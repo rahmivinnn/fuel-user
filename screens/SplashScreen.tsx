@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Logo from '../components/Logo';
+import whiteLogoPng from './logo putih.png';
+import topElementPng from './atas (2).png';
+import bottomElementPng from './bawah (2).png';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -17,12 +19,27 @@ const SplashScreen = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-primary relative overflow-hidden">
-      {/* Green background */}
-      <div className="absolute inset-0 bg-primary"></div>
+      {/* Top element */}
+      <img 
+        src={topElementPng} 
+        alt="Top decoration" 
+        className="absolute top-0 left-0 w-full h-24 md:h-32 object-cover z-20"
+      />
       
-      {/* Logo centered */}
+      {/* Bottom element */}
+      <img 
+        src={bottomElementPng} 
+        alt="Bottom decoration" 
+        className="absolute bottom-0 left-0 w-full h-24 md:h-32 object-cover z-20"
+      />
+      
+      {/* Logo centered and flipped horizontally */}
       <div className="relative z-10 flex flex-col items-center">
-        <Logo />
+        <img 
+          src={whiteLogoPng} 
+          alt="FuelFriendly Logo" 
+          className="w-32 h-32 md:w-40 md:h-40 object-contain scale-x-[-1]" 
+        />
       </div>
       
       {/* Ensure logo is always visible according to user preference */}

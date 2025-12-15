@@ -263,8 +263,10 @@ const LoginScreen = () => {
 
     try {
       await login(email, password);
+      // Navigate to home screen after successful login
+      navigate('/home');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -491,9 +493,7 @@ const LoginScreen = () => {
                 await loginWithGoogle();
               } catch (e: any) {
                 console.error('Google login error:', e);
-                if (e?.message && !e.message.includes('cancelled-popup-request')) {
-                  setError(e?.message || 'Google login failed.');
-                }
+                setError(e?.message || 'Google login failed.');
               } finally {
                 setIsLoading(false);
               }

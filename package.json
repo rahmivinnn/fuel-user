@@ -18,7 +18,6 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "firebase": "^12.6.0",
     "lottie-react": "^2.4.0",
     "lucide-react": "^0.553.0",
     "mapbox-gl": "^3.16.0",

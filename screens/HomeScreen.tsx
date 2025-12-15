@@ -6,13 +6,13 @@ import { Station } from '../types';
 import { apiGetStations } from '../services/api';
 import { useAppContext } from '../App';
 import LottieAnimation from '../components/LottieAnimation';
-import MapboxMap from '../components/MapboxMap';
+import FuelMap from '../components/FuelMap';
 import loadingAnimation from '../assets/animations/loading.json';
 import tulisanPng from '../tulisan.png';
 import AnimatedPage from '../components/AnimatedPage';
 
 // FIX: Changed Station prop type to match what apiGetStations returns.
-const StationCard = ({ station }: { station: Omit<Station, 'groceries' | 'fuelFriends'> }) => {
+const StationCard = ({ station }: { station: any }) => {
   const navigate = useNavigate();
   return (
     <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-4 md:p-5 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
@@ -43,6 +43,24 @@ const HomeScreen = () => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
+  // Function to get user's IP-based location
+  const getUserLocationByIP = async () => {
+    try {
+      const response = await fetch('https://api.iplocation.net/?ip=');
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        return {
+          lat: parseFloat(data.latitude),
+          lon: parseFloat(data.longitude)
+        };
+      }
+    } catch (err) {
+      console.error('Failed to get location by IP:', err);
+    }
+    return null;
+  };
+
   useEffect(() => {
     const fetchStations = async () => {
       if (!userLocation) {
@@ -66,25 +84,31 @@ const HomeScreen = () => {
   }, [userLocation]); // This will re-run when userLocation changes
 
   useEffect(() => {
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        const location = { lat: position.coords.latitude, lon: position.coords.longitude };
-        setUserLocation(location);
-      },
-      () => {
-        const defaultLocation = { lat: -6.200000, lon: 106.816666 };
-        setError('Location permission denied, using default location');
-        setUserLocation(defaultLocation);
-      },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-    );
-    const fallbackTimer = setTimeout(() => {
-      if (!userLocation) {
-        const defaultLocation = { lat: -6.200000, lon: 106.816666 };
-        setUserLocation(defaultLocation);
-      }
-    }, 5000);
-    return () => { clearTimeout(fallbackTimer); navigator.geolocation.clearWatch(id); };
+    const initializeLocation = async () => {
+      // First try to get location from browser geolocation
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = { lat: position.coords.latitude, lon: position.coords.longitude };
+          setUserLocation(location);
+        },
+        async (error) => {
+          console.log('Geolocation error:', error);
+          // If geolocation fails, try IP-based location
+          const ipLocation = await getUserLocationByIP();
+          if (ipLocation) {
+            setUserLocation(ipLocation);
+          } else {
+            // Fallback to Jakarta coordinates
+            const defaultLocation = { lat: -6.200000, lon: 106.816666 };
+            setError('Using default location (Jakarta)');
+            setUserLocation(defaultLocation);
+          }
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
+      );
+    };
+
+    initializeLocation();
   }, []);
 
   const handleStationSelect = (station: Omit<Station, 'groceries' | 'fuelFriends'>) => {
@@ -132,7 +156,6 @@ const HomeScreen = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && query.trim()) {
-                    // ... existing search logic ...
                     try {
                       setIsLoading(true);
                       setError('');
@@ -178,7 +201,7 @@ const HomeScreen = () => {
                 <p className="text-center text-red-500 text-sm md:text-base px-4 md:px-6">{error}</p>
               </div>
             ) : (
-              <MapboxMap
+              <FuelMap
                 stations={stations}
                 userLocation={userLocation}
                 onStationSelect={handleStationSelect}
@@ -229,7 +252,11 @@ const HomeScreen = () => {
                   <p className="text-center text-gray-500 text-sm">No nearby stations found</p>
                 </div>
               ) : (
-                stations.map(station => <StationCard key={station.id} station={station} />)
+                stations.map((station) => (
+                  <div key={station.id}>
+                    <StationCard station={station} />
+                  </div>
+                ))
               )}
             </div>
           )}

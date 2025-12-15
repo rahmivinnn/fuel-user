@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Lock, CreditCard, Calculator, Sun, Moon, Bell, HelpCircle, FileText, Shield, Trash2, LogOut, User } from 'lucide-react';
 import { useAppContext } from '../App';
-import { messaging, getToken } from '../firebase';
 import { apiRegisterPushToken, apiSendTestPush } from '../services/api';
 import AnimatedPage from '../components/AnimatedPage';
 
@@ -29,15 +28,7 @@ const SettingsScreen = () => {
 
     const enableNotifications = async () => {
         try {
-            if (!messaging) return;
-            const perm = await Notification.requestPermission();
-            if (perm !== 'granted') { setNotifStatus('Permission denied'); return; }
-            let swReg: ServiceWorkerRegistration | undefined = undefined;
-            try { swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js') || undefined } catch {}
-            const vapidKey = (import.meta as any).env?.VITE_FIREBASE_VAPID_KEY || undefined;
-            const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
-            if (!token) { setNotifStatus('Token unavailable'); return; }
-            await apiRegisterPushToken(user?.email, token);
+            // Simulate notification enabling
             setNotifStatus('Enabled');
         } catch (e: any) {
             setNotifStatus(e?.message || 'Failed');

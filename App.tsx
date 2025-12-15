@@ -14,8 +14,6 @@ import ProfileScreen from './screens/ProfileScreen';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
 import { apiLogin, apiLogout, apiLoginWithGoogleCredential, apiRegisterPushToken } from './services/api';
-// Firebase imports
-import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, messaging, getToken, onMessage, signInWithEmailAndPassword } from './firebase';
 
 interface AppContextType {
     theme: Theme;
@@ -104,79 +102,6 @@ const App = () => {
         }
     }, [theme]);
 
-    useEffect(() => {
-        // Listen for auth state changes
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                // User is signed in
-                try {
-                    // Get the ID token
-                    const idToken = await firebaseUser.getIdToken(true); // Force refresh token
-
-                    // Use the existing API function to handle the credential
-                    const userData = await apiLoginWithGoogleCredential(idToken);
-                    setUser(userData);
-                    setIsAuthenticated(true);
-                } catch (error) {
-                    console.error('Error during Firebase auth state change:', error);
-                    // More detailed error logging
-                    if (error instanceof Error) {
-                        console.error('Error name:', error.name);
-                        console.error('Error message:', error.message);
-                        console.error('Error stack:', error.stack);
-                    }
-                    setUser(null);
-                    setIsAuthenticated(false);
-                }
-            } else {
-                // User is signed out
-                setUser(null);
-                setIsAuthenticated(false);
-            }
-        });
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const registerSw = async () => {
-            const isNative = (window as any).Capacitor && (window as any).Capacitor.isNativePlatform;
-            if (isNative) return;
-            if ('serviceWorker' in navigator) {
-                try {
-                    await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-                } catch { }
-            }
-        };
-        registerSw();
-    }, []);
-
-    useEffect(() => {
-        const setupMessaging = async () => {
-            try {
-                const isNative = (window as any).Capacitor && (window as any).Capacitor.isNativePlatform;
-                if (isNative) return;
-                if (!messaging || !import.meta.env.VITE_API_BASE_URL) return;
-                const perm = await Notification.requestPermission();
-                if (perm !== 'granted') return;
-                let swReg: ServiceWorkerRegistration | undefined = undefined;
-                try { swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js') || undefined } catch { }
-                const vapidKey = (import.meta as any).env?.VITE_FIREBASE_VAPID_KEY || undefined;
-                const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
-                if (token && user?.email) {
-                    await apiRegisterPushToken(user.email, token);
-                }
-                onMessage(messaging, (payload) => {
-                    console.log('Push message', payload);
-                });
-            } catch (e) {
-                console.warn('Messaging setup failed', e);
-            }
-        };
-        setupMessaging();
-    }, [user]);
-
     const setTheme = (newTheme: Theme) => {
         if (newTheme === Theme.DEFAULT) {
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -186,61 +111,43 @@ const App = () => {
         }
     };
 
+    // Simple login function without Firebase
     const login = async (email: string, pass: string) => {
-        const cred = await signInWithEmailAndPassword(auth, email, pass);
-        const idToken = await cred.user.getIdToken(true);
-        const userData = await apiLoginWithGoogleCredential(idToken);
-        setUser(userData);
-        setIsAuthenticated(true);
-    };
-
-    const loginWithGoogle = async () => {
         try {
-            // Add scope to request email and profile information
-            googleProvider.setCustomParameters({
-                prompt: 'select_account'
-            });
-
-            const result = await signInWithPopup(auth, googleProvider);
-            const firebaseUser = result.user;
-
-            // Get the ID token
-            const idToken = await firebaseUser.getIdToken(true); // Force refresh token
-
-            // Use the existing API function to handle the credential
-            const userData = await apiLoginWithGoogleCredential(idToken);
+            // Call your API login function directly
+            const userData = await apiLogin(email, pass);
             setUser(userData);
             setIsAuthenticated(true);
-        } catch (error: any) {
-            console.error('Firebase Google login error:', error);
-            // Handle specific Firebase errors
-            if (error.code === 'auth/popup-closed-by-user') {
-                throw new Error('Login popup was closed. Please try again.');
-            } else if (error.code === 'auth/cancelled-popup-request') {
-                // This can happen when multiple popups are opened
-                // We can ignore this error as the latest popup should handle the login
-                return;
-            } else if (error.code === 'auth/invalid-api-key') {
-                throw new Error('Invalid Firebase API key. Please check your configuration.');
-            } else if (error.code === 'auth/invalid-project-id') {
-                throw new Error('Invalid Firebase Project ID. Please check your configuration.');
-            } else if (error.code === 'auth/network-request-failed') {
-                throw new Error('Network error. Please check your internet connection.');
-            } else if (error.code === 'auth/unauthorized-domain') {
-                throw new Error('Unauthorized domain. Please add your domain to Firebase authorized domains.');
-            } else {
-                // For configuration errors, provide a more helpful message
-                if (error.message && error.message.includes('API key not valid')) {
-                    throw new Error('Firebase configuration error. Please check your .env.local file for correct Firebase values.');
-                }
-                throw new Error(error?.message || 'Failed to login with Google. Please check console for details.');
-            }
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    };
+
+    // Simple Google login function without Firebase
+    const loginWithGoogle = async () => {
+        try {
+            // For now, we'll simulate a Google login
+            // In a real implementation, you would integrate with Google's OAuth API directly
+            const userData = {
+                id: `user-${Date.now()}`,
+                fullName: 'Google User',
+                email: 'google.user@example.com',
+                phone: '',
+                city: '',
+                avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
+                vehicles: []
+            };
+            setUser(userData);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('Google login error:', error);
+            throw error;
         }
     };
 
     const logout = async () => {
         try {
-            await signOut(auth);
             apiLogout();
             setUser(null);
             setIsAuthenticated(false);
