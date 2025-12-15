@@ -1,0 +1,147 @@
+import { Resend } from "resend";
+
+export async function sendEmailOTP(email, otp) {
+  try {
+    // Check if we're in development mode and want to simulate email sending
+    const isDevelopmentMode = process.env.NODE_ENV === 'development';
+    const simulateEmailSending = process.env.SIMULATE_EMAIL_SENDING === 'true';
+    
+    if (isDevelopmentMode && simulateEmailSending) {
+      console.log('📧 SIMULATED: OTP email sent to:', email);
+      console.log('🔐 SIMULATED OTP Code:', otp);
+      console.log('📝 NOTE: In a real production environment, this OTP would be sent to the email address above.');
+      
+      // Simulate success
+      return {
+        success: true,
+        messageId: 'simulated-' + Date.now(),
+        simulated: true,
+        otp: otp // Include the OTP in the response for development testing
+      };
+    }
+    
+    // Validate API key exists
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY is not configured');
+      return {
+        success: false,
+        error: 'Email service is not configured. Please contact support.'
+      };
+    }
+
+    // Validate email parameter
+    if (!email || typeof email !== 'string') {
+      console.error('❌ Invalid email parameter:', email);
+      return {
+        success: false,
+        error: 'Invalid email address'
+      };
+    }
+
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      console.error('❌ Invalid email format:', normalizedEmail);
+      return {
+        success: false,
+        error: 'Invalid email format'
+      };
+    }
+
+    console.log('🔑 Using API Key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
+    console.log('📧 Sending OTP to:', normalizedEmail);
+    console.log('🔐 OTP Code:', otp);
+    
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    let data, error;
+    try {
+      // Use onboarding@resend.dev for testing if a verified domain is not configured
+      const fromEmail = process.env.RESEND_FROM_EMAIL && !process.env.RESEND_FROM_EMAIL.includes('@gmail.com') 
+        ? process.env.RESEND_FROM_EMAIL 
+        : 'onboarding@resend.dev';
+      
+      const result = await resend.emails.send({
+        from: fromEmail,
+        to: normalizedEmail,
+        subject: 'Your OTP Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4CAF50;">FuelFriendly</h2>
+            <p>Your verification code is:</p>
+            <div style="font-size: 24px; font-weight: bold; color: #333; margin: 20px 0;">${otp}</div>
+            <p style="color: #666;">This code expires in 5 minutes.</p>
+          </div>
+        `
+      });
+      
+      data = result.data;
+      error = result.error;
+    } catch (sendError) {
+      console.error('❌ Resend send() threw error:', sendError);
+      return {
+        success: false,
+        error: sendError.message || 'Failed to send email. Please try again.'
+      };
+    }
+    
+    console.log('📧 Resend response - data:', data ? 'present' : 'null', 'error:', error ? 'present' : 'null');
+    
+    if (error) {
+      console.error('❌ Resend API error details:', JSON.stringify(error, null, 2));
+      
+      // Handle specific Resend error types
+      let errorMessage = 'Failed to send email';
+      if (error.message) {
+        errorMessage = error.message;
+        // Provide a more helpful error message for domain verification issues
+        if (errorMessage.includes('only send testing emails to your own email address')) {
+          errorMessage = 'Email service limitation: With the free Resend account, OTP can only be sent to the verified email address (shafiradev62@gmail.com). To send OTP to other email addresses, please upgrade your Resend account and verify a domain.';
+        } else if (errorMessage.includes('domain is not verified')) {
+          errorMessage = 'Email service error: The sender domain is not verified. Please verify your domain in the Resend dashboard or use the default onboarding@resend.dev address.';
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.name) {
+        errorMessage = `${error.name}: ${error.message || 'Unknown error'}`;
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+    
+    if (!data) {
+      console.error('❌ No data returned from Resend API');
+      return {
+        success: false,
+        error: 'Failed to send email: No response from email service'
+      };
+    }
+    
+    if (!data.id) {
+      console.error('❌ Unexpected response from Resend API - no id:', JSON.stringify(data, null, 2));
+      return {
+        success: false,
+        error: 'Failed to send email: Invalid response from email service'
+      };
+    }
+    
+    console.log('✅ Email sent successfully, message ID:', data.id);
+    return {
+      success: true,
+      messageId: data.id
+    };
+  } catch (err) {
+    console.error('❌ Unexpected email error:', err);
+    console.error('❌ Error stack:', err.stack);
+    return {
+      success: false,
+      error: err.message || 'An unexpected error occurred while sending email'
+    };
+  }
+}
