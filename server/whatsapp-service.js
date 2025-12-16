@@ -107,6 +107,44 @@ class WhatsAppService {
     }
   }
 
+  detectLanguage(phoneNumber) {
+    const countryCode = phoneNumber.substring(0, 2)
+    
+    // Country code mapping
+    const languageMap = {
+      '62': 'id', // Indonesia
+      '60': 'id', // Malaysia (use Indonesian)
+      '65': 'en', // Singapore
+      '1': 'en',  // USA/Canada
+      '44': 'en', // UK
+      '61': 'en', // Australia
+      '91': 'en', // India
+      '86': 'en', // China (use English)
+      '81': 'en', // Japan (use English)
+      '82': 'en', // South Korea (use English)
+    }
+    
+    return languageMap[countryCode] || 'en' // Default to English
+  }
+
+  getOTPMessage(otp, language) {
+    const messages = {
+      'id': {
+        title: '🔐 *FuelFriendly OTP*',
+        body: `Kode verifikasi Anda: *${otp}*`,
+        footer: 'Kode berlaku selama 5 menit.\nJangan bagikan kode ini kepada siapapun.'
+      },
+      'en': {
+        title: '🔐 *FuelFriendly OTP*',
+        body: `Your verification code: *${otp}*`,
+        footer: 'Code expires in 5 minutes.\nDo not share this code with anyone.'
+      }
+    }
+    
+    const msg = messages[language] || messages['en']
+    return `${msg.title}\n\n${msg.body}\n\n${msg.footer}`
+  }
+
   async sendOTP(phoneNumber, otp) {
     if (!this.isConnected || !this.sock) {
       throw new Error('WhatsApp not connected')
@@ -117,11 +155,13 @@ class WhatsAppService {
       const formattedNumber = phoneNumber.replace(/[^\d]/g, '')
       const jid = `${formattedNumber}@s.whatsapp.net`
       
-      const message = `🔐 *FuelFriendly OTP*\n\nKode verifikasi Anda: *${otp}*\n\nKode berlaku selama 5 menit.\nJangan bagikan kode ini kepada siapapun.`
+      // Detect language and get appropriate message
+      const language = this.detectLanguage(formattedNumber)
+      const message = this.getOTPMessage(otp, language)
       
       await this.sock.sendMessage(jid, { text: message })
       
-      console.log(`✅ OTP sent to ${phoneNumber}`)
+      console.log(`✅ OTP sent to ${phoneNumber} in ${language}`)
       return { success: true, message: 'OTP sent successfully' }
       
     } catch (error) {

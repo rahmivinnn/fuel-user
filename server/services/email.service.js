@@ -1,5 +1,58 @@
 import { Resend } from "resend";
 
+function detectLanguageFromEmail(email) {
+  const domain = email.split('@')[1]?.toLowerCase()
+  
+  // Indonesian domains
+  const indonesianDomains = [
+    'gmail.com', 'yahoo.co.id', 'hotmail.co.id', 'outlook.co.id',
+    'co.id', '.id', 'telkom.net', 'indosat.net.id'
+  ]
+  
+  // Check if email contains Indonesian indicators
+  if (indonesianDomains.some(d => domain?.includes(d)) || 
+      email.toLowerCase().includes('indonesia') ||
+      email.toLowerCase().includes('jakarta') ||
+      email.toLowerCase().includes('surabaya')) {
+    return 'id'
+  }
+  
+  return 'en' // Default to English
+}
+
+function getEmailOTPContent(otp, language) {
+  const content = {
+    'id': {
+      subject: 'Kode Verifikasi FuelFriendly',
+      title: 'FuelFriendly',
+      greeting: 'Kode verifikasi Anda adalah:',
+      footer: 'Kode ini berlaku selama 5 menit.',
+      color: '#4CAF50'
+    },
+    'en': {
+      subject: 'FuelFriendly Verification Code',
+      title: 'FuelFriendly', 
+      greeting: 'Your verification code is:',
+      footer: 'This code expires in 5 minutes.',
+      color: '#4CAF50'
+    }
+  }
+  
+  const lang = content[language] || content['en']
+  
+  return {
+    subject: lang.subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: ${lang.color};">${lang.title}</h2>
+        <p>${lang.greeting}</p>
+        <div style="font-size: 24px; font-weight: bold; color: #333; margin: 20px 0;">${otp}</div>
+        <p style="color: #666;">${lang.footer}</p>
+      </div>
+    `
+  }
+}
+
 export async function sendEmailOTP(email, otp) {
   try {
     // Check if we're in development mode and want to simulate email sending
@@ -64,18 +117,15 @@ export async function sendEmailOTP(email, otp) {
         ? process.env.RESEND_FROM_EMAIL 
         : 'onboarding@resend.dev';
       
+      // Detect language and get appropriate content
+      const language = detectLanguageFromEmail(normalizedEmail)
+      const emailContent = getEmailOTPContent(otp, language)
+      
       const result = await resend.emails.send({
         from: fromEmail,
         to: normalizedEmail,
-        subject: 'Your OTP Code',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #4CAF50;">FuelFriendly</h2>
-            <p>Your verification code is:</p>
-            <div style="font-size: 24px; font-weight: bold; color: #333; margin: 20px 0;">${otp}</div>
-            <p style="color: #666;">This code expires in 5 minutes.</p>
-          </div>
-        `
+        subject: emailContent.subject,
+        html: emailContent.html
       });
       
       data = result.data;
@@ -99,7 +149,7 @@ export async function sendEmailOTP(email, otp) {
         errorMessage = error.message;
         // Provide a more helpful error message for domain verification issues
         if (errorMessage.includes('only send testing emails to your own email address')) {
-          errorMessage = 'Email service limitation: With the free Resend account, OTP can only be sent to the verified email address (shafiradev62@gmail.com). To send OTP to other email addresses, please upgrade your Resend account and verify a domain.';
+          errorMessage = 'Email service limitation: With the free Resend account, OTP can only be sent to verified email addresses. To send OTP to other email addresses, please upgrade your Resend account and verify a domain.';
         } else if (errorMessage.includes('domain is not verified')) {
           errorMessage = 'Email service error: The sender domain is not verified. Please verify your domain in the Resend dashboard or use the default onboarding@resend.dev address.';
         }

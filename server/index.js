@@ -318,6 +318,44 @@ app.get('/api/station/:id', async (req, res) => {
 
 const port = process.env.PORT || 4000
 
+// WhatsApp OTP endpoints
+app.post('/api/otp/whatsapp/send', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+    
+    const result = await otpService.sendWhatsAppOTP(phoneNumber);
+    res.json(result);
+  } catch (error) {
+    console.error('WhatsApp OTP send error:', error);
+    res.status(500).json({ error: error.message || 'Failed to send WhatsApp OTP' });
+  }
+});
+
+app.post('/api/otp/whatsapp/verify', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ success: false, error: 'Phone number and OTP are required' });
+    }
+    
+    console.log('Verifying WhatsApp OTP for:', phoneNumber, 'OTP:', otp);
+    const result = await otpService.verifyOTP(phoneNumber, otp);
+    console.log('Verification result:', result);
+    
+    if (result.success) {
+      res.json({ success: true, message: result.message });
+    } else {
+      res.json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error('WhatsApp OTP verify error:', error);
+    res.json({ success: false, error: error.message || 'Failed to verify WhatsApp OTP' });
+  }
+});
+
 // Register OTP routes
 console.log('Registering OTP routes');
 app.use('/api/otp', otpRoutes);
