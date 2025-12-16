@@ -1,6 +1,6 @@
 import express from "express";
 import { generateOTP, getExpiry, saveOTP, verifyOTP } from "../utils/otp.js";
-import { sendEmailOTP } from "../services/sendgrid.service.js";
+import { sendEmailOTP } from "../services/email.service.js";
 
 const router = express.Router();
 
