@@ -51,14 +51,7 @@ const RegistrationScreen = () => {
     const createAccount = async () => {
         setLoading(true);
         try {
-            // Register the user with the API
             await apiRegister(formData);
-            
-            // Login the user after registration
-            const userData = await apiLogin(formData.email, formData.password);
-            updateUser(userData);
-            
-            // Move to verification step after registration
             setStep(4);
         } catch (error) {
             console.error("Registration failed:", error);
@@ -409,12 +402,22 @@ const VerificationProcess = ({ method, formData, onComplete }: {
     formData: any;
     onComplete: () => void;
 }) => {
+    const { updateUser } = useAppContext();
     const [otp, setOtp] = useState('');
     const [timer, setTimer] = useState(60);
     const [canResend, setCanResend] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const hasSentRef = React.useRef(false);
+
+    useEffect(() => {
+        if (!hasSentRef.current) {
+            hasSentRef.current = true;
+            sendOTP();
+        }
+    }, []);
 
     useEffect(() => {
         if (timer > 0) {
@@ -427,26 +430,101 @@ const VerificationProcess = ({ method, formData, onComplete }: {
         }
     }, [timer]);
 
+    const sendOTP = async () => {
+        try {
+            const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+            
+            // Add to Resend contacts if email method
+            if (method === 'email') {
+                await fetch(`${base}/api/resend/contact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: formData.email,
+                        firstName: formData.fullName.split(' ')[0],
+                        lastName: formData.fullName.split(' ').slice(1).join(' ')
+                    })
+                });
+            }
+            
+            const endpoint = method === 'email' ? '/api/otp/email/send' : '/api/otp/whatsapp/send';
+            const payload = method === 'email' 
+                ? { email: formData.email } 
+                : { phoneNumber: formData.phone };
+            
+            const res = await fetch(`${base}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                setOtpSent(true);
+                setSuccess(`OTP sent to your ${method}!`);
+            } else {
+                setError(data.error || 'Failed to send OTP');
+            }
+        } catch (err) {
+            setError('Failed to send OTP');
+        } finally {
+            setOtpSent(true);
+        }
+    };
+
     const handleVerify = async () => {
         setLoading(true);
         setError('');
         setSuccess('');
         
         try {
-            // Simulate verification success
-            setSuccess('Account verified successfully!');
-            setTimeout(onComplete, 1500);
+            const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+            const endpoint = method === 'email' ? '/api/otp/email/verify' : '/api/otp/whatsapp/verify';
+            const payload = method === 'email'
+                ? { email: formData.email, otp }
+                : { phoneNumber: formData.phone, otp };
+            
+            const res = await fetch(`${base}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                setSuccess('Account verified successfully!');
+                const userData = {
+                    id: `user-${Date.now()}`,
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    city: '',
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
+                    vehicles: [{
+                        id: `v-${Date.now()}`,
+                        brand: formData.vehicleBrand,
+                        color: formData.vehicleColor,
+                        licenseNumber: formData.licenseNumber,
+                        fuelType: formData.fuelType
+                    }]
+                };
+                updateUser(userData);
+                setTimeout(onComplete, 1500);
+            } else {
+                setError(data.error || 'Invalid verification code');
+            }
         } catch (err) {
-            setError('Invalid verification code');
+            setError('Verification failed');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleResend = () => {
+    const handleResend = async () => {
         setTimer(60);
         setCanResend(false);
-        setSuccess('Verification code resent!');
+        setOtpSent(false);
+        setTimeout(() => sendOTP(), 500);
     };
 
     return (

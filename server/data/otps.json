@@ -1,16 +1,9 @@
 {
-  "447833853304": {
-    "otp": "588611",
+  "6289502694005": {
+    "otp": "777133",
     "type": "whatsapp",
-    "createdAt": 1765812401500,
-    "expiresAt": 1765812701500,
-    "verified": false
-  },
-  "14236728656": {
-    "otp": "925271",
-    "type": "whatsapp",
-    "createdAt": 1765812412682,
-    "expiresAt": 1765812712682,
+    "createdAt": 1765994469866,
+    "expiresAt": 1765994769866,
     "verified": false
   }
 }

@@ -10,12 +10,13 @@ export const apiLogout = () => {
 
 export const apiRegister = async (data: any): Promise<User> => {
     const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const payload: Partial<User> = {
+    const user: User = {
+        id: `user-${Date.now()}`,
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
         city: data.city || '',
-        avatarUrl: data.avatarUrl || '',
+        avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.fullName)}&background=random`,
         vehicles: [{
             id: `v-${Date.now()}`,
             brand: data.vehicleBrand,
@@ -23,13 +24,17 @@ export const apiRegister = async (data: any): Promise<User> => {
             licenseNumber: data.licenseNumber,
             fuelType: data.fuelType
         }]
-    } as any;
+    };
     const res = await fetch(`${base}/api/user/me?email=${encodeURIComponent(data.email)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(user)
     });
-    if (!res.ok) throw new Error('Failed to save profile');
+    if (!res.ok) {
+        const error = await res.text();
+        console.error('Registration error:', error);
+        throw new Error(`Failed to save profile: ${error}`);
+    }
     return await res.json();
 };
 

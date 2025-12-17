@@ -30,11 +30,18 @@ export function deleteOTP(email) {
 }
 
 export function verifyOTP(email, inputOtp) {
+  console.log('🔍 Verifying OTP for:', email);
+  console.log('🔍 Input OTP:', inputOtp);
+  console.log('🔍 Stored OTPs:', Array.from(otpStorage.keys()));
+  
   const stored = getOTP(email);
   
   if (!stored) {
+    console.log('❌ OTP not found for:', email);
     return { isValid: false, message: 'OTP not found' };
   }
+  
+  console.log('✅ Found stored OTP:', stored.otp);
   
   // Check if OTP has expired
   if (new Date() > stored.expiresAt) {

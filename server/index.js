@@ -175,10 +175,17 @@ app.patch('/api/user/me', async (req, res) => {
   if (!email) { res.status(400).json({ error: 'email required' }); return }
   const users = await readUsers()
   const idx = users.findIndex(u => u.email === email)
-  if (idx === -1) { res.status(404).json({ error: 'not_found' }); return }
-  users[idx] = { ...users[idx], ...payload }
-  await writeUsers(users)
-  res.json(users[idx])
+  if (idx === -1) {
+    // Create new user if not found
+    users.push(payload)
+    await writeUsers(users)
+    res.json(payload)
+  } else {
+    // Update existing user
+    users[idx] = { ...users[idx], ...payload }
+    await writeUsers(users)
+    res.json(users[idx])
+  }
 })
 
 app.get('/api/stations', async (req, res) => {
@@ -353,6 +360,31 @@ app.post('/api/otp/whatsapp/verify', async (req, res) => {
   } catch (error) {
     console.error('WhatsApp OTP verify error:', error);
     res.json({ success: false, error: error.message || 'Failed to verify WhatsApp OTP' });
+  }
+});
+
+// Add contact to Resend
+app.post('/api/resend/contact', async (req, res) => {
+  try {
+    const { email, firstName, lastName } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return res.json({ success: false, error: 'Resend not configured' });
+    
+    const response = await fetch('https://api.resend.com/audiences/78261da4-41a8-4ef8-8c49-c57536b363de/contacts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, first_name: firstName, last_name: lastName })
+    });
+    
+    const data = await response.json();
+    res.json({ success: response.ok, data });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
 });
 
