@@ -126,7 +126,7 @@ export async function sendEmailOTP(email, otp) {
       };
     }
 
-    // Normalize email
+    // Normalize email (trim whitespace and convert to lowercase)
     const normalizedEmail = email.trim().toLowerCase();
     
     // Check SendGrid first, then Resend
