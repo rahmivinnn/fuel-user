@@ -106,6 +106,51 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Test route working' });
 });
 
+// Registration endpoint
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    console.log('📝 Registration request:', req.body);
+    const { fullName, email, phoneNumber, password, vehicleBrand, vehicleColor, licenseNumber, fuelType } = req.body;
+    
+    if (!fullName || !email || !phoneNumber || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const users = await readUsers();
+    const existingUser = users.find(u => u.email === email);
+    
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    const newUser = {
+      id: `user-${Date.now()}`,
+      fullName,
+      email,
+      phone: phoneNumber,
+      password, // In production, hash this!
+      city: '',
+      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`,
+      vehicles: vehicleBrand ? [{
+        id: `v-${Date.now()}`,
+        brand: vehicleBrand,
+        color: vehicleColor,
+        licenseNumber,
+        fuelType
+      }] : []
+    };
+    
+    users.push(newUser);
+    await writeUsers(users);
+    
+    console.log('✅ User registered successfully:', newUser.email);
+    res.json({ success: true, user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName } });
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
 // Auth: verify Firebase ID token via Google tokeninfo and persist user profile
 app.post('/api/auth/firebase', async (req, res) => {
   try {
@@ -324,6 +369,45 @@ app.get('/api/station/:id', async (req, res) => {
 })
 
 const port = process.env.PORT || 4000
+
+// SMS OTP endpoints
+app.post('/api/otp/sms/send', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+    
+    const { sendSMSOTP } = await import('./services/twilio.service.js');
+    const result = await sendSMSOTP(phoneNumber, otpService.generateOTP());
+    res.json(result);
+  } catch (error) {
+    console.error('SMS OTP send error:', error);
+    res.status(500).json({ error: error.message || 'Failed to send SMS OTP' });
+  }
+});
+
+app.post('/api/otp/sms/verify', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ success: false, error: 'Phone number and OTP are required' });
+    }
+    
+    console.log('Verifying SMS OTP for:', phoneNumber, 'OTP:', otp);
+    const result = otpService.verifyOTP(phoneNumber, otp);
+    console.log('Verification result:', result);
+    
+    if (result.success) {
+      res.json({ success: true, message: result.message });
+    } else {
+      res.json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error('SMS OTP verify error:', error);
+    res.json({ success: false, error: error.message || 'Failed to verify SMS OTP' });
+  }
+});
 
 // WhatsApp OTP endpoints
 app.post('/api/otp/whatsapp/send', async (req, res) => {
