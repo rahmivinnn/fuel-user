@@ -1,4 +1,35 @@
 import { Resend } from "resend";
+import sgMail from '@sendgrid/mail';
+
+async function sendSendGridOTP(email, otp) {
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    const language = detectLanguageFromEmail(email);
+    const emailContent = getEmailOTPContent(otp, language);
+    
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@sendgrid.net',
+      subject: emailContent.subject,
+      html: emailContent.html
+    };
+    
+    const result = await sgMail.send(msg);
+    console.log('✅ SendGrid email sent successfully to:', email);
+    
+    return {
+      success: true,
+      messageId: result[0].headers['x-message-id']
+    };
+  } catch (error) {
+    console.error('❌ SendGrid error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to send email via SendGrid'
+    };
+  }
+}
 
 function detectLanguageFromEmail(email) {
   const domain = email.split('@')[1]?.toLowerCase()
@@ -73,9 +104,14 @@ export async function sendEmailOTP(email, otp) {
       };
     }
     
+    // Check SendGrid first, then Resend
+    if (process.env.SENDGRID_API_KEY) {
+      return await sendSendGridOTP(normalizedEmail, otp);
+    }
+    
     // Validate API key exists
     if (!process.env.RESEND_API_KEY) {
-      console.error('❌ RESEND_API_KEY is not configured');
+      console.error('❌ No email service configured');
       return {
         success: false,
         error: 'Email service is not configured. Please contact support.'
