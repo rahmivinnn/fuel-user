@@ -128,6 +128,9 @@ export async function sendEmailOTP(email, otp) {
       } else {
         console.log('⚠️ Failed to add to contacts (may already exist):', normalizedEmail);
       }
+      
+      // Wait 1 second to avoid rate limit (2 requests/second)
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (contactError) {
       console.log('⚠️ Contact add error (continuing anyway):', contactError.message);
     }
