@@ -23,9 +23,18 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+
 .env.local
 .env.local.example
 .env.local.template
 
+
+# environment
+.env
+
+# pm2
 ecosystem.config.cjs
+
+# whatsapp runtime session
+server/wa-session/
+server/data/users.json
