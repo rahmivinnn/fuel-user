@@ -400,8 +400,11 @@ app.post('/api/otp/sms/send', async (req, res) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
     
+    const otp = otpService.generateOTP();
+    otpService.saveOTP(phoneNumber, otp);
+    
     const { sendSMSOTP } = await import('./services/twilio.service.js');
-    const result = await sendSMSOTP(phoneNumber, otpService.generateOTP());
+    const result = await sendSMSOTP(phoneNumber, otp);
     res.json(result);
   } catch (error) {
     console.error('SMS OTP send error:', error);

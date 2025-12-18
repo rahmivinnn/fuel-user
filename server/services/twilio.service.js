@@ -1,12 +1,9 @@
 import twilio from 'twilio';
 
-// Use API Key format: apiKeySid, apiKeySecret, options
+// Use main account credentials
 const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID, // This is actually API Key SID
-  process.env.TWILIO_AUTH_TOKEN,  // This is actually API Key Secret
-  {
-    accountSid: process.env.TWILIO_MAIN_ACCOUNT_SID // Need main Account SID
-  }
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
 );
 
 export async function sendSMSOTP(phoneNumber, otp) {

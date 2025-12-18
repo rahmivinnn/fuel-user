@@ -6,7 +6,7 @@ import MobileOTPForm from '../components/MobileOTPForm';
 import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
 
-type AuthMethod = 'email-password' | 'email-otp';
+type AuthMethod = 'email-password' | 'email-otp' | 'whatsapp-otp';
 
 const LoginScreen = () => {
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ const LoginScreen = () => {
 
   // OTP States
   const [emailForOtp, setEmailForOtp] = useState('');
+  const [phoneForOtp, setPhoneForOtp] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [canResend, setCanResend] = useState(false);
@@ -277,16 +278,166 @@ const LoginScreen = () => {
     setOtpSent(false);
     setOtpCode('');
     setEmailForOtp('');
+    setPhoneForOtp('');
     setError('');
     setSuccess('');
     setCanResend(false);
     setResendTimer(0);
   };
 
+  // WhatsApp OTP functions
+  const handleSendWhatsAppOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const response = await fetch(`${base}/api/otp/whatsapp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phoneForOtp })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setOtpSent(true);
+        setSuccess('OTP sent via WhatsApp!');
+        startResendTimer();
+      } else {
+        setError(data.error || 'Failed to send WhatsApp OTP');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to send WhatsApp OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyWhatsAppOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const response = await fetch(`${base}/api/otp/whatsapp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phoneForOtp, otp: otpCode })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSuccess('OTP verified successfully!');
+        const userData = {
+          id: `user-${Date.now()}`,
+          fullName: phoneForOtp,
+          email: '',
+          phone: phoneForOtp,
+          city: '',
+          avatarUrl: `https://ui-avatars.com/api/?name=${phoneForOtp}&background=random`,
+          vehicles: []
+        };
+        updateUser(userData);
+        setTimeout(() => navigate('/home'), 1500);
+      } else {
+        setError(data.error || 'Invalid OTP code');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to verify OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderWhatsAppOTPForm = () => (
+    <form onSubmit={otpSent ? handleVerifyWhatsAppOTP : handleSendWhatsAppOTP} className="w-full max-w-sm space-y-3">
+      {otpSent ? (
+        <>
+          <div className="text-center space-y-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Enter the 6-digit code sent to
+            </p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              {phoneForOtp}
+            </p>
+          </div>
+          <div className="relative">
+            <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Enter 6-digit OTP"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className="w-full pl-10 pr-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary text-sm mobile-text-sm text-center tracking-widest text-lg font-semibold"
+              maxLength={6}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading || otpCode.length !== 6}
+            className="w-full bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-primary/70 mobile-btn-md ripple"
+          >
+            {isLoading ? 'Verifying...' : 'Verify OTP'}
+          </button>
+          <div className="flex justify-between items-center">
+            <button
+              type="button"
+              onClick={resetOTPState}
+              className="text-primary text-sm font-semibold hover:underline"
+            >
+              Change Phone
+            </button>
+            <button
+              type="button"
+              onClick={handleSendWhatsAppOTP}
+              disabled={!canResend || isLoading}
+              className="text-primary text-sm font-semibold hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              {canResend ? 'Resend OTP' : `Resend in ${resendTimer}s`}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Enter your phone number for WhatsApp OTP
+            </p>
+          </div>
+          <div className="relative">
+            <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="tel"
+              placeholder="628123456789"
+              value={phoneForOtp}
+              onChange={(e) => setPhoneForOtp(e.target.value.replace(/\D/g, ''))}
+              className="w-full pl-10 pr-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary text-sm mobile-text-sm"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-green-600 text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-600/70 mobile-btn-md ripple"
+          >
+            {isLoading ? 'Sending...' : 'Send WhatsApp OTP'}
+          </button>
+        </>
+      )}
+    </form>
+  );
+
   const renderAuthMethodSelector = () => (
     <div className="w-full max-w-sm space-y-2">
       <p className="text-sm text-gray-600 dark:text-gray-400 text-center">Choose login method:</p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-1">
         <button
           type="button"
           onClick={() => {
@@ -294,12 +445,12 @@ const LoginScreen = () => {
             resetOTPState();
             setShowMobileOTP(false);
           }}
-          className={`py-2 px-3 rounded-full text-xs font-medium transition-all ${authMethod === 'email-password'
+          className={`py-2 px-2 rounded-full text-xs font-medium transition-all ${authMethod === 'email-password'
               ? 'bg-primary text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
             }`}
         >
-          Email/Password
+          Email/Pass
         </button>
         <button
           type="button"
@@ -308,12 +459,26 @@ const LoginScreen = () => {
             resetOTPState();
             setShowMobileOTP(true);
           }}
-          className={`py-2 px-3 rounded-full text-xs font-medium transition-all ${authMethod === 'email-otp'
+          className={`py-2 px-2 rounded-full text-xs font-medium transition-all ${authMethod === 'email-otp'
               ? 'bg-primary text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
             }`}
         >
           Email OTP
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMethod('whatsapp-otp');
+            resetOTPState();
+            setShowMobileOTP(false);
+          }}
+          className={`py-2 px-2 rounded-full text-xs font-medium transition-all ${authMethod === 'whatsapp-otp'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
+        >
+          WhatsApp
         </button>
       </div>
     </div>
@@ -475,6 +640,7 @@ const LoginScreen = () => {
         ) : (
           authMethod === 'email-otp' && renderResendEmailOTPForm()
         )}
+        {authMethod === 'whatsapp-otp' && renderWhatsAppOTPForm()}
 
         <div className="w-full max-w-sm space-y-3">
           <div className="flex items-center justify-center space-x-2">

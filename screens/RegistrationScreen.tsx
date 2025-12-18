@@ -362,7 +362,7 @@ const VerificationStep = ({ formData, onSelectMethod, selectedMethod, onNext }: 
                     {selectedMethod === 'sms' && <Check size={16} className="text-white" />}
                 </div>
                 <div className="text-left">
-                    <p className="font-semibold">SMS</p>
+                    <p className="font-semibold">WhatsApp</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Send code to {formData.phone}</p>
                 </div>
             </button>
@@ -530,7 +530,7 @@ const VerificationProcess = ({ method, formData, onComplete }: {
     return (
         <div className="space-y-4">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Enter the 6-digit code sent to your {method === 'sms' ? 'phone' : 'email'}
+                Enter the 6-digit code sent to your {method === 'sms' ? 'WhatsApp' : 'email'}
             </p>
             
             <div className="relative">
