@@ -104,6 +104,18 @@ export async function sendEmailOTP(email, otp) {
       };
     }
     
+    // Validate email parameter
+    if (!email || typeof email !== 'string') {
+      console.error('❌ Invalid email parameter:', email);
+      return {
+        success: false,
+        error: 'Invalid email address'
+      };
+    }
+
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+    
     // Check SendGrid first, then Resend
     if (process.env.SENDGRID_API_KEY) {
       return await sendSendGridOTP(normalizedEmail, otp);
@@ -117,18 +129,6 @@ export async function sendEmailOTP(email, otp) {
         error: 'Email service is not configured. Please contact support.'
       };
     }
-
-    // Validate email parameter
-    if (!email || typeof email !== 'string') {
-      console.error('❌ Invalid email parameter:', email);
-      return {
-        success: false,
-        error: 'Invalid email address'
-      };
-    }
-
-    // Normalize email
-    const normalizedEmail = email.trim().toLowerCase();
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
