@@ -45,23 +45,8 @@ async function sendSendGridOTP(email, otp) {
 }
 
 function detectLanguageFromEmail(email) {
-  const domain = email.split('@')[1]?.toLowerCase()
-  
-  // Indonesian domains
-  const indonesianDomains = [
-    'gmail.com', 'yahoo.co.id', 'hotmail.co.id', 'outlook.co.id',
-    'co.id', '.id', 'telkom.net', 'indosat.net.id'
-  ]
-  
-  // Check if email contains Indonesian indicators
-  if (indonesianDomains.some(d => domain?.includes(d)) || 
-      email.toLowerCase().includes('indonesia') ||
-      email.toLowerCase().includes('jakarta') ||
-      email.toLowerCase().includes('surabaya')) {
-    return 'id'
-  }
-  
-  return 'en' // Default to English
+  // Always return English for now
+  return 'en'
 }
 
 function getEmailOTPContent(otp, language) {
