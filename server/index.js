@@ -469,29 +469,9 @@ app.post('/api/otp/whatsapp/verify', async (req, res) => {
   }
 });
 
-// Add contact to Resend
+// Add contact (disabled - using SendGrid now)
 app.post('/api/resend/contact', async (req, res) => {
-  try {
-    const { email, firstName, lastName } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email required' });
-    
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) return res.json({ success: false, error: 'Resend not configured' });
-    
-    const response = await fetch('https://api.resend.com/audiences/78261da4-41a8-4ef8-8c49-c57536b363de/contacts', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, first_name: firstName, last_name: lastName })
-    });
-    
-    const data = await response.json();
-    res.json({ success: response.ok, data });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
+  res.json({ success: true, message: 'Contact management disabled - using SendGrid' });
 });
 
 // Register OTP routes
