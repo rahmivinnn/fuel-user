@@ -3,6 +3,9 @@ import sgMail from '@sendgrid/mail';
 
 async function sendSendGridOTP(email, otp) {
   try {
+    console.log('🔑 Using SendGrid API Key:', process.env.SENDGRID_API_KEY?.substring(0, 10) + '...');
+    console.log('📧 From Email:', process.env.SENDGRID_FROM_EMAIL);
+    
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     
     const language = detectLanguageFromEmail(email);
@@ -15,15 +18,25 @@ async function sendSendGridOTP(email, otp) {
       html: emailContent.html
     };
     
+    console.log('📧 Sending email via SendGrid to:', email);
     const result = await sgMail.send(msg);
-    console.log('✅ SendGrid email sent successfully to:', email);
+    console.log('✅ SendGrid email sent successfully');
     
     return {
       success: true,
-      messageId: result[0].headers['x-message-id']
+      messageId: result[0].headers['x-message-id'] || 'sendgrid-' + Date.now()
     };
   } catch (error) {
-    console.error('❌ SendGrid error:', error);
+    console.error('❌ SendGrid error details:', error.response?.body || error.message);
+    
+    // Handle specific SendGrid errors
+    if (error.code === 403) {
+      return {
+        success: false,
+        error: 'SendGrid API key is invalid or not authorized. Please check your API key.'
+      };
+    }
+    
     return {
       success: false,
       error: error.message || 'Failed to send email via SendGrid'
