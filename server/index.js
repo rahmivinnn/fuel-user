@@ -143,6 +143,28 @@ app.post('/api/auth/register', async (req, res) => {
     users.push(newUser);
     await writeUsers(users);
     
+    // Auto-add to Resend contacts
+    try {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (apiKey) {
+        await fetch('https://api.resend.com/audiences/78261da4-41a8-4ef8-8c49-c57536b363de/contacts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            email: email, 
+            first_name: fullName.split(' ')[0], 
+            last_name: fullName.split(' ').slice(1).join(' ') || '' 
+          })
+        });
+        console.log('📧 Added to Resend contacts:', email);
+      }
+    } catch (err) {
+      console.log('⚠️ Failed to add to Resend contacts:', err.message);
+    }
+    
     console.log('✅ User registered successfully:', newUser.email);
     res.json({ success: true, user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName } });
   } catch (error) {
