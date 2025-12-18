@@ -2,7 +2,7 @@ module.exports = {
   apps: [{
     name: 'fuel-user-api',
     script: 'server/index.js',
-    cwd: '/Users/admin/Documents/FREELANCE/fuel-user',
+    cwd: '/root/fuel-user',
     env: {
       NODE_ENV: 'development',
       PORT: 4000
