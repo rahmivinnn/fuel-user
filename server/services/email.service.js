@@ -108,6 +108,30 @@ export async function sendEmailOTP(email, otp) {
     console.log('📧 Sending OTP to:', normalizedEmail);
     console.log('🔐 OTP Code:', otp);
     
+    // Auto-add email to Resend contacts before sending
+    try {
+      const addContactResponse = await fetch('https://api.resend.com/audiences/78261da4-41a8-4ef8-8c49-c57536b363de/contacts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          email: normalizedEmail,
+          first_name: normalizedEmail.split('@')[0],
+          last_name: 'User'
+        })
+      });
+      
+      if (addContactResponse.ok) {
+        console.log('✅ Added to Resend contacts:', normalizedEmail);
+      } else {
+        console.log('⚠️ Failed to add to contacts (may already exist):', normalizedEmail);
+      }
+    } catch (contactError) {
+      console.log('⚠️ Contact add error (continuing anyway):', contactError.message);
+    }
+    
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     let data, error;

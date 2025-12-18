@@ -27,3 +27,5 @@ dist-ssr
 .env.local
 .env.local.example
 .env.local.template
+
+ecosystem.config.cjs
