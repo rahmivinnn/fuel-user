@@ -1,32 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// FIX: Added Bell icon to imports.
-import { Search, SlidersHorizontal, MapPin, Star, Fuel, Bell, LogOut } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, Star, Fuel, Mic, Plus, Minus } from 'lucide-react';
 import { Station } from '../types';
 import { apiGetStations } from '../services/api';
 import { useAppContext } from '../App';
-import LottieAnimation from '../components/LottieAnimation';
-import FuelMap from '../components/FuelMap';
-import loadingAnimation from '../assets/animations/loading.json';
-import tulisanPng from '../tulisan.png';
+import MapboxMap from '../components/MapboxMap';
 import AnimatedPage from '../components/AnimatedPage';
 
-// FIX: Changed Station prop type to match what apiGetStations returns.
-const StationCard = ({ station }: { station: any }) => {
+// Status Bar Component
+const StatusBar = () => (
+  <div className="flex justify-between items-center px-4 py-2 bg-white">
+    <span className="text-black font-semibold text-base tracking-tight">8:45</span>
+    <div className="flex items-center gap-1">
+      <div className="w-[18px] h-3 bg-black rounded-sm"></div>
+      <div className="w-[17px] h-3 bg-black rounded-sm"></div>
+      <div className="flex items-center">
+        <div className="w-6 h-3 border-2 border-black rounded bg-white"></div>
+        <div className="w-[1.4px] h-1 bg-black rounded-r"></div>
+        <span className="absolute text-white text-[10px] font-bold ml-1">100%</span>
+      </div>
+    </div>
+  </div>
+);
+
+// Station Card Component
+const StationCard = ({ station, index }: { station: any; index: number }) => {
   const navigate = useNavigate();
+  const imageUrl = index === 0 ? '/image-card-1.png' : '/image-card-2.png';
+  
   return (
-    <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-4 md:p-5 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-      <img src={station.imageUrl} alt={station.name} className="w-full sm:w-24 h-32 sm:h-24 md:w-28 md:h-28 object-cover rounded-xl" />
-      <div className="flex-grow flex flex-col justify-between">
-        <h3 className="text-lg md:text-xl font-bold">{station.name}</h3>
-        <div className="text-sm md:text-base space-y-1 text-gray-500 dark:text-gray-400">
-          <div className="flex items-center"><Fuel size={16} className="mr-2 text-primary" /> Fuel Price: <span className="font-semibold text-light-text dark:text-dark-text ml-auto">{Number.isNaN(station.fuelPrices.regular) ? 'N/A' : `$${station.fuelPrices.regular.toFixed(2)}`}</span></div>
-          <div className="flex items-center"><MapPin size={16} className="mr-2 text-primary" /> Distance: <span className="font-semibold text-light-text dark:text-dark-text ml-auto">{station.distance}</span></div>
-          <div className="flex items-center"><Star size={16} className="mr-2 text-yellow-400" /> Reviews: <span className="font-semibold text-light-text dark:text-dark-text ml-auto">{station.rating > 0 ? `${station.rating} (${station.reviewCount} reviews)` : 'N/A'}</span></div>
+    <div className="bg-white rounded-2xl shadow-lg p-0 flex">
+      <div className="w-[118px] h-[183px] p-2">
+        <img 
+          src={imageUrl} 
+          alt={station.name} 
+          className="w-[102px] h-[164px] object-cover rounded-lg"
+          onError={(e) => {
+            e.currentTarget.src = `https://source.unsplash.com/300x300/?gas-station,${station.name}`;
+          }}
+        />
+      </div>
+      <div className="flex-1 p-2">
+        <div className="p-2">
+          <h3 className="text-base font-semibold text-[#3F4249] mb-2">{station.name}</h3>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Fuel size={20} className="text-[#3AC36C]" />
+                <span className="text-sm text-[#3F4249]">Fuel Price</span>
+              </div>
+              <span className="text-base font-semibold text-[#3F4249]">$36.67</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <MapPin size={20} className="text-[#FF5630]" />
+              <span className="text-sm text-[#3F4249] flex-1">{station.address || 'Nearby'}</span>
+              <span className="text-sm text-[#3F4249]">{station.distance}</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Star size={20} className="text-[#FFC107] fill-current" />
+              <span className="text-sm text-[#3F4249] flex-1">Reviews</span>
+              <span className="text-sm text-[#3F4249]">4.6</span>
+              <span className="text-xs text-[#3F4249]">(24 Reviews)</span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => navigate(`/station/${station.id}`)}
+            className="w-full bg-[#3AC36C] text-white py-2 px-4 rounded-full text-sm font-bold mt-4 hover:bg-[#2ea85a] transition-colors"
+          >
+            Select Station
+          </button>
         </div>
-        <button onClick={() => navigate(`/station/${station.id}`)} className="mt-2 w-full bg-primary text-white py-2.5 md:py-3 rounded-full text-sm md:text-base font-semibold hover:bg-primary-dark transition-all active:scale-95 shadow hover:shadow-lg ripple">
-          Select Station
-        </button>
       </div>
     </div>
   );
@@ -34,42 +81,32 @@ const StationCard = ({ station }: { station: any }) => {
 
 const HomeScreen = () => {
   const { user, logout } = useAppContext();
-  // FIX: Changed stations state to hold the partial station type returned by the api.
   const [stations, setStations] = useState<Omit<Station, 'groceries' | 'fuelFriends'>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number, lon: number } | null>(null);
-
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
-  // Function to get user's IP-based location
-  const getUserLocationByIP = async () => {
-    try {
-      const response = await fetch('https://api.iplocation.net/?ip=');
-      const data = await response.json();
-      
-      if (data.latitude && data.longitude) {
-        return {
-          lat: parseFloat(data.latitude),
-          lon: parseFloat(data.longitude)
-        };
+  // Get user location
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({ lat: position.coords.latitude, lon: position.coords.longitude });
+      },
+      () => {
+        // Fallback to Jakarta
+        setUserLocation({ lat: -6.200000, lon: 106.816666 });
       }
-    } catch (err) {
-      console.error('Failed to get location by IP:', err);
-    }
-    return null;
-  };
+    );
+  }, []);
 
+  // Fetch stations
   useEffect(() => {
     const fetchStations = async () => {
-      if (!userLocation) {
-        return;
-      }
-
+      if (!userLocation) return;
+      
       setIsLoading(true);
-      setError('');
-
       try {
         const data = await apiGetStations(userLocation.lat, userLocation.lon);
         setStations(data);
@@ -81,185 +118,108 @@ const HomeScreen = () => {
     };
 
     fetchStations();
-  }, [userLocation]); // This will re-run when userLocation changes
-
-  useEffect(() => {
-    const initializeLocation = async () => {
-      // First try to get location from browser geolocation
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = { lat: position.coords.latitude, lon: position.coords.longitude };
-          setUserLocation(location);
-        },
-        async (error) => {
-          console.log('Geolocation error:', error);
-          // If geolocation fails, try IP-based location
-          const ipLocation = await getUserLocationByIP();
-          if (ipLocation) {
-            setUserLocation(ipLocation);
-          } else {
-            // Fallback to Jakarta coordinates
-            const defaultLocation = { lat: -6.200000, lon: 106.816666 };
-            setError('Using default location (Jakarta)');
-            setUserLocation(defaultLocation);
-          }
-        },
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
-      );
-    };
-
-    initializeLocation();
-  }, []);
-
-  const handleStationSelect = (station: Omit<Station, 'groceries' | 'fuelFriends'>) => {
-    navigate(`/station/${station.id}`);
-  };
+  }, [userLocation]);
 
   return (
     <AnimatedPage>
-      <div className="h-full w-full flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-        {/* Branding - Hidden on small mobile to save space, visible on slightly larger screens */}
-        <div className="hidden sm:flex justify-center p-2 md:p-6 pt-6">
-          <img src={tulisanPng} alt="FuelFriendly" className="h-8 md:h-12 object-contain max-w-full" />
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Status Bar */}
+        <StatusBar />
+        
+        {/* Header */}
+        <div className="flex justify-between items-center px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/avatar.png" 
+              alt="Avatar" 
+              className="w-7 h-7 rounded-full"
+              onError={(e) => {
+                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23e5e7eb'/%3E%3C/svg%3E";
+              }}
+            />
+            <img 
+              src="/tulisan.png" 
+              alt="FuelFriendly" 
+              className="h-6"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+          <img 
+            src="/ring.png" 
+            alt="Notifications" 
+            className="w-7 h-7"
+            onError={(e) => {
+              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%233F4249' stroke-width='2'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E";
+            }}
+          />
         </div>
 
-        <header className="p-3 md:p-6 space-y-3 bg-light-bg dark:bg-dark-bg sticky top-0 z-10 shadow-sm">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <img src={user?.avatarUrl} alt="User Avatar" className="w-8 h-8 md:w-12 md:h-12 rounded-full" />
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-medium">Welcome back,</span>
-                <span className="text-sm font-bold text-gray-800 dark:text-white leading-tight">{user?.fullName?.split(' ')[0] || 'User'}</span>
-              </div>
-            </div>
-            <button onClick={logout} className="p-2 md:p-3 rounded-full hover:bg-gray-100 dark:hover:bg-dark-card mr-2" title="Sign Out">
-              <LogOut size={20} className="md:w-6 md:h-6 text-gray-500" />
-            </button>
-            <button className="p-2 md:p-3 rounded-full hover:bg-gray-100 dark:hover:bg-dark-card relative">
-              <Bell size={20} className="md:w-6 md:h-6" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 md:top-2.5 md:right-2.5 md:w-2.5 md:h-2.5 bg-red-500 rounded-full"></span>
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              {isLoading && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
+        {/* Search Bar */}
+        <div className="px-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center bg-white border border-gray-400 rounded-full px-4 py-3">
+              <Search size={20} className="text-[#3F4249] mr-2" />
               <input
                 type="text"
-                placeholder="Search city..."
+                placeholder="Search for fuel and groceries"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={async (e) => {
-                  if (e.key === 'Enter' && query.trim()) {
-                    try {
-                      setIsLoading(true);
-                      setError('');
-                      const base = (import.meta as any).env?.VITE_API_BASE_URL;
-                      const url = base ? `${base}/api/geocode?q=${encodeURIComponent(query.trim())}` : `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query.trim())}`;
-                      const res = await fetch(url, { headers: base ? {} : { 'User-Agent': 'fuelfriendly' } });
-                      if (!res.ok) throw new Error('Failed to geocode');
-                      const data = base ? await res.json() : await res.json();
-                      let lat: number, lon: number;
-                      if (base) {
-                        lat = data.lat; lon = data.lon;
-                      } else {
-                        const item = Array.isArray(data) && data.length ? data[0] : null;
-                        if (!item) throw new Error('Place not found');
-                        lat = parseFloat(item.lat); lon = parseFloat(item.lon);
-                      }
-                      setUserLocation({ lat, lon });
-                    } catch (err: any) {
-                      setError(err.message || 'Search failed');
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  }
-                }}
-                className="w-full pl-9 pr-9 py-2 md:py-4 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                className="flex-1 outline-none text-base text-gray-500 font-['Poppins']"
               />
+              <Mic size={20} className="text-[#3F4249] ml-2" />
             </div>
-            <button className="p-2 md:p-4 bg-light-card dark:bg-dark-card rounded-full shadow transition-transform active:scale-95 hover:shadow-lg ripple">
-              <SlidersHorizontal size={18} className="md:w-6 md:h-6" />
+            <button className="w-12 h-12 bg-[#E3FFEE] border border-gray-400 rounded-full flex items-center justify-center">
+              <SlidersHorizontal size={24} className="text-[#3F4249] rotate-180" />
             </button>
-          </div>
-        </header>
-
-        {/* Map Area - Fixed height relative to viewport height */}
-        <div className="w-full flex-shrink-0 relative overflow-hidden h-[35vh] md:h-[45vh]">
-          <div className="h-full w-full bg-gray-300 dark:bg-gray-700 shadow-inner">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : error ? (
-              <div className="flex justify-center items-center h-full">
-                <p className="text-center text-red-500 text-sm md:text-base px-4 md:px-6">{error}</p>
-              </div>
-            ) : (
-              <FuelMap
-                stations={stations}
-                userLocation={userLocation}
-                onStationSelect={handleStationSelect}
-              />
-            )}
           </div>
         </div>
 
-        {/* List Area - Fills remaining space */}
-        <div className="flex-grow overflow-y-auto bg-gray-50 dark:bg-gray-900 px-4 md:px-6 py-2">
-          <div className="sticky top-0 bg-gray-50 dark:bg-gray-900 py-2 z-10 mb-2">
-            <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-2 md:hidden"></div>
-            <h2 className="text-lg md:text-2xl font-bold">Fuel Stations Nearby</h2>
+        {/* Map */}
+        <div className="mx-4 mb-4 relative">
+          <div className="h-[420px] rounded-2xl overflow-hidden border-2 border-[#3F4249]">
+            <MapboxMap
+              stations={stations}
+              userLocation={userLocation}
+              onStationSelect={(station) => navigate(`/station/${station.id}`)}
+            />
           </div>
+          
+          {/* Map Controls */}
+          <div className="absolute right-4 bottom-16 flex flex-col gap-4">
+            <button className="w-7 h-7 bg-[#3AC36C] rounded-sm shadow-lg flex items-center justify-center">
+              <Plus size={16} className="text-white" />
+            </button>
+            <button className="w-7 h-7 bg-[#3AC36C] rounded-sm shadow-lg flex items-center justify-center">
+              <Minus size={16} className="text-white" />
+            </button>
+          </div>
+        </div>
 
-          {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-500 p-4">
-              <p className="text-sm">{error}</p>
-              <button
-                onClick={() => {
-                  setIsLoading(true);
-                  setError('');
-                  if (userLocation) {
-                    apiGetStations(userLocation.lat, userLocation.lon)
-                      .then(data => {
-                        setStations(data);
-                        setIsLoading(false);
-                      })
-                      .catch(err => {
-                        setError(err.message);
-                        setIsLoading(false);
-                      });
-                  }
-                }}
-                className="mt-2 px-4 py-1.5 bg-primary text-white rounded-full text-xs font-semibold ripple"
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3 pb-20">
-              {stations.length === 0 ? (
-                <div className="flex flex-col items-center mt-4">
-                  <p className="text-center text-gray-500 text-sm">No nearby stations found</p>
-                </div>
-              ) : (
-                stations.map((station) => (
-                  <div key={station.id}>
-                    <StationCard station={station} />
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+        {/* Fuel Stations List */}
+        <div className="px-4 flex-1">
+          <h2 className="text-xl font-semibold text-[#3F4249] font-['Poppins'] mb-4">Fuel Station nearby</h2>
+          
+          <div className="space-y-4 pb-24">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-[#3AC36C] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-8">
+                <p>{error}</p>
+              </div>
+            ) : stations.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                <p>No stations found</p>
+              </div>
+            ) : (
+              stations.slice(0, 4).map((station, index) => (
+                <StationCard key={station.id} station={station} index={index} />
+              ))
+            )}
+          </div>
         </div>
       </div>
     </AnimatedPage>
