@@ -1,144 +1,337 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Star, Minus, Plus, Trash2 } from 'lucide-react';
-import { Station, GroceryItem, FuelFriend } from '../types';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MapPin, Clock, Star, Plus, Minus, Trash2 } from 'lucide-react';
+import { Station } from '../types';
 import { apiGetStationDetails } from '../services/api';
-import LottieAnimation from '../components/LottieAnimation';
-import loadingAnimation from '../assets/animations/loading.json';
 import AnimatedPage from '../components/AnimatedPage';
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+interface FuelFriend {
+  id: string;
+  name: string;
+  price: number;
+  location: string;
+  rating: number;
+  reviews: number;
+  avatar: string;
+}
+
 const StationDetailsScreen = () => {
-    const navigate = useNavigate();
-    const { id } = useParams();
-    const [station, setStation] = useState<Station | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isOrdering, setIsOrdering] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [station, setStation] = useState<Station | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [cart, setCart] = useState<CartItem[]>([]);
 
-    useEffect(() => {
-        if (!id) return;
-        const fetchDetails = async () => {
-            try {
-                setIsLoading(true);
-                const data = await apiGetStationDetails(id);
-                setStation(data);
-            } catch (error) {
-                console.error("Failed to fetch station details:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchDetails();
-    }, [id]);
+  // Mock data for groceries
+  const groceries = [
+    { id: '1', name: 'Snacks', price: 16.19, image: '/image-card-1.png' },
+    { id: '2', name: 'water', price: 16.19, image: '/image-card-1.png' },
+    { id: '3', name: 'Bread', price: 16.19, image: '/image-card-1.png' }
+  ];
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-dark-bg">
-                <p className="text-lg font-semibold text-gray-500">Loading details...</p>
-            </div>
+  // Mock data for fuel friends
+  const fuelFriends: FuelFriend[] = [
+    { id: '1', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
+    { id: '2', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
+    { id: '3', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
+    { id: '4', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' }
+  ];
+
+  useEffect(() => {
+    const fetchStationDetails = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      try {
+        const data = await apiGetStationDetails(id);
+        setStation(data);
+      } catch (err: any) {
+        setError(err.message);
+        // Mock data for demo
+        setStation({
+          id: id,
+          name: 'Petro Tennessee',
+          address: 'Abcd Tennessee',
+          distance: '2.7 miles away',
+          deliveryTime: '30 minutes',
+          rating: 4.7,
+          reviews: 146,
+          image: '/brand1.png',
+          fuelPrices: {
+            regular: 1.23,
+            premium: 1.75,
+            diesel: 2.14
+          },
+          groceries: [],
+          fuelFriends: []
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStationDetails();
+  }, [id]);
+
+  const updateCartQuantity = (itemId: string, change: number) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.id === itemId);
+      
+      if (existingItem) {
+        if (existingItem.quantity + change <= 0) {
+          return prevCart.filter(item => item.id !== itemId);
+        }
+        return prevCart.map(item => 
+          item.id === itemId 
+            ? { ...item, quantity: item.quantity + change }
+            : item
         );
-    }
+      } else if (change > 0) {
+        const grocery = groceries.find(g => g.id === itemId);
+        if (grocery) {
+          return [...prevCart, {
+            id: itemId,
+            name: grocery.name,
+            price: grocery.price,
+            quantity: 1,
+            image: grocery.image
+          }];
+        }
+      }
+      
+      return prevCart;
+    });
+  };
 
-    if (!station) {
-        return (
-            <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 dark:bg-dark-bg">
-                <p>Station not found.</p>
-                <button onClick={() => navigate(-1)} className="mt-4 text-primary font-semibold">Go Back</button>
-            </div>
-        );
-    }
+  const getItemQuantity = (itemId: string) => {
+    const item = cart.find(item => item.id === itemId);
+    return item ? item.quantity : 0;
+  };
 
+  const removeFromCart = (itemId: string) => {
+    setCart(prevCart => prevCart.filter(item => item.id !== itemId));
+  };
+
+  if (isLoading) {
     return (
-        <AnimatedPage>
-            <div className="min-h-screen bg-gray-50 dark:bg-dark-bg text-light-text dark:text-dark-text pb-24">
-                <div className="relative h-48">
-                    <img src={station.bannerUrl} alt="Station Banner" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                        <img src={station.logoUrl} alt="Station Logo" className="w-24 h-24 rounded-full border-4 border-white" />
-                    </div>
-                    <button onClick={() => navigate(-1)} className="absolute top-4 left-4 p-2 bg-white/20 text-white rounded-full backdrop-blur-sm">
-                        <ArrowLeft size={24} />
-                    </button>
-                </div>
-
-                <div className="p-4 -mt-8 z-10 relative">
-                    <div className="text-center mb-4">
-                        <h1 className="text-2xl font-bold">{station.name}</h1>
-                        <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center"><MapPin size={16} className="mr-1" /> {station.address}</p>
-                    </div>
-
-                    <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-4 mb-4">
-                        <h2 className="text-lg font-bold mb-2">Fuel Prices</h2>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Regular</span><span>{(station.fuelPrices.regular === null || station.fuelPrices.regular === undefined || Number.isNaN(station.fuelPrices.regular)) ? 'N/A' : `$${Number(station.fuelPrices.regular).toFixed(2)} per liter`}</span></div>
-                            <div className="flex justify-between"><span>Premium</span><span>{(station.fuelPrices.premium === null || station.fuelPrices.premium === undefined || Number.isNaN(station.fuelPrices.premium)) ? 'N/A' : `$${Number(station.fuelPrices.premium).toFixed(2)} per liter`}</span></div>
-                            <div className="flex justify-between"><span>Diesel</span><span>{(station.fuelPrices.diesel === null || station.fuelPrices.diesel === undefined || Number.isNaN(station.fuelPrices.diesel)) ? 'N/A' : `$${Number(station.fuelPrices.diesel).toFixed(2)} per liter`}</span></div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-around text-center text-sm mb-4">
-                        <div className="flex items-center space-x-1"><MapPin size={16} className="text-primary" /><span>{station.distance}</span></div>
-                        <div className="flex items-center space-x-1"><Clock size={16} className="text-primary" /><span>{station.deliveryTime}</span></div>
-                        <div className="flex items-center space-x-1"><Star size={16} className="text-yellow-400" /><span>{station.rating} ({station.reviewCount} reviews)</span></div>
-                    </div>
-
-                    <div className="mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-lg font-bold">Groceries</h2>
-                            <a href="#" className="text-primary font-semibold text-sm">See all</a>
-                        </div>
-                        {station.groceries.map(item => <GroceryItemCard key={item.id} item={item} />)}
-                    </div>
-
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-lg font-bold">Select Fuel friend</h2>
-                            <a href="#" className="text-primary font-semibold text-sm">See all</a>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            {station.fuelFriends.map(friend => <FuelFriendCard key={friend.id} friend={friend} />)}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-sm border-t border-light-border dark:border-dark-border">
-                    <button onClick={async () => { setIsOrdering(true); setTimeout(() => navigate('/checkout'), 600); }} className="w-full bg-primary text-white py-4 rounded-full text-lg font-semibold transition-all active:scale-95 hover:shadow-xl flex items-center justify-center">
-                        {isOrdering ? 'Processing...' : 'Order Now'}
-                    </button>
-                </div>
-            </div>
-        </AnimatedPage>
-    );
-};
-
-// FIX: Added an interface for component props to fix key prop issue.
-interface GroceryItemCardProps {
-    item: GroceryItem;
-}
-
-const GroceryItemCard = ({ item }: GroceryItemCardProps) => (
-    <div className="flex items-center bg-light-card dark:bg-dark-card p-2 rounded-xl mb-2">
-        <img src={item.imageUrl} className="w-12 h-12 rounded-lg" alt={item.name} />
-        <div className="ml-3 flex-grow">
-            <p className="font-semibold">{item.name}</p>
-            <p className="text-sm text-gray-500">${(item.price || 0).toFixed(2)}</p>
+      <AnimatedPage>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="w-8 h-8 border-4 border-[#3AC36C] border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <button className="px-4 py-1 bg-primary text-white rounded-lg text-sm">Add</button>
-    </div>
-);
+      </AnimatedPage>
+    );
+  }
 
-// FIX: Added an interface for component props to fix key prop issue.
-interface FuelFriendCardProps {
-    friend: FuelFriend;
-}
+  if (error && !station) {
+    return (
+      <AnimatedPage>
+        <div className="flex justify-center items-center min-h-screen">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-const FuelFriendCard = ({ friend }: FuelFriendCardProps) => (
-    <div className="bg-light-card dark:bg-dark-card p-3 rounded-xl text-center">
-        <img src={friend.avatarUrl} className="w-16 h-16 rounded-full mx-auto mb-2" alt={friend.name} />
-        <p className="font-semibold">{friend.name}</p>
-        <p className="text-xs text-gray-500">${(friend.rate || 0).toFixed(2)}</p>
-        <p className="text-xs text-gray-500 flex items-center justify-center"><Star size={12} className="text-yellow-400 mr-1" />{friend.rating} ({friend.reviewCount} reviews)</p>
-        <button className="mt-2 w-full text-sm bg-primary text-white py-1.5 rounded-full">Select</button>
-    </div>
-);
+  return (
+    <AnimatedPage>
+      <div className="bg-white min-h-screen pb-24">
+        {/* Header */}
+        <div className="relative">
+          <div className="h-48 bg-gradient-to-r from-orange-400 to-pink-400 relative overflow-hidden">
+            <img 
+              src="/image-card-1.png" 
+              alt="Station" 
+              className="w-full h-full object-cover"
+            />
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute top-4 left-4 p-2 bg-white/80 rounded-full"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+              <h1 className="text-lg font-semibold text-white">Station Details</h1>
+            </div>
+          </div>
+          
+          {/* Station Logo */}
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+            <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg">
+              <img 
+                src="/brand1.png" 
+                alt={station?.name} 
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Station Info */}
+        <div className="px-4 pt-12 pb-6 text-center">
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">{station?.name}</h1>
+          <div className="flex items-center justify-center text-gray-600 mb-4">
+            <MapPin className="w-4 h-4 mr-1 text-red-500" />
+            <span className="text-sm">{station?.address}</span>
+          </div>
+        </div>
+
+        {/* Fuel Prices */}
+        <div className="mx-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">Fuel Prices</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-700">Regular</span>
+                <span className="font-semibold">${station?.fuelPrices?.regular} per liter</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-700">Premium</span>
+                <span className="font-semibold">${station?.fuelPrices?.premium} per liter</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-700">Diesel</span>
+                <span className="font-semibold">${station?.fuelPrices?.diesel} per liter</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Station Stats */}
+        <div className="px-4 mb-6 space-y-2">
+          <div className="flex items-center text-gray-600">
+            <MapPin className="w-4 h-4 mr-2 text-red-500" />
+            <span className="text-sm">Distance: {station?.distance}</span>
+          </div>
+          <div className="flex items-center text-gray-600">
+            <Clock className="w-4 h-4 mr-2 text-gray-500" />
+            <span className="text-sm">Average Delivery time: {station?.deliveryTime}</span>
+          </div>
+          <div className="flex items-center text-gray-600">
+            <Star className="w-4 h-4 mr-2 text-yellow-500 fill-current" />
+            <span className="text-sm">{station?.rating} Rating </span>
+            <span className="text-sm text-green-600">({station?.reviews} reviews)</span>
+          </div>
+        </div>
+
+        {/* Groceries */}
+        <div className="px-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Groceries</h2>
+            <button className="text-green-600 text-sm font-medium">See all</button>
+          </div>
+          <div className="space-y-3">
+            {groceries.map((item) => {
+              const quantity = getItemQuantity(item.id);
+              return (
+                <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{item.name}</h3>
+                    <p className="text-sm text-gray-600">${item.price}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {quantity > 0 ? (
+                      <>
+                        <button
+                          onClick={() => updateCartQuantity(item.id, -1)}
+                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="w-8 text-center font-medium">{quantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(item.id, 1)}
+                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center ml-2"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => updateCartQuantity(item.id, 1)}
+                        className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Fuel Friends */}
+        <div className="px-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Select Fuel friend</h2>
+            <button className="text-green-600 text-sm font-medium">See all</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {fuelFriends.slice(0, 4).map((friend) => (
+              <div key={friend.id} className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <img 
+                    src={friend.avatar} 
+                    alt={friend.name} 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-gray-900 truncate">{friend.name}</h3>
+                    <p className="text-xs text-gray-600">${friend.price.toFixed(2)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 mb-2">
+                  <MapPin className="w-3 h-3 text-red-500" />
+                  <span className="text-xs text-gray-600">{friend.location}</span>
+                </div>
+                <div className="flex items-center space-x-1 mb-3">
+                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                  <span className="text-xs text-gray-600">{friend.rating}</span>
+                  <span className="text-xs text-green-600">({friend.reviews} reviews)</span>
+                </div>
+                <button className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium">
+                  Select
+                </button>
+              </div>
+            ))}
+          </div>
+          <button className="w-full text-green-600 text-sm font-medium py-2">
+            View More
+          </button>
+        </div>
+
+        {/* Order Now Button */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+          <button 
+            onClick={() => navigate('/checkout')}
+            className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold"
+          >
+            Order Now
+          </button>
+        </div>
+      </div>
+    </AnimatedPage>
+  );
+};
 
 export default StationDetailsScreen;

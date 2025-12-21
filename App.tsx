@@ -10,6 +10,9 @@ import CheckoutScreen from './screens/CheckoutScreen';
 import TrackOrderScreen from './screens/TrackOrderScreen';
 import MyOrdersScreen from './screens/MyOrdersScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import PaymentScreen from './screens/PaymentScreen';
+import OrderSummaryScreen from './screens/OrderSummaryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -67,8 +70,8 @@ const AppNavigator = () => {
     const showBottomNav = isAuthenticated && ['/home', '/orders', '/track', '/settings'].includes(location.pathname);
 
     return (
-        <div className="h-full w-full flex flex-col min-h-0">
-            <main className="flex-grow pb-20 md:pb-24">
+        <div className="w-full h-full flex flex-col min-h-0 overflow-y-auto">
+            <main className="flex-grow pb-20 md:pb-24 overflow-y-auto">
                 <Routes>
                     <Route path="/" element={<SplashScreen />} />
                     <Route path="/welcome" element={<WelcomeScreen />} />
@@ -77,8 +80,11 @@ const AppNavigator = () => {
                     <Route path="/home" element={<HomeScreen />} />
                     <Route path="/station/:id" element={<StationDetailsScreen />} />
                     <Route path="/checkout" element={<CheckoutScreen />} />
+                    <Route path="/order-summary" element={<OrderSummaryScreen />} />
+                    <Route path="/payment" element={<PaymentScreen />} />
                     <Route path="/track" element={<TrackOrderScreen />} />
                     <Route path="/orders" element={<MyOrdersScreen />} />
+                    <Route path="/notifications" element={<NotificationsScreen />} />
                     <Route path="/settings" element={<SettingsScreen />} />
                     <Route path="/profile" element={<ProfileScreen />} />
                 </Routes>
@@ -90,8 +96,16 @@ const AppNavigator = () => {
 
 const App = () => {
     const [theme, setThemeState] = useState<Theme>(Theme.LIGHT);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(true);
+    const [user, setUser] = useState<User | null>({
+        id: 'user-1',
+        fullName: 'Test User',
+        email: 'test@example.com',
+        phone: '',
+        city: '',
+        avatarUrl: '',
+        vehicles: []
+    });
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -163,8 +177,8 @@ const App = () => {
 
     return (
         <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, login, loginWithGoogle, logout, updateUser }}>
-            <div className="w-full h-full font-sans bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', overflow: 'hidden' }}>
-                <div className="w-full h-full bg-light-bg dark:bg-dark-bg overflow-hidden" style={{ height: '100dvh', maxHeight: '100dvh' }}>
+            <div className="w-full h-full font-sans bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                <div className="w-full h-full bg-light-bg dark:bg-dark-bg overflow-y-auto" style={{ height: '100dvh', maxHeight: '100dvh' }}>
                     <HashRouter>
                         <AppNavigator />
                     </HashRouter>

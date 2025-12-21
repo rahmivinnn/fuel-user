@@ -220,7 +220,74 @@ app.get('/api/station/:id', async (req, res) => {
   }
 });
 
-// Orders endpoints
+// Seed data endpoint
+app.post('/api/seed', async (req, res) => {
+  try {
+    // Seed fuel stations
+    const stationsData = [
+      {
+        id: 'station-1',
+        name: 'Petro Tennessee',
+        address: 'Abcd Tennessee',
+        latitude: '-6.200000',
+        longitude: '106.816666',
+        regularPrice: '1.23',
+        premiumPrice: '1.75',
+        dieselPrice: '2.14',
+        rating: '4.7',
+        totalReviews: 146,
+        averageDeliveryTime: 30
+      },
+      {
+        id: 'station-2', 
+        name: 'Shell Express',
+        address: 'Downtown Area',
+        latitude: '-6.210000',
+        longitude: '106.826666',
+        regularPrice: '1.25',
+        premiumPrice: '1.78',
+        dieselPrice: '2.16',
+        rating: '4.5',
+        totalReviews: 89,
+        averageDeliveryTime: 25
+      }
+    ];
+
+    // Seed products
+    const productsData = [
+      { id: 'prod-1', stationId: 'station-1', name: 'Snacks', category: 'Food', price: '16.19', inStock: true },
+      { id: 'prod-2', stationId: 'station-1', name: 'Water', category: 'Drinks', price: '16.19', inStock: true },
+      { id: 'prod-3', stationId: 'station-1', name: 'Bread', category: 'Food', price: '16.19', inStock: true }
+    ];
+
+    // Seed fuel friends
+    const fuelFriendsData = [
+      {
+        id: 'ff-1',
+        fullName: 'Shah Hussain',
+        phoneNumber: '+1234567890',
+        email: 'shah@example.com',
+        location: 'Tennessee',
+        deliveryFee: '5.00',
+        rating: '4.8',
+        totalReviews: 46,
+        latitude: '-6.200000',
+        longitude: '106.816666',
+        about: 'Experienced fuel delivery driver'
+      }
+    ];
+
+    // Insert data
+    await db.insert(fuelStations).values(stationsData).onConflictDoNothing();
+    await db.insert(products).values(productsData).onConflictDoNothing();
+    await db.insert(fuelFriends).values(fuelFriendsData).onConflictDoNothing();
+
+    res.json({ success: true, message: 'Seed data inserted successfully' });
+  } catch (error) {
+    console.error('Seed error:', error);
+    res.status(500).json({ error: 'Failed to seed data' });
+  }
+});
 app.get('/api/orders', async (req, res) => {
   try {
     const allOrders = await db.select().from(orders);
@@ -233,14 +300,35 @@ app.get('/api/orders', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
   try {
     const orderData = req.body;
+    const trackingNumber = `TRK-${Date.now()}`;
+    
     const [newOrder] = await db.insert(orders).values({
-      ...orderData,
-      trackingNumber: `TRK-${Date.now()}`
+      trackingNumber,
+      customerId: orderData.customerId || 'customer-1',
+      stationId: orderData.stationId || 'station-1',
+      fuelFriendId: orderData.fuelFriendId,
+      vehicleId: orderData.vehicleId,
+      deliveryAddress: orderData.deliveryAddress,
+      deliveryPhone: orderData.deliveryPhone,
+      fuelType: orderData.fuelType,
+      fuelQuantity: orderData.fuelQuantity,
+      fuelCost: orderData.fuelCost,
+      deliveryFee: orderData.deliveryFee,
+      groceriesCost: orderData.groceriesCost || '0',
+      totalAmount: orderData.totalAmount,
+      orderType: orderData.orderType || 'instant',
+      scheduledDate: orderData.scheduledDate,
+      scheduledTime: orderData.scheduledTime,
+      estimatedDeliveryTime: orderData.estimatedDeliveryTime,
+      status: 'pending',
+      paymentStatus: 'completed',
+      paymentMethod: orderData.paymentMethod || 'credit_card'
     }).returning();
     
-    res.status(201).json(newOrder);
+    res.status(201).json({ success: true, order: newOrder, trackingId: trackingNumber });
   } catch (error) {
-    res.status(500).json({ error: 'Database error' });
+    console.error('Order creation error:', error);
+    res.status(500).json({ error: 'Failed to create order' });
   }
 });
 
@@ -281,15 +369,41 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // For now, just return success (implement WhatsApp sending later)
+    // Send via Twilio WhatsApp
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioWhatsApp = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+    
+    if (!accountSid || !authToken) {
+      return res.status(500).json({ error: 'Twilio credentials not configured' });
+    }
+    
+    const client = (await import('twilio')).default(accountSid, authToken);
+    
+    // Format phone number for WhatsApp
+    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+    const whatsappNumber = `whatsapp:${formattedPhone}`;
+    
+    await client.messages.create({
+      body: `Your FuelFriendly verification code is: ${otp}. Valid for 5 minutes.`,
+      from: twilioWhatsApp,
+      to: whatsappNumber
+    });
+    
+    // Store OTP in memory (in production, use Redis or database)
+    global.otpStore = global.otpStore || {};
+    global.otpStore[phoneNumber] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+    };
+    
     res.json({ 
       success: true, 
-      message: 'OTP sent via WhatsApp',
-      otp: otp // Remove in production
+      message: 'OTP sent via WhatsApp'
     });
   } catch (error) {
     console.error('WhatsApp OTP send error:', error);
-    res.status(500).json({ error: 'Failed to send WhatsApp OTP' });
+    res.status(500).json({ error: 'Failed to send WhatsApp OTP: ' + error.message });
   }
 });
 
@@ -300,12 +414,24 @@ app.post('/api/otp/whatsapp/verify', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Phone number and OTP are required' });
     }
     
-    // For now, accept any 6-digit OTP (implement proper verification later)
-    if (otp.length === 6) {
-      res.json({ success: true, message: 'OTP verified successfully' });
-    } else {
-      res.json({ success: false, error: 'Invalid OTP code' });
+    // Check stored OTP
+    const storedData = global.otpStore?.[phoneNumber];
+    if (!storedData) {
+      return res.json({ success: false, error: 'OTP not found or expired' });
     }
+    
+    if (Date.now() > storedData.expires) {
+      delete global.otpStore[phoneNumber];
+      return res.json({ success: false, error: 'OTP expired' });
+    }
+    
+    if (storedData.otp !== otp) {
+      return res.json({ success: false, error: 'Invalid OTP code' });
+    }
+    
+    // OTP verified, clean up
+    delete global.otpStore[phoneNumber];
+    res.json({ success: true, message: 'OTP verified successfully' });
   } catch (error) {
     console.error('WhatsApp OTP verify error:', error);
     res.json({ success: false, error: 'Failed to verify WhatsApp OTP' });

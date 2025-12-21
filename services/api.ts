@@ -196,13 +196,23 @@ const decodeJwt = (token: string): any => {
     try { return JSON.parse(json); } catch { return null; }
 };
 
-export const apiLoginWithGoogleCredential = async (credential: string): Promise<User> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/auth/firebase`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: credential })
-    });
-    if (!res.ok) throw new Error('Failed to authenticate');
-    return await res.json();
-}
+export const apiSeedData = async (): Promise<{ success: boolean }> => {
+  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+  const res = await fetch(`${base}/api/seed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error('Failed to seed data');
+  return await res.json();
+};
+
+export const apiCreateOrderFromPayment = async (orderData: any): Promise<{ success: boolean; trackingId: string }> => {
+  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+  const res = await fetch(`${base}/api/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData)
+  });
+  if (!res.ok) throw new Error('Failed to create order');
+  return await res.json();
+};

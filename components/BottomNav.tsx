@@ -23,7 +23,7 @@ const NavItem = ({ to, icon, label }: { to: string; icon: string; label: string 
 
 const BottomNav = () => {
     return (
-        <footer className="fixed bottom-0 left-0 right-0 bg-light-bg dark:bg-dark-card border-t border-light-border dark:border-dark-border shadow-t-lg w-full" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg w-full z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="flex justify-around items-center h-20 md:h-24 px-2 md:px-4">
                 <NavItem to="/home" icon={homeIcon} label="Home" />
                 <NavItem to="/orders" icon={myOrdersIcon} label="My Orders" />
