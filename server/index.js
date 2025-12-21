@@ -1,15 +1,73 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import fetch from 'node-fetch';
 import { eq } from 'drizzle-orm';
 import { db } from './db.js';
 import { customers, vehicles, orders, fuelStations, products, fuelFriends } from '../shared/schema.js';
+import otpService from './otp-service.js';
+import otpRoutes from './routes/otp.routes.js';
 
 dotenv.config({ path: '.env.local' });
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'FuelFriendly API Server',
+    status: 'running',
+    version: '1.0.0'
+  });
+});
+
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Registration endpoint
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { fullName, email, phoneNumber, password, vehicleBrand, vehicleColor, licenseNumber, fuelType } = req.body;
+    
+    if (!fullName || !email || !phoneNumber || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const existingUser = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+    
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    const [newUser] = await db.insert(customers).values({
+      fullName,
+      email,
+      phoneNumber,
+      password,
+      profilePhoto: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+    }).returning();
+    
+    // Create vehicle if provided
+    if (vehicleBrand) {
+      await db.insert(vehicles).values({
+        customerId: newUser.id,
+        brand: vehicleBrand,
+        color: vehicleColor,
+        licenseNumber,
+        fuelType,
+        isPrimary: true
+      });
+    }
+    
+    res.json({ success: true, user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName } });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
 
 // User endpoints
 app.get('/api/user/me', async (req, res) => {
@@ -187,6 +245,35 @@ app.post('/api/orders', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
+// Geocoding endpoint
+app.get('/api/geocode', async (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    res.status(400).json({ error: 'q required' });
+    return;
+  }
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': 'fuelfriendly' } });
+    if (!r.ok) {
+      res.status(r.status).json({ error: r.statusText });
+      return;
+    }
+    const data = await r.json();
+    const item = Array.isArray(data) && data.length ? data[0] : null;
+    if (!item) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    res.json({ lat: parseFloat(item.lat), lon: parseFloat(item.lon), display_name: item.display_name });
+  } catch (e) {
+    res.status(500).json({ error: 'failed to geocode' });
+  }
+});
+
+// OTP routes
+app.use('/api/otp', otpRoutes);
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => {

@@ -104,19 +104,24 @@ export const apiGetStationDetails = async (id: string): Promise<Station> => {
     const res = await fetch(`${base}/api/station/${id}`);
     if (!res.ok) throw new Error('Failed to fetch station details');
     const st = await res.json();
-    // Mock data for a more realistic experience
-    st.groceries = [
-        { id: 'g1', name: 'Mineral Water', price: 1.50, imageUrl: 'https://images.unsplash.com/photo-1560023907-5f339617ea30?w=100&h=100&fit=crop' },
-        { id: 'g2', name: 'Potato Chips', price: 2.50, imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=100&h=100&fit=crop' },
-        { id: 'g3', name: 'Energy Bar', price: 3.00, imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&h=100&fit=crop' },
-        { id: 'g4', name: 'Coffee', price: 4.50, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop' }
-    ];
+    
+    // Return real data from database or add mock data if empty
+    if (!st.groceries || st.groceries.length === 0) {
+        st.groceries = [
+            { id: 'g1', name: 'Mineral Water', price: 1.50, imageUrl: 'https://images.unsplash.com/photo-1560023907-5f339617ea30?w=100&h=100&fit=crop' },
+            { id: 'g2', name: 'Potato Chips', price: 2.50, imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=100&h=100&fit=crop' },
+            { id: 'g3', name: 'Energy Bar', price: 3.00, imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&h=100&fit=crop' },
+            { id: 'g4', name: 'Coffee', price: 4.50, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop' }
+        ];
+    }
 
-    st.fuelFriends = [
-        { id: 'f1', name: 'John Driver', rate: 15.00, rating: 4.9, reviewCount: 124, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
-        { id: 'f2', name: 'Sarah Spark', rate: 14.50, rating: 4.8, reviewCount: 89, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-        { id: 'f3', name: 'Mike Moto', rate: 16.00, rating: 5.0, reviewCount: 42, avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop' }
-    ];
+    if (!st.fuelFriends || st.fuelFriends.length === 0) {
+        st.fuelFriends = [
+            { id: 'f1', name: 'John Driver', rate: 15.00, rating: 4.9, reviewCount: 124, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
+            { id: 'f2', name: 'Sarah Spark', rate: 14.50, rating: 4.8, reviewCount: 89, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+            { id: 'f3', name: 'Mike Moto', rate: 16.00, rating: 5.0, reviewCount: 42, avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop' }
+        ];
+    }
     return st;
 };
 
