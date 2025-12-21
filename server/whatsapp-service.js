@@ -44,11 +44,15 @@ class WhatsAppService {
       this.sock = makeWASocket({
         auth: state,
         logger: logger,
-        browser: ['FuelFriendly', 'Chrome', '1.0.0'], // Add browser info
-        syncFullHistory: false, // Don't sync full history
-        generateHighQualityLinkPreview: false, // Disable link previews
-        markOnlineOnConnect: false, // Don't mark as online
-        defaultQueryTimeoutMs: 60000, // Increase timeout
+        browser: ['FuelFriendly', 'Chrome', '1.0.0'],
+        syncFullHistory: false,
+        generateHighQualityLinkPreview: false,
+        markOnlineOnConnect: false,
+        defaultQueryTimeoutMs: 60000,
+        connectTimeoutMs: 60000,
+        keepAliveIntervalMs: 30000,
+        retryRequestDelayMs: 1000,
+        maxMsgRetryCount: 5
       })
 
       this.sock.ev.on('connection.update', (update) => {
@@ -80,18 +84,21 @@ class WhatsAppService {
           
           console.log('❌ WhatsApp connection closed:', lastDisconnect?.error?.message || 'Unknown error')
           
-          if (shouldReconnect) {
-            console.log('🔄 Attempting to reconnect in 5 seconds...')
+          if (shouldReconnect && this.retryCount < this.maxRetries) {
+            this.retryCount++
+            console.log(`🔄 Attempting to reconnect (${this.retryCount}/${this.maxRetries}) in 10 seconds...`)
             setTimeout(() => {
               this.initialize()
-            }, 5000)
+            }, 10000)
           } else {
-            console.log('🚫 Not reconnecting (logged out)')
+            console.log('🚫 Max retries reached or logged out')
+            this.retryCount = 0
           }
         } else if (connection === 'open') {
           console.log('✅ WhatsApp connected successfully!')
           console.log('🎉 Ready to send OTP messages!')
           this.isConnected = true
+          this.retryCount = 0
         }
       })
 

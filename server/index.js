@@ -374,15 +374,17 @@ app.get('/api/geocode', async (req, res) => {
 // Import WhatsApp service
 import whatsappService from './whatsapp-service.js';
 
-// Initialize WhatsApp service
-whatsappService.initialize();
-
 // WhatsApp OTP endpoints
 app.post('/api/otp/whatsapp/send', async (req, res) => {
   try {
     const { phoneNumber } = req.body;
     if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
+    }
+    
+    // Check if WhatsApp is connected
+    if (!whatsappService.isConnected) {
+      return res.status(500).json({ error: 'WhatsApp not connected' });
     }
     
     // Generate OTP
@@ -480,12 +482,5 @@ app.post('/api/otp/email/verify', async (req, res) => {
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`FuelFriendly API running on port ${port} with PostgreSQL`);
-  console.log('WhatsApp service initializing...');
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Shutting down gracefully...');
-  await whatsappService.disconnect();
-  process.exit(0);
+  console.log('Note: WhatsApp service should be running separately via PM2');
 });
