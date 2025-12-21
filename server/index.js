@@ -223,6 +223,18 @@ app.get('/api/station/:id', async (req, res) => {
 // Seed data endpoint
 app.post('/api/seed', async (req, res) => {
   try {
+    // Seed customers first
+    const customersData = [
+      {
+        id: 'customer-1',
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phoneNumber: '+1234567890',
+        password: 'password123',
+        isEmailVerified: true
+      }
+    ];
+
     // Seed fuel stations
     const stationsData = [
       {
@@ -277,7 +289,8 @@ app.post('/api/seed', async (req, res) => {
       }
     ];
 
-    // Insert data
+    // Insert data in correct order (customers first)
+    await db.insert(customers).values(customersData).onConflictDoNothing();
     await db.insert(fuelStations).values(stationsData).onConflictDoNothing();
     await db.insert(products).values(productsData).onConflictDoNothing();
     await db.insert(fuelFriends).values(fuelFriendsData).onConflictDoNothing();
