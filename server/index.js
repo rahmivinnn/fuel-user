@@ -371,6 +371,12 @@ app.get('/api/geocode', async (req, res) => {
   }
 });
 
+// Import WhatsApp service
+import whatsappService from './whatsapp-service.js';
+
+// Initialize WhatsApp service
+whatsappService.initialize();
+
 // WhatsApp OTP endpoints
 app.post('/api/otp/whatsapp/send', async (req, res) => {
   try {
@@ -382,26 +388,8 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Send via Twilio WhatsApp
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioWhatsApp = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-    
-    if (!accountSid || !authToken) {
-      return res.status(500).json({ error: 'Twilio credentials not configured' });
-    }
-    
-    const client = (await import('twilio')).default(accountSid, authToken);
-    
-    // Format phone number for WhatsApp
-    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-    const whatsappNumber = `whatsapp:${formattedPhone}`;
-    
-    await client.messages.create({
-      body: `Your FuelFriendly verification code is: ${otp}. Valid for 5 minutes.`,
-      from: twilioWhatsApp,
-      to: whatsappNumber
-    });
+    // Send via Baileys WhatsApp
+    await whatsappService.sendOTP(phoneNumber, otp);
     
     // Store OTP in memory (in production, use Redis or database)
     global.otpStore = global.otpStore || {};
@@ -412,11 +400,12 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'OTP sent via WhatsApp'
+      message: 'OTP sent via WhatsApp',
+      expiresIn: 300
     });
   } catch (error) {
     console.error('WhatsApp OTP send error:', error);
-    res.status(500).json({ error: 'Failed to send WhatsApp OTP: ' + error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -430,7 +419,7 @@ app.post('/api/otp/whatsapp/verify', async (req, res) => {
     // Check stored OTP
     const storedData = global.otpStore?.[phoneNumber];
     if (!storedData) {
-      return res.json({ success: false, error: 'OTP not found or expired' });
+      return res.json({ success: false, error: 'OTP not found' });
     }
     
     if (Date.now() > storedData.expires) {
@@ -439,7 +428,7 @@ app.post('/api/otp/whatsapp/verify', async (req, res) => {
     }
     
     if (storedData.otp !== otp) {
-      return res.json({ success: false, error: 'Invalid OTP code' });
+      return res.json({ success: false, error: 'Invalid OTP' });
     }
     
     // OTP verified, clean up
@@ -491,4 +480,12 @@ app.post('/api/otp/email/verify', async (req, res) => {
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`FuelFriendly API running on port ${port} with PostgreSQL`);
+  console.log('WhatsApp service initializing...');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  await whatsappService.disconnect();
+  process.exit(0);
 });
