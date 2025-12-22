@@ -500,10 +500,44 @@ app.post('/api/otp/email/send', async (req, res) => {
     
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
+    // Store OTP in memory
+    global.emailOtpStore = global.emailOtpStore || {};
+    global.emailOtpStore[email] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000
+    };
+    
     res.json({ 
       success: true, 
       message: 'OTP sent to email',
       otp: otp // Remove in production
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send email OTP' });
+  }
+});
+
+// Alternative endpoint for frontend compatibility
+app.post('/api/resend/contact', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP in memory
+    global.emailOtpStore = global.emailOtpStore || {};
+    global.emailOtpStore[email] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000
+    };
+    
+    res.json({ 
+      success: true, 
+      message: 'Verification code sent successfully',
+      otp: otp // For testing - remove in production
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to send email OTP' });
@@ -517,11 +551,24 @@ app.post('/api/otp/email/verify', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email and OTP are required' });
     }
     
-    if (otp.length === 6) {
-      res.json({ success: true, message: 'OTP verified successfully' });
-    } else {
-      res.json({ success: false, error: 'Invalid OTP code' });
+    // Check stored OTP
+    const storedData = global.emailOtpStore?.[email];
+    if (!storedData) {
+      return res.json({ success: false, error: 'OTP not found' });
     }
+    
+    if (Date.now() > storedData.expires) {
+      delete global.emailOtpStore[email];
+      return res.json({ success: false, error: 'OTP expired' });
+    }
+    
+    if (storedData.otp !== otp) {
+      return res.json({ success: false, error: 'Invalid OTP code' });
+    }
+    
+    // OTP verified, clean up
+    delete global.emailOtpStore[email];
+    res.json({ success: true, message: 'OTP verified successfully' });
   } catch (error) {
     res.json({ success: false, error: 'Failed to verify email OTP' });
   }
