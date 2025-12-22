@@ -527,6 +527,42 @@ app.post('/api/resend/contact', async (req, res) => {
     
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
+    // Send email using Resend
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey) {
+      try {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'FuelFriendly <noreply@fuelfriendly.com>',
+            to: [email],
+            subject: 'FuelFriendly Verification Code',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #3AC36C;">FuelFriendly Verification</h2>
+                <p>Your verification code is:</p>
+                <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                  ${otp}
+                </div>
+                <p>This code will expire in 5 minutes.</p>
+                <p>If you didn't request this code, please ignore this email.</p>
+              </div>
+            `
+          })
+        });
+        
+        if (!emailResponse.ok) {
+          console.error('Resend API error:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Email send error:', emailError);
+      }
+    }
+    
     // Store OTP in memory
     global.emailOtpStore = global.emailOtpStore || {};
     global.emailOtpStore[email] = {
@@ -536,8 +572,7 @@ app.post('/api/resend/contact', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'Verification code sent successfully',
-      otp: otp // For testing - remove in production
+      message: 'Verification code sent successfully'
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to send email OTP' });
