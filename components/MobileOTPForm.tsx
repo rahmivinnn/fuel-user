@@ -62,7 +62,7 @@ const MobileOTPForm: React.FC<MobileOTPFormProps> = ({ onBack, onSuccess, onErro
 
     setIsLoading(true);
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://apidecor.kelolahrd.life';
       const response = await fetch(`${base}/api/otp/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +101,7 @@ const MobileOTPForm: React.FC<MobileOTPFormProps> = ({ onBack, onSuccess, onErro
 
     setIsLoading(true);
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://apidecor.kelolahrd.life';
       const response = await fetch(`${base}/api/otp/email/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -145,7 +145,7 @@ const MobileOTPForm: React.FC<MobileOTPFormProps> = ({ onBack, onSuccess, onErro
     
     setIsLoading(true);
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://apidecor.kelolahrd.life';
       const response = await fetch(`${base}/api/otp/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

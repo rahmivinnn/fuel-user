@@ -5,6 +5,7 @@ import Logo from '../components/Logo';
 import MobileOTPForm from '../components/MobileOTPForm';
 import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
+import { verificationService } from '../services/verificationService';
 
 type AuthMethod = 'email-password' | 'email-otp' | 'whatsapp-otp';
 
@@ -67,7 +68,6 @@ const LoginScreen = () => {
     }
   };
 
-  // Send Email OTP (Resend)
   const handleSendResendEmailOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -75,50 +75,18 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-      const response = await fetch(`${base}/api/otp/email/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailForOtp })
-      });
+      const result = await verificationService.sendVerificationCode(
+        emailForOtp,
+        '', // No phone for email OTP
+        emailForOtp.split('@')[0]
+      );
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        const text = await response.text();
-        throw new Error(`Server error: ${text || 'Invalid response from server'}`);
-      }
-
-      // Check response status and data
-      if (!response.ok) {
-        const errorMsg = data?.error || data?.message || `HTTP error! status: ${response.status}`;
-        console.error('Server returned error:', response.status, errorMsg);
-        setError(errorMsg);
-        return;
-      }
-
-      if (data.success) {
+      if (result.success) {
         setOtpSent(true);
-        // Show the OTP code in development mode when simulating
-        if (data.simulated && data.otp) {
-          setSuccess(`OTP sent to your email! For testing purposes, the OTP code is: ${data.otp}`);
-        } else {
-          setSuccess('OTP sent to your email!');
-        }
+        setSuccess(result.message);
         startResendTimer();
       } else {
-        const errorMsg = data?.error || 'Failed to send Email OTP';
-        console.error('Email send failed:', errorMsg);
-        
-        // Provide a more helpful error message for domain verification issues
-        if (errorMsg.includes('only send testing emails to your own email address') || 
-            errorMsg.includes('domain is not verified')) {
-          setError('For demo purposes, OTP can only be sent to the developer\'s email address. In a production environment, this limitation would be removed by verifying a domain with the email service provider.');
-        } else {
-          setError(errorMsg);
-        }
+        setError(result.message);
       }
     } catch (err: any) {
       console.error('Resend Email OTP error:', err);
@@ -128,7 +96,6 @@ const LoginScreen = () => {
     }
   };
 
-  // Verify OTP
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -136,62 +103,29 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     try {
-      let verified = false;
-      let userData = null;
+      const result = verificationService.verifyCode(emailForOtp, otpCode);
 
-      // Use Resend API verification
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-      const response = await fetch(`${base}/api/otp/email/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailForOtp, otp: otpCode })
-      });
-
-      // Check if response is OK before trying to parse JSON
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        throw new Error('Invalid response from server');
-      }
-
-      verified = data.success;
-      userData = {
-        id: `user-${Date.now()}`,
-        fullName: emailForOtp.split('@')[0],
-        email: emailForOtp,
-        phone: '',
-        city: '',
-        avatarUrl: `https://ui-avatars.com/api/?name=${emailForOtp.split('@')[0]}&background=random`,
-        vehicles: []
-      };
-
-      if (verified) {
+      if (result.success) {
         setSuccess('OTP verified successfully!');
 
-        // Use returned user data or create mock user for OTP login
-        const user = userData || {
+        // Create user data for OTP login
+        const userData = {
           id: `user-${Date.now()}`,
           fullName: emailForOtp.split('@')[0],
           email: emailForOtp,
           phone: '',
           city: '',
-          avatarUrl: `https://ui-avatars.com/api/?name=${emailForOtp}&background=random`,
+          avatarUrl: `https://ui-avatars.com/api/?name=${emailForOtp.split('@')[0]}&background=random`,
           vehicles: []
         };
 
-        updateUser(user);
+        updateUser(userData);
 
         setTimeout(() => {
           navigate('/home');
         }, 1500);
       } else {
-        setError('Invalid OTP code');
+        setError(result.message);
       }
     } catch (err: any) {
       console.error('Verify OTP error:', err);
@@ -201,49 +135,22 @@ const LoginScreen = () => {
     }
   };
 
-  // Resend OTP
   const handleResendOTP = async () => {
     setError('');
     setSuccess('');
     setIsLoading(true);
 
     try {
-      // Resend via Resend API
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-      const response = await fetch(`${base}/api/otp/email/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailForOtp })
-      });
+      const result = await verificationService.sendVerificationCode(
+        emailForOtp,
+        '', // No phone for email OTP
+        emailForOtp.split('@')[0]
+      );
 
-      // Check if response is OK before trying to parse JSON
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        throw new Error('Invalid response from server');
-      }
-
-      if (data.success) {
-        // Show the OTP code in development mode when simulating
-        if (data.simulated && data.otp) {
-          setSuccess(`OTP resent to your email! For testing purposes, the OTP code is: ${data.otp}`);
-        } else {
-          setSuccess('OTP resent to your email!');
-        }
+      if (result.success) {
+        setSuccess(result.message);
       } else {
-        // Provide a more helpful error message for domain verification issues
-        if (data.error.includes('only send testing emails to your own email address') || 
-            data.error.includes('domain is not verified')) {
-          setError('For demo purposes, OTP can only be sent to the developer\'s email address. In a production environment, this limitation would be removed by verifying a domain with the email service provider.');
-        } else {
-          setError(data.error || 'Failed to resend Email OTP');
-        }
+        setError(result.message);
       }
 
       startResendTimer();
@@ -285,7 +192,6 @@ const LoginScreen = () => {
     setResendTimer(0);
   };
 
-  // WhatsApp OTP functions
   const handleSendWhatsAppOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -293,16 +199,18 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-      const response = await fetch(`${base}/api/otp/whatsapp/send`, {
+      const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+      const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ phoneNumber: phoneForOtp })
       });
-
+      
       const data = await response.json();
-
-      if (response.ok && data.success) {
+      
+      if (data.success) {
         setOtpSent(true);
         setSuccess('OTP sent via WhatsApp!');
         startResendTimer();
@@ -323,16 +231,21 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     try {
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-      const response = await fetch(`${base}/api/otp/whatsapp/verify`, {
+      const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+      const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber: phoneForOtp, otp: otpCode })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          phoneNumber: phoneForOtp, 
+          otp: otpCode 
+        })
       });
-
+      
       const data = await response.json();
-
-      if (response.ok && data.success) {
+      
+      if (data.success) {
         setSuccess('OTP verified successfully!');
         const userData = {
           id: `user-${Date.now()}`,

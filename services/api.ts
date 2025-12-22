@@ -1,218 +1,190 @@
-import { User, Station, Order } from '../types';
+import axios from 'axios';
+import { networkHandler } from './networkHandler';
 
-export const apiLogin = async (email: string, pass: string): Promise<User> => {
-    throw new Error('Use Firebase login');
+const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+
+// Use fetch instead of axios for better mobile compatibility
+const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const response = await networkHandler.makeRequest(url, options);
+  return response.json();
+};
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 15000
+});
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+
+export const apiRegister = async (userData: any) => {
+  try {
+    const data = await apiCall('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    });
+    return data;
+  } catch (error) {
+    // Fallback for mobile
+    const { data } = await api.post('/api/auth/register', userData);
+    return data;
+  }
+};
+
+export const apiLogin = async (email: string, password: string) => {
+  const { data } = await api.post('/api/auth/login', { email, password });
+  if (!data.success) throw new Error(data.error);
+  return data.user;
 };
 
 export const apiLogout = () => {
-    localStorage.removeItem('authToken');
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
 };
 
-export const apiRegister = async (data: any): Promise<User> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const user: User = {
-        id: `user-${Date.now()}`,
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        city: data.city || '',
-        avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.fullName)}&background=random`,
-        vehicles: [{
-            id: `v-${Date.now()}`,
-            brand: data.vehicleBrand,
-            color: data.vehicleColor,
-            licenseNumber: data.licenseNumber,
-            fuelType: data.fuelType
-        }]
-    };
-    const res = await fetch(`${base}/api/user/me?email=${encodeURIComponent(data.email)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user)
-    });
-    if (!res.ok) {
-        const error = await res.text();
-        console.error('Registration error:', error);
-        throw new Error(`Failed to save profile: ${error}`);
-    }
-    return await res.json();
+export const apiLoginWithGoogleCredential = async () => {
+  // Simulate Google login for now
+  return {
+    id: `user-${Date.now()}`,
+    fullName: 'Google User',
+    email: 'google.user@example.com',
+    phone: '',
+    city: '',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
+    vehicles: []
+  };
 };
 
-export const apiGetStations = async (lat: number, lon: number): Promise<Omit<Station, 'groceries' | 'fuelFriends'>[]> => {
-    const radius = 10000;
-    const query = `[out:json];node[amenity=fuel](around:${radius},${lat},${lon});out;`;
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const url = base ? `${base}/api/stations?lat=${lat}&lon=${lon}&radius=${radius}` : `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+// ==========================================
+// FUEL STATIONS
+// ==========================================
 
-    try {
-        const res = await fetch(url);
-        if (!res.ok) {
-            throw new Error(`Failed to fetch stations: ${res.status} ${res.statusText}`);
-        }
-        const data = await res.json();
-
-        const toKm = (aLat: number, aLon: number, bLat: number, bLon: number) => {
-            const R = 6371e3;
-            const dLat = (bLat - aLat) * Math.PI / 180;
-            const dLon = (bLon - aLon) * Math.PI / 180;
-            const sa = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * Math.PI / 180) * Math.cos(bLat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-            const c = 2 * Math.atan2(Math.sqrt(sa), Math.sqrt(1 - sa));
-            return (R * c) / 1000;
-        };
-
-        const stations = (data.elements || []).map((el: any, idx: number) => {
-            const name = el.tags?.name || 'Fuel Station';
-            const address = [el.tags?.street, el.tags?.city].filter(Boolean).join(', ') || 'Nearby';
-            const distKm = el.lat && el.lon ? toKm(lat, lon, el.lat, el.lon) : 0;
-
-            // Generate a more realistic image URL based on the station name
-            const imageName = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-            const imageUrl = `https://source.unsplash.com/300x300/?gas-station,${imageName}`;
-
-            return {
-                id: `osm-${el.id || idx}`,
-                name,
-                address,
-                distance: distKm ? `${distKm.toFixed(1)} km` : '',
-                deliveryTime: '10-15 min',
-                rating: 0,
-                reviewCount: 0,
-                imageUrl,
-                bannerUrl: `https://source.unsplash.com/600x300/?gas-station,${imageName}`,
-                logoUrl: imageUrl,
-                fuelPrices: { regular: NaN, premium: NaN, diesel: NaN },
-                lat: el.lat || lat,
-                lon: el.lon || lon
-            } as Omit<Station, 'groceries' | 'fuelFriends'>;
-        });
-
-        // Sort stations by distance (closest first)
-        stations.sort((a, b) => {
-            const distA = parseFloat(a.distance) || 0;
-            const distB = parseFloat(b.distance) || 0;
-            return distA - distB;
-        });
-
-        return stations;
-    } catch (error) {
-        return [];
-    }
+export const apiGetStations = async (lat: number, lng: number, radius = 10000) => {
+  const { data } = await api.get(`/api/stations?lat=${lat}&lng=${lng}&radius=${radius}`);
+  return data.data;
 };
 
-export const apiGetStationDetails = async (id: string): Promise<Station> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/station/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch station details');
-    const st = await res.json();
+export const apiGetStationDetails = async (id: string) => {
+  const { data } = await api.get(`/api/station/${id}`);
+  return data.data;
+};
+
+// ==========================================
+// OTP VERIFICATION
+// ==========================================
+
+export const apiSendWhatsAppOTP = async (phoneNumber: string) => {
+  const { data } = await api.post('/api/otp/whatsapp/send', { phoneNumber });
+  return data;
+};
+
+export const apiSendEmailOTP = async (email: string) => {
+  const { data } = await api.post('/api/otp/email/send', { email });
+  return data;
+};
+
+export const apiVerifyOTP = async (identifier: string, otp: string) => {
+  const { data } = await api.post('/api/otp/verify', { identifier, otp });
+  return data;
+};
+
+// ==========================================
+// ORDERS
+// ==========================================
+
+export const apiCreateOrder = async (orderData: any) => {
+  const { data } = await api.post('/api/orders', orderData);
+  return data.data;
+};
+
+export const apiGetOrders = async (customerId?: string) => {
+  const url = customerId ? `/api/orders?customerId=${customerId}` : '/api/orders';
+  const { data } = await api.get(url);
+  return data.data;
+};
+
+export const apiCreateOrderFromPayment = async (orderData: any) => {
+  const { data } = await api.post('/api/orders', orderData);
+  return data;
+};
+
+export const apiUpdateOrderStatus = async (id: string, status: string) => {
+  const { data } = await api.patch(`/api/orders/${id}/status`, { status });
+  return data;
+};
+
+// ==========================================
+// PAYMENTS (STRIPE)
+// ==========================================
+
+export const apiCreatePaymentIntent = async (amount: number, orderId: string, currency = 'gbp') => {
+  const { data } = await api.post('/api/stripe/create-payment-intent', {
+    amount,
+    orderId,
+    currency
+  });
+  return data;
+};
+
+// ==========================================
+// USER PROFILE
+// ==========================================
+
+export const apiUpdateUserProfile = async (userData: any) => {
+  const { data } = await api.patch('/api/user/profile', userData);
+  return data;
+};
+
+export const apiRegisterPushToken = async (email: string, token: string) => {
+  const { data } = await api.post('/api/notifications/register', { email, token });
+  return data;
+};
+
+export const apiSendTestPush = async (token?: string) => {
+  const { data } = await api.post('/api/notifications/test', { token });
+  return data;
+};
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+
+export const apiHealthCheck = async () => {
+  const { data } = await api.get('/api/health');
+  return data;
+};
+
+export const apiSeedDatabase = async () => {
+  const { data } = await api.post('/api/seed');
+  return data;
+};
+
+export const apiSeedData = async () => {
+  return await apiSeedDatabase();
+};
+
+// ==========================================
+// ERROR HANDLING
+// ==========================================
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
     
-    // Return real data from database or add mock data if empty
-    if (!st.groceries || st.groceries.length === 0) {
-        st.groceries = [
-            { id: 'g1', name: 'Mineral Water', price: 1.50, imageUrl: 'https://images.unsplash.com/photo-1560023907-5f339617ea30?w=100&h=100&fit=crop' },
-            { id: 'g2', name: 'Potato Chips', price: 2.50, imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=100&h=100&fit=crop' },
-            { id: 'g3', name: 'Energy Bar', price: 3.00, imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&h=100&fit=crop' },
-            { id: 'g4', name: 'Coffee', price: 4.50, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop' }
-        ];
+    if (error.response?.status === 401) {
+      // Unauthorized - clear auth data
+      apiLogout();
+      window.location.href = '/login';
     }
+    
+    return Promise.reject(error);
+  }
+);
 
-    if (!st.fuelFriends || st.fuelFriends.length === 0) {
-        st.fuelFriends = [
-            { id: 'f1', name: 'John Driver', rate: 15.00, rating: 4.9, reviewCount: 124, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
-            { id: 'f2', name: 'Sarah Spark', rate: 14.50, rating: 4.8, reviewCount: 89, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-            { id: 'f3', name: 'Mike Moto', rate: 16.00, rating: 5.0, reviewCount: 42, avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop' }
-        ];
-    }
-    return st;
-};
-
-export const apiGetOrders = async (): Promise<Order[]> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/orders`);
-    if (!res.ok) throw new Error('Failed to fetch orders');
-    return await res.json();
-}
-
-export const apiCreateOrder = async (order: Order): Promise<Order> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order)
-    });
-    if (!res.ok) throw new Error('Failed to create order');
-    return await res.json();
-}
-
-export const apiUpdateOrderStatus = async (id: string, status: Order['status']): Promise<Order | null> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/orders/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-    });
-    if (!res.ok) return null;
-    return await res.json();
-}
-
-export const apiUpdateUserProfile = async (userData: User): Promise<User> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/user/me?email=${encodeURIComponent(userData.email)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData)
-    });
-    if (!res.ok) throw new Error('Failed to update profile');
-    return await res.json();
-}
-
-export const apiRegisterPushToken = async (email: string | undefined, token: string): Promise<{ ok: boolean }> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/notifications/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token })
-    });
-    if (!res.ok) throw new Error('Failed to register push token');
-    return await res.json();
-}
-
-export const apiSendTestPush = async (token?: string): Promise<{ ok: boolean } | { error: string }> => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-    const res = await fetch(`${base}/api/notifications/test`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(token ? { token } : {})
-    });
-    try { return await res.json(); } catch { return { ok: false } as any }
-}
-
-const decodeJwt = (token: string): any => {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(atob(payload).split('').map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    try { return JSON.parse(json); } catch { return null; }
-};
-
-export const apiSeedData = async (): Promise<{ success: boolean }> => {
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-  const res = await fetch(`${base}/api/seed`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  });
-  if (!res.ok) throw new Error('Failed to seed data');
-  return await res.json();
-};
-
-export const apiCreateOrderFromPayment = async (orderData: any): Promise<{ success: boolean; trackingId: string }> => {
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-  const res = await fetch(`${base}/api/orders`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orderData)
-  });
-  if (!res.ok) throw new Error('Failed to create order');
-  return await res.json();
-};
+export default api;

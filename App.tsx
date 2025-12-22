@@ -1,7 +1,12 @@
-import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
-import { HashRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Toaster } from "sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AnimatePresence } from "framer-motion";
+import MobileDebugger from './components/MobileDebugger';
+
+// Import pages from fuel-user-update structure
 import SplashScreen from './screens/SplashScreen';
-import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegistrationScreen from './screens/RegistrationScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -16,7 +21,36 @@ import OrderSummaryScreen from './screens/OrderSummaryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
-import { apiLogin, apiLogout, apiLoginWithGoogleCredential, apiRegisterPushToken } from './services/api';
+
+// API functions
+const apiLogin = async (email: string, password: string) => {
+  const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await response.json();
+  if (!data.success) throw new Error(data.error);
+  return data.user;
+};
+
+const apiLogout = () => {
+  // Clear any stored tokens/session data
+  localStorage.removeItem('user');
+};
+
+const apiLoginWithGoogleCredential = async () => {
+  // Simulate Google login for now
+  return {
+    id: `user-${Date.now()}`,
+    fullName: 'Google User',
+    email: 'google.user@example.com',
+    phone: '',
+    city: '',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
+    vehicles: []
+  };
+};
 
 interface AppContextType {
     theme: Theme;
@@ -39,33 +73,23 @@ export const useAppContext = () => {
     return context;
 };
 
+const queryClient = new QueryClient();
+
 const AppNavigator = () => {
     const { isAuthenticated } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Only redirect on initial load or auth state change, not on every location change
     useEffect(() => {
-        const publicRoutes = ['/', '/splash', '/welcome', '/login', '/register'];
+        const publicRoutes = ['/', '/login', '/register'];
         const currentPath = location.pathname;
         
-        // Only redirect if we're on a route that requires authentication state to match
-        // and we're not already transitioning
-        if (!window.location.hash.includes('#transition')) {
-            if (isAuthenticated && (currentPath === '/' || currentPath === '/splash' || currentPath === '/welcome' || currentPath === '/login' || currentPath === '/register')) {
-                navigate('/home');
-            } else if (!isAuthenticated && currentPath !== '/' && currentPath !== '/splash' && currentPath !== '/welcome' && currentPath !== '/login' && currentPath !== '/register') {
-                // Only redirect to splash screen if trying to access protected routes
-                if (currentPath.startsWith('/home') || currentPath.startsWith('/station') || 
-                    currentPath.startsWith('/checkout') || currentPath.startsWith('/track') || 
-                    currentPath.startsWith('/orders') || currentPath.startsWith('/settings') || 
-                    currentPath.startsWith('/profile')) {
-                    navigate('/');
-                }
-            }
+        if (isAuthenticated && publicRoutes.includes(currentPath)) {
+            navigate('/home');
+        } else if (!isAuthenticated && !publicRoutes.includes(currentPath)) {
+            navigate('/');
         }
-    }, [isAuthenticated]); // Remove location.pathname from dependencies to prevent constant redirects
-
+    }, [isAuthenticated, navigate]);
 
     const showBottomNav = isAuthenticated && ['/home', '/orders', '/track', '/settings'].includes(location.pathname);
 
@@ -74,7 +98,6 @@ const AppNavigator = () => {
             <main className="flex-grow pb-20 md:pb-24 overflow-y-auto">
                 <Routes>
                     <Route path="/" element={<SplashScreen />} />
-                    <Route path="/welcome" element={<WelcomeScreen />} />
                     <Route path="/login" element={<LoginScreen />} />
                     <Route path="/register" element={<RegistrationScreen />} />
                     <Route path="/home" element={<HomeScreen />} />
@@ -96,16 +119,8 @@ const AppNavigator = () => {
 
 const App = () => {
     const [theme, setThemeState] = useState<Theme>(Theme.LIGHT);
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
-    const [user, setUser] = useState<User | null>({
-        id: 'user-1',
-        fullName: 'Test User',
-        email: 'test@example.com',
-        phone: '',
-        city: '',
-        avatarUrl: '',
-        vehicles: []
-    });
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -125,10 +140,8 @@ const App = () => {
         }
     };
 
-    // Simple login function without Firebase
     const login = async (email: string, pass: string) => {
         try {
-            // Call your API login function directly
             const userData = await apiLogin(email, pass);
             setUser(userData);
             setIsAuthenticated(true);
@@ -138,20 +151,9 @@ const App = () => {
         }
     };
 
-    // Simple Google login function without Firebase
     const loginWithGoogle = async () => {
         try {
-            // For now, we'll simulate a Google login
-            // In a real implementation, you would integrate with Google's OAuth API directly
-            const userData = {
-                id: `user-${Date.now()}`,
-                fullName: 'Google User',
-                email: 'google.user@example.com',
-                phone: '',
-                city: '',
-                avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
-                vehicles: []
-            };
+            const userData = await apiLoginWithGoogleCredential();
             setUser(userData);
             setIsAuthenticated(true);
         } catch (error) {
@@ -176,15 +178,39 @@ const App = () => {
     }
 
     return (
-        <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, login, loginWithGoogle, logout, updateUser }}>
-            <div className="w-full h-full font-sans bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-                <div className="w-full h-full bg-light-bg dark:bg-dark-bg overflow-y-auto" style={{ height: '100dvh', maxHeight: '100dvh' }}>
-                    <HashRouter>
-                        <AppNavigator />
-                    </HashRouter>
+        <QueryClientProvider client={queryClient}>
+            <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, login, loginWithGoogle, logout, updateUser }}>
+                <div className="w-full h-full font-sans bg-white text-gray-900" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw' }}>
+                    <Toaster
+                        position="top-center"
+                        toastOptions={{
+                            className: 'ios-toast',
+                            style: {
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                color: '#000000',
+                                border: 'none',
+                                borderRadius: '25px',
+                                fontSize: '15px',
+                                fontWeight: '500',
+                                padding: '12px 24px',
+                                backdropFilter: 'blur(12px)',
+                                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
+                                width: 'auto',
+                                minWidth: '300px',
+                                marginBottom: '16px',
+                            },
+                            duration: 3000,
+                        }}
+                    />
+                    <div className="w-full h-full bg-white overflow-y-auto" style={{ height: '100dvh', maxHeight: '100dvh' }}>
+                        <BrowserRouter>
+                            <AppNavigator />
+                        </BrowserRouter>
+                        <MobileDebugger />
+                    </div>
                 </div>
-            </div>
-        </AppContext.Provider>
+            </AppContext.Provider>
+        </QueryClientProvider>
     );
 }
 

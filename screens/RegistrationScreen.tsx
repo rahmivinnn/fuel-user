@@ -5,6 +5,7 @@ import { useAppContext } from '../App';
 import { apiRegister, apiLogin } from '../services/api';
 import Logo from '../components/Logo';
 import AnimatedPage from '../components/AnimatedPage';
+import { verificationService } from '../services/verificationService';
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [1, 2, 3];
@@ -26,6 +27,7 @@ const RegistrationScreen = () => {
     const navigate = useNavigate();
     const { login, updateUser } = useAppContext();
     const [step, setStep] = useState(1);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -50,12 +52,34 @@ const RegistrationScreen = () => {
     
     const createAccount = async () => {
         setLoading(true);
+        setError('');
         try {
-            await apiRegister(formData);
+            // Transform data to match backend API expectations
+            const apiData = {
+                fullName: formData.fullName,
+                email: formData.email,
+                phoneNumber: formData.phone, // Backend expects phoneNumber, not phone
+                password: formData.password,
+                vehicleBrand: formData.vehicleBrand,
+                vehicleColor: formData.vehicleColor,
+                licenseNumber: formData.licenseNumber,
+                fuelType: formData.fuelType
+            };
+            
+            await apiRegister(apiData);
             setStep(4);
         } catch (error) {
             console.error("Registration failed:", error);
-            alert("Registration failed. Please try again.");
+            
+            // Extract error message from API response
+            let errorMessage = "Registration failed. Please try again.";
+            if (error.response?.data?.error) {
+                errorMessage = error.response.data.error;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -72,7 +96,7 @@ const RegistrationScreen = () => {
             case 2:
                 return <Step2 next={handleNext} back={handleBack} formData={formData} handleChange={handleChange} />;
             case 3:
-                return <Step3 createAccount={createAccount} editDetails={() => setStep(1)} formData={formData} loading={loading} />;
+                return <Step3 createAccount={createAccount} editDetails={() => setStep(1)} formData={formData} loading={loading} error={error} />;
             case 4:
                 return <VerificationStep 
                     formData={formData} 
@@ -178,6 +202,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                     value={formData.phone} 
                     onChange={handleChange} 
                     className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                    placeholder="e.g. 6289502694005"
                     required 
                 />
             </div>
@@ -297,8 +322,14 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
     </form>
 );
 
-const Step3 = ({ createAccount, editDetails, formData, loading }: { createAccount: () => void; editDetails: () => void; formData: any; loading: boolean }) => (
+const Step3 = ({ createAccount, editDetails, formData, loading, error }: { createAccount: () => void; editDetails: () => void; formData: any; loading: boolean; error?: string }) => (
     <div className="space-y-4">
+        {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+            </div>
+        )}
+        
         <div className="bg-light-card dark:bg-dark-card rounded-2xl p-4">
             <h3 className="font-bold mb-2">Account Details</h3>
             <div className="space-y-1 text-sm">
@@ -432,38 +463,43 @@ const VerificationProcess = ({ method, formData, onComplete }: {
 
     const sendOTP = async () => {
         try {
-            const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
             
-            // Add to Resend contacts if email method
             if (method === 'email') {
-                await fetch(`${base}/api/resend/contact`, {
+                const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email: formData.email,
-                        firstName: formData.fullName.split(' ')[0],
-                        lastName: formData.fullName.split(' ').slice(1).join(' ')
-                    })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: formData.email })
                 });
-            }
-            
-            const endpoint = method === 'email' ? '/api/otp/email/send' : '/api/otp/whatsapp/send';
-            const payload = method === 'email' 
-                ? { email: formData.email } 
-                : { phoneNumber: formData.phone };
-            
-            const res = await fetch(`${base}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const data = await res.json();
-            if (data.success) {
-                setOtpSent(true);
-                setSuccess(`OTP sent to your ${method}!`);
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    setOtpSent(true);
+                    setSuccess(data.message || 'OTP sent to your email!');
+                } else {
+                    setError(data.error || 'Failed to send email OTP');
+                }
             } else {
-                setError(data.error || 'Failed to send OTP');
+                // WhatsApp method
+                const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phoneNumber: formData.phone })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    setOtpSent(true);
+                    setSuccess(data.message || 'OTP sent via WhatsApp!');
+                } else {
+                    setError(data.error || 'Failed to send WhatsApp OTP');
+                }
             }
         } catch (err) {
             setError('Failed to send OTP');
@@ -478,22 +514,55 @@ const VerificationProcess = ({ method, formData, onComplete }: {
         setSuccess('');
         
         try {
-            const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-            const endpoint = method === 'email' ? '/api/otp/email/verify' : '/api/otp/whatsapp/verify';
-            const payload = method === 'email'
-                ? { email: formData.email, otp }
-                : { phoneNumber: formData.phone, otp };
-            
-            const res = await fetch(`${base}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const data = await res.json();
-            if (data.success) {
+            let verified = false;
+            let userData = null;
+
+            if (method === 'email') {
+                const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+                const response = await fetch(`${API_BASE_URL}/api/otp/email/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        email: formData.email, 
+                        otp: otp 
+                    })
+                });
+                
+                const data = await response.json();
+                verified = data.success;
+                
+                if (!verified) {
+                    setError(data.error || 'Invalid verification code');
+                    return;
+                }
+            } else {
+                // WhatsApp method - use backend API
+                const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+                const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        phoneNumber: formData.phone, 
+                        otp: otp 
+                    })
+                });
+                
+                const data = await response.json();
+                verified = data.success;
+                
+                if (!verified) {
+                    setError(data.error || 'Invalid verification code');
+                    return;
+                }
+            }
+
+            if (verified) {
                 setSuccess('Account verified successfully!');
-                const userData = {
+                userData = {
                     id: `user-${Date.now()}`,
                     fullName: formData.fullName,
                     email: formData.email,
@@ -509,9 +578,12 @@ const VerificationProcess = ({ method, formData, onComplete }: {
                     }]
                 };
                 updateUser(userData);
+                
+                // Complete registration with welcome message
+                const emailKey = method === 'email' ? formData.email : `${formData.phone}@whatsapp.register`;
+                await verificationService.completeRegistration(emailKey);
+                
                 setTimeout(onComplete, 1500);
-            } else {
-                setError(data.error || 'Invalid verification code');
             }
         } catch (err) {
             setError('Verification failed');

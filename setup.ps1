@@ -140,7 +140,7 @@ VITE_GOOGLE_CLIENT_ID=
 # ----------------------------------------
 # API CONFIGURATION
 # ----------------------------------------
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL=https://apidecor.kelolahrd.life
 "@
 
 # Write to file

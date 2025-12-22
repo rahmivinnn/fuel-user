@@ -1,5 +1,5 @@
 // Test script for WhatsApp OTP API
-const API_BASE = 'http://localhost:4000';
+const API_BASE = 'https://apidecor.kelolahrd.life';
 
 async function testWhatsAppStatus() {
   try {

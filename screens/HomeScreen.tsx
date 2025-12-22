@@ -31,20 +31,20 @@ const StationCard = ({ station, index }: { station: any; index: number }) => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Fuel size={16} sm:size={20} className="text-[#3AC36C]" />
+                <Fuel size={20} className="text-[#3AC36C]" />
                 <span className="text-sm text-[#3F4249]">Fuel Price</span>
               </div>
               <span className="text-sm sm:text-base font-semibold text-[#3F4249]">$36.67</span>
             </div>
             
             <div className="flex items-center gap-2">
-              <MapPin size={16} sm:size={20} className="text-[#FF5630]" />
+              <MapPin size={20} className="text-[#FF5630]" />
               <span className="text-sm text-[#3F4249] flex-1 truncate">{station.address || 'Nearby'}</span>
               <span className="text-sm text-[#3F4249]">{station.distance}</span>
             </div>
             
             <div className="flex items-center gap-2">
-              <Star size={16} sm:size={20} className="text-[#FFC107] fill-current" />
+              <Star size={20} className="text-[#FFC107] fill-current" />
               <span className="text-sm text-[#3F4249] flex-1">Reviews</span>
               <span className="text-sm text-[#3F4249]">4.6</span>
               <span className="text-xs text-[#3F4249]">(24 Reviews)</span>
