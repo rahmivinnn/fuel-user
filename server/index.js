@@ -373,6 +373,22 @@ app.get('/api/geocode', async (req, res) => {
 
 // Import WhatsApp service
 import whatsappService from './whatsapp-service.js';
+import { promises as fs } from 'fs';
+import path from 'path';
+
+// Function to check WhatsApp status from file
+const checkWhatsAppStatus = async () => {
+  try {
+    const statusFile = path.join(process.cwd(), 'server', 'whatsapp-status.json');
+    const data = await fs.readFile(statusFile, 'utf8');
+    const status = JSON.parse(data);
+    // Check if status is recent (within 2 minutes)
+    const isRecent = (Date.now() - status.lastUpdate) < 120000;
+    return status.isConnected && isRecent;
+  } catch (error) {
+    return false;
+  }
+};
 
 // WhatsApp OTP endpoints
 app.post('/api/otp/whatsapp/send', async (req, res) => {
@@ -382,16 +398,25 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
     
-    // Check if WhatsApp is connected
-    if (!whatsappService.isConnected) {
+    // Check if WhatsApp is connected via status file
+    const isConnected = await checkWhatsAppStatus();
+    if (!isConnected) {
       return res.status(500).json({ error: 'WhatsApp not connected' });
     }
     
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Send via Baileys WhatsApp
-    await whatsappService.sendOTP(phoneNumber, otp);
+    // Send via HTTP request to WhatsApp daemon
+    const response = await fetch('http://localhost:3001/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber, otp })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to send via WhatsApp daemon');
+    }
     
     // Store OTP in memory (in production, use Redis or database)
     global.otpStore = global.otpStore || {};

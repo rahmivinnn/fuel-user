@@ -78,6 +78,7 @@ class WhatsAppService {
         
         if (connection === 'close') {
           this.isConnected = false
+          this.updateStatus()
           const shouldReconnect = (lastDisconnect?.error instanceof Boom) 
             ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
             : true
@@ -99,6 +100,7 @@ class WhatsAppService {
           console.log('🎉 Ready to send OTP messages!')
           this.isConnected = true
           this.retryCount = 0
+          this.updateStatus()
         }
       })
 
@@ -174,6 +176,20 @@ class WhatsAppService {
     } catch (error) {
       console.error('❌ Failed to send OTP:', error)
       throw new Error('Failed to send WhatsApp OTP')
+    }
+  }
+
+  // Write connection status to file for other processes
+  updateStatus() {
+    const statusFile = path.join(process.cwd(), 'server', 'whatsapp-status.json')
+    const status = {
+      isConnected: this.isConnected,
+      lastUpdate: Date.now()
+    }
+    try {
+      fs.writeFile(statusFile, JSON.stringify(status))
+    } catch (error) {
+      console.error('Failed to write status:', error.message)
     }
   }
 

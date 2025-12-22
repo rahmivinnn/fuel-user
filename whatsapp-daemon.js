@@ -1,6 +1,31 @@
 import whatsappService from './server/whatsapp-service.js';
+import express from 'express';
+
+const app = express();
+app.use(express.json());
 
 console.log('🚀 Starting WhatsApp service for FuelFriendly...');
+
+// HTTP endpoint for sending OTP
+app.post('/send-otp', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ error: 'Phone number and OTP required' });
+    }
+    
+    await whatsappService.sendOTP(phoneNumber, otp);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Start HTTP server
+app.listen(3001, () => {
+  console.log('📡 WhatsApp HTTP server running on port 3001');
+});
 
 // Initialize WhatsApp
 await whatsappService.initialize();
