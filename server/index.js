@@ -527,39 +527,34 @@ app.post('/api/resend/contact', async (req, res) => {
     
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Send email using Resend
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
+    // Send email using SendGrid
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
+    if (sendgridApiKey) {
       try {
-        const emailResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'FuelFriendly <noreply@fuelfriendly.com>',
-            to: [email],
-            subject: 'FuelFriendly Verification Code',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #3AC36C;">FuelFriendly Verification</h2>
-                <p>Your verification code is:</p>
-                <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                  ${otp}
-                </div>
-                <p>This code will expire in 5 minutes.</p>
-                <p>If you didn't request this code, please ignore this email.</p>
-              </div>
-            `
-          })
-        });
+        const sgMail = (await import('@sendgrid/mail')).default;
+        sgMail.setApiKey(sendgridApiKey);
         
-        if (!emailResponse.ok) {
-          console.error('Resend API error:', await emailResponse.text());
-        }
+        const msg = {
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@fuelfriendly.com',
+          subject: 'FuelFriendly Verification Code',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #3AC36C;">FuelFriendly Verification</h2>
+              <p>Your verification code is:</p>
+              <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                ${otp}
+              </div>
+              <p>This code will expire in 5 minutes.</p>
+              <p>If you didn't request this code, please ignore this email.</p>
+            </div>
+          `
+        };
+        
+        await sgMail.send(msg);
+        console.log(`✅ Email sent to ${email}`);
       } catch (emailError) {
-        console.error('Email send error:', emailError);
+        console.error('SendGrid error:', emailError);
       }
     }
     
