@@ -407,22 +407,45 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Send via HTTP request to WhatsApp daemon
-    const response = await fetch('http://localhost:3001/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phoneNumber, otp })
-    });
+    // Write OTP request to file for daemon to process
+    const requestFile = path.join(process.cwd(), 'server', 'otp-request.json');
+    const request = {
+      phoneNumber,
+      otp,
+      timestamp: Date.now(),
+      processed: false
+    };
     
-    if (!response.ok) {
-      throw new Error('Failed to send via WhatsApp daemon');
+    await fs.writeFile(requestFile, JSON.stringify(request));
+    
+    // Wait for processing (max 10 seconds)
+    let processed = false;
+    for (let i = 0; i < 20; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        const data = await fs.readFile(requestFile, 'utf8');
+        const status = JSON.parse(data);
+        if (status.processed) {
+          processed = true;
+          if (status.error) {
+            throw new Error(status.error);
+          }
+          break;
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
     }
     
-    // Store OTP in memory (in production, use Redis or database)
+    if (!processed) {
+      throw new Error('WhatsApp OTP timeout');
+    }
+    
+    // Store OTP in memory
     global.otpStore = global.otpStore || {};
     global.otpStore[phoneNumber] = {
       otp,
-      expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+      expires: Date.now() + 5 * 60 * 1000
     };
     
     res.json({ 

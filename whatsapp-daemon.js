@@ -1,34 +1,39 @@
 import whatsappService from './server/whatsapp-service.js';
-import express from 'express';
-
-const app = express();
-app.use(express.json());
+import { promises as fs } from 'fs';
+import path from 'path';
 
 console.log('🚀 Starting WhatsApp service for FuelFriendly...');
 
-// HTTP endpoint for sending OTP
-app.post('/send-otp', async (req, res) => {
-  try {
-    const { phoneNumber, otp } = req.body;
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({ error: 'Phone number and OTP required' });
-    }
-    
-    await whatsappService.sendOTP(phoneNumber, otp);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Send OTP error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Start HTTP server
-app.listen(3001, () => {
-  console.log('📡 WhatsApp HTTP server running on port 3001');
-});
-
 // Initialize WhatsApp
 await whatsappService.initialize();
+
+// Monitor for OTP requests
+const processOTPRequests = async () => {
+  const requestFile = path.join(process.cwd(), 'server', 'otp-request.json');
+  
+  try {
+    const data = await fs.readFile(requestFile, 'utf8');
+    const request = JSON.parse(data);
+    
+    if (!request.processed && whatsappService.isConnected) {
+      try {
+        await whatsappService.sendOTP(request.phoneNumber, request.otp);
+        request.processed = true;
+        request.success = true;
+      } catch (error) {
+        request.processed = true;
+        request.error = error.message;
+      }
+      
+      await fs.writeFile(requestFile, JSON.stringify(request));
+    }
+  } catch (error) {
+    // File doesn't exist or other error, ignore
+  }
+};
+
+// Check for requests every second
+setInterval(processOTPRequests, 1000);
 
 // Keep the service alive and monitor connection
 const keepAlive = setInterval(async () => {
