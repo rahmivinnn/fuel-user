@@ -23,6 +23,13 @@ class WhatsAppService {
     } catch (error) {
       console.log('⚠️ Session already clear or error clearing:', error.message)
     }
+    
+    // Recreate session directory
+    try {
+      await fs.mkdir(this.sessionPath, { recursive: true })
+    } catch (error) {
+      console.log('⚠️ Error creating session directory:', error.message)
+    }
   }
 
   async checkLock() {
