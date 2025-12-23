@@ -521,117 +521,102 @@ const LoginScreen = () => {
 
   return (
     <AnimatedPage>
-      <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-12 bg-white dark:bg-dark-bg text-light-text dark:text-dark-text space-y-6">
-        {/* Logo and Brand */}
-        <div className="flex flex-col items-center space-y-4">
-          <img 
-            src="/logo-green.png" 
-            alt="FuelFriendly Logo" 
-            className="w-20 h-20"
-          />
-        </div>
-
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 text-center">Sign In</h2>
-
-        {error && (
-          <div className="w-full max-w-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-            <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+      <div className="w-full bg-white relative overflow-hidden fixed inset-0" style={{ height: '100dvh', maxHeight: '100dvh', touchAction: 'none' }}>
+        {/* Top Rectangle - curve points bottom right */}
+        <img 
+          src="/Rectangle 3365.png" 
+          alt="" 
+          className="absolute top-0 left-0 w-full h-auto z-0 pointer-events-none"
+          style={{ maxHeight: '20vh', transform: 'rotate(180deg)' }}
+        />
+        
+        {/* Bottom Rectangle - curve points top left */}
+        <img 
+          src="/Rectangle 3365.png" 
+          alt="" 
+          className="absolute bottom-0 left-0 w-full h-auto z-0 pointer-events-none"
+          style={{ maxHeight: '35vh', transform: 'rotate(360deg)' }}
+        />
+        
+        {/* Hexagon pattern at bottom */}
+        <img 
+          src="/hexagon.png" 
+          alt="" 
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-48 sm:w-64 h-auto z-10 pointer-events-none opacity-60"
+        />
+        
+        {/* Content optimized for all devices */}
+        <div className="relative z-20 flex flex-col items-center justify-center w-full px-4 max-w-sm mx-auto h-full">
+          {/* Logo and Brand */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="w-60 h-48 rounded-full border-3 border-green-500 flex items-center justify-center mb-3">
+              <img 
+                src="/logo-green.png" 
+                alt="FuelFriendly Logo" 
+                className="w-52 h-40"
+              />
+            </div>
           </div>
-        )}
 
-        {success && (
-          <div className="w-full max-w-sm bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-            <p className="text-green-600 dark:text-green-400 text-sm text-center">{success}</p>
-          </div>
-        )}
-
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
-          <div className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-center text-base text-gray-600">
-            Customer
-          </div>
-          <input
-            type="email"
-            placeholder="Email or phone number"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400"
-            required
-          />
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400"
-              required
-            />
+          {/* Buttons */}
+          <div className="w-full space-y-2 mb-3">
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400"
+              onClick={() => navigate('/login-form')}
+              className="w-full bg-green-500 text-white py-2 rounded-full text-xs font-semibold shadow-lg transition-all active:scale-95"
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              Log In
             </button>
-          </div>
-          <div className="text-right">
-            <button 
+            
+            <button
               type="button"
-              onClick={() => navigate('/forgot-password')}
-              className="text-base text-red-500 hover:underline"
+              onClick={() => navigate('/register')}
+              className="w-full bg-white border-2 border-green-500 text-green-500 py-2 rounded-full text-xs font-semibold transition-all active:scale-95"
             >
-              Forgotten Password
+              Sign up
             </button>
           </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-green-500 text-white py-3 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-500/70"
-          >
-            {isLoading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
 
-        <div className="w-full max-w-sm space-y-4">
-          <div className="flex items-center justify-center space-x-4">
-            <hr className="flex-1 border-gray-300 dark:border-gray-600" />
-            <span className="text-gray-500 dark:text-gray-400 text-base">Or</span>
-            <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+          <div className="w-full space-y-2 mb-3">
+            <div className="flex items-center justify-center space-x-4">
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+              <span className="text-gray-500 dark:text-gray-400 text-xs">Or</span>
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setError('');
+                  setSuccess('');
+                  setIsLoading(true);
+                  await loginWithGoogle();
+                } catch (e: any) {
+                  console.error('Google login error:', e);
+                  setError(e?.message || 'Google login failed.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-gray-700 dark:text-dark-text py-2 rounded-full text-xs font-medium transition-all active:scale-95 hover:shadow-md disabled:opacity-50"
+            >
+              {isLoading ? (
+                'Connecting...'
+              ) : (
+                <>
+                  <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-3 h-3 mr-2" />
+                  Continue with Google
+                </>
+              )}
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                setError('');
-                setSuccess('');
-                setIsLoading(true);
-                await loginWithGoogle();
-              } catch (e: any) {
-                console.error('Google login error:', e);
-                setError(e?.message || 'Google login failed.');
-              } finally {
-                setIsLoading(false);
-              }
-            }}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center bg-transparent border-2 border-green-500 text-gray-700 dark:text-dark-text py-3 rounded-full text-base font-medium transition-all active:scale-95 hover:shadow-md disabled:opacity-50"
-          >
-            {isLoading ? (
-              'Connecting...'
-            ) : (
-              <>
-                <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-5 h-5 mr-3" />
-                Continue with Google
-              </>
-            )}
-          </button>
+          <p className="text-center text-gray-500 dark:text-gray-400 text-xs">
+            Don't have an account? <span onClick={() => navigate('/register')} className="text-green-500 font-semibold cursor-pointer">Sign up</span>
+          </p>
         </div>
-
-        <p className="text-center text-gray-500 dark:text-gray-400 text-base">
-          Don't have an account? <span onClick={() => navigate('/register')} className="text-green-500 font-semibold cursor-pointer">Sign up</span>
-        </p>
       </div>
     </AnimatedPage>
   );

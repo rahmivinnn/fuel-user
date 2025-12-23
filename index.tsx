@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './src/index.css';
 
-// Register Service Worker for PWA functionality
-if ('serviceWorker' in navigator) {
+// Capacitor imports
+import { Capacitor } from '@capacitor/core';
+
+// Only register service worker for web platform
+if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {

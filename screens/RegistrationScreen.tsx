@@ -21,7 +21,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
                             ? 'bg-green-500 border-green-500 text-white'
                             : 'bg-white border-gray-300 text-gray-400'
                     }`}>
-                        {step}
+                        {index + 1 < currentStep ? <Check size={20} /> : step}
                     </div>
                     {index < steps.length - 1 && (
                         <div className={`flex-1 h-0.5 mx-4 ${
@@ -627,22 +627,6 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
             const data = await response.json();
             
             if (data.success) {
-                const userData = {
-                    id: `user-${Date.now()}`,
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    city: '',
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
-                    vehicles: [{
-                        id: `v-${Date.now()}`,
-                        brand: formData.vehicleBrand,
-                        color: formData.vehicleColor,
-                        licenseNumber: formData.licenseNumber,
-                        fuelType: formData.fuelType
-                    }]
-                };
-                updateUser(userData);
                 onComplete();
             } else {
                 setError(data.error || 'Invalid verification code');
@@ -839,7 +823,6 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
     onBack: () => void;
     onComplete: () => void;
 }) => {
-    const { updateUser } = useAppContext();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -897,22 +880,6 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
             const data = await response.json();
             
             if (data.success) {
-                const userData = {
-                    id: `user-${Date.now()}`,
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    city: '',
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
-                    vehicles: [{
-                        id: `v-${Date.now()}`,
-                        brand: formData.vehicleBrand,
-                        color: formData.vehicleColor,
-                        licenseNumber: formData.licenseNumber,
-                        fuelType: formData.fuelType
-                    }]
-                };
-                updateUser(userData);
                 onComplete();
             } else {
                 setError(data.error || 'Invalid verification code');
