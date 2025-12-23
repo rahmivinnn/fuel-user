@@ -8,6 +8,7 @@ import MobileDebugger from './components/MobileDebugger';
 // Import pages from fuel-user-update structure
 import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import RegistrationScreen from './screens/RegistrationScreen';
 import HomeScreen from './screens/HomeScreen';
 import StationDetailsScreen from './screens/StationDetailsScreen';
@@ -19,6 +20,7 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import PaymentScreen from './screens/PaymentScreen';
 import OrderSummaryScreen from './screens/OrderSummaryScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
 
@@ -81,7 +83,7 @@ const AppNavigator = () => {
     const location = useLocation();
 
     useEffect(() => {
-        const publicRoutes = ['/', '/login', '/register'];
+        const publicRoutes = ['/', '/login', '/register', '/forgot-password'];
         const currentPath = location.pathname;
         
         if (isAuthenticated && publicRoutes.includes(currentPath)) {
@@ -99,6 +101,8 @@ const AppNavigator = () => {
                 <Routes>
                     <Route path="/" element={<SplashScreen />} />
                     <Route path="/login" element={<LoginScreen />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+                    <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
                     <Route path="/register" element={<RegistrationScreen />} />
                     <Route path="/home" element={<HomeScreen />} />
                     <Route path="/station/:id" element={<StationDetailsScreen />} />

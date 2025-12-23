@@ -227,6 +227,40 @@ app.post('/api/otp/verify', async (req, res) => {
 });
 
 // ==========================================
+// PASSWORD RESET ROUTES
+// ==========================================
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password required' });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Check if user exists
+    const user = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+    if (!user.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Update password
+    await db.update(customers)
+      .set({ password: newPassword }) // In production, hash this
+      .where(eq(customers.email, email));
+    
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// ==========================================
 // FUEL STATIONS ROUTES
 // ==========================================
 
@@ -506,6 +540,7 @@ app.listen(PORT, () => {
   console.log(`\n📋 Available endpoints:`);
   console.log(`   POST /api/auth/register`);
   console.log(`   POST /api/auth/login`);
+  console.log(`   POST /api/auth/reset-password`);
   console.log(`   POST /api/otp/whatsapp/send`);
   console.log(`   POST /api/otp/email/send`);
   console.log(`   POST /api/otp/verify`);

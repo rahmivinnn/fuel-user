@@ -10,12 +10,22 @@ import { verificationService } from '../services/verificationService';
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [1, 2, 3];
     return (
-        <div className="flex items-center justify-center w-full my-2">
-            {steps.map((_, index) => (
+        <div className="flex items-center justify-center w-full my-6">
+            {steps.map((step, index) => (
                 <React.Fragment key={index}>
-                    <div className={`w-2 h-2 rounded-full ${index < currentStep ? 'bg-primary' : 'bg-gray-300'}`}></div>
+                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-semibold ${
+                        index + 1 === currentStep 
+                            ? 'bg-green-500 border-green-500 text-white' 
+                            : index + 1 < currentStep
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'bg-white border-gray-300 text-gray-400'
+                    }`}>
+                        {step}
+                    </div>
                     {index < steps.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 ${index < currentStep - 1 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+                        <div className={`flex-1 h-0.5 mx-4 ${
+                            index + 1 < currentStep ? 'bg-green-500' : 'bg-gray-300'
+                        }`} style={{ minWidth: '60px' }}></div>
                     )}
                 </React.Fragment>
             ))}
@@ -133,11 +143,24 @@ const RegistrationScreen = () => {
                     </div>
                 </div>
 
-                <div className="text-center mb-3">
+                <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Registration</h2>
                 </div>
 
-                {step < 4 && <Stepper currentStep={step} />}
+                {step < 4 && (
+                    <>
+                        <Stepper currentStep={step} />
+                        {step === 1 && (
+                            <div className="flex justify-center mb-4">
+                                <div className="w-12 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <svg width="24" height="16" viewBox="0 0 24 16" fill="white">
+                                        <path d="M2 8h16M6 4l4 4-4 4" stroke="white" strokeWidth="2" fill="none"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
 
                 <div className="flex-grow mt-0">
                     {renderStep()}
@@ -157,6 +180,7 @@ interface StepProps {
 
 const Step1 = ({ next, formData, handleChange }: StepProps) => {
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -169,85 +193,95 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
     }
     
     return (
-        <form onSubmit={handleFormSubmit} className="space-y-3">
-            <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Full Name</label>
+        <div className="space-y-4">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
                 <input 
                     name="fullName" 
                     type="text" 
+                    placeholder="Full Name"
                     value={formData.fullName} 
                     onChange={handleChange} 
-                    className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                     required 
                 />
-            </div>
-            
-            <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</label>
+                
                 <input 
                     name="email" 
                     type="email" 
+                    placeholder="Email address"
                     value={formData.email} 
                     onChange={handleChange} 
-                    className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                     required 
                 />
-            </div>
-            
-            <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Phone</label>
+                
                 <input 
                     name="phone" 
                     type="tel" 
+                    placeholder="Phone Number"
                     value={formData.phone} 
                     onChange={handleChange} 
-                    className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
-                    placeholder="e.g. 6289502694005"
+                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                     required 
                 />
-            </div>
-            
-            <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Password</label>
+                
                 <div className="relative">
                     <input 
                         name="password" 
                         type={showPassword ? "text" : "password"} 
+                        placeholder="Password"
                         value={formData.password} 
                         onChange={handleChange} 
-                        className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                        className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                         required 
                     />
                     <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400"
+                        className="absolute inset-y-0 right-0 px-6 flex items-center text-gray-400"
                     >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
-            </div>
-            
-            <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Confirm Password</label>
+                
                 <div className="relative">
                     <input 
-                        type="password" 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder="Confirm Password"
                         value={confirmPassword} 
                         onChange={(e) => setConfirmPassword(e.target.value)} 
-                        className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                        className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                         required 
                     />
+                    <button 
+                        type="button" 
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                        className="absolute inset-y-0 right-0 px-6 flex items-center text-gray-400"
+                    >
+                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                 </div>
+                
+                <button 
+                    type="submit" 
+                    className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
+                >
+                    Next
+                </button>
+            </form>
+            
+            <div className="text-center text-gray-500 text-base mt-6">
+                Or
             </div>
             
             <button 
-                type="submit" 
-                className="w-full bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-primary/70 mobile-btn-md ripple"
+                type="button"
+                className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-gray-700 py-4 rounded-full text-base font-medium transition-all active:scale-95 hover:shadow-md"
             >
-                Next
+                <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-5 h-5 mr-3" />
+                Continue with Google
             </button>
-        </form>
+        </div>
     );
 };
 

@@ -521,12 +521,17 @@ const LoginScreen = () => {
 
   return (
     <AnimatedPage>
-      <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-6 bg-white dark:bg-dark-bg text-light-text dark:text-dark-text space-y-4">
-        <Logo />
+      <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-12 bg-white dark:bg-dark-bg text-light-text dark:text-dark-text space-y-6">
+        {/* Logo and Brand */}
+        <div className="flex flex-col items-center space-y-4">
+          <img 
+            src="/logo-green.png" 
+            alt="FuelFriendly Logo" 
+            className="w-20 h-20"
+          />
+        </div>
 
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-700 dark:text-gray-200 text-center">Sign In</h2>
-
-        {renderAuthMethodSelector()}
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 text-center">Sign In</h2>
 
         {error && (
           <div className="w-full max-w-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
@@ -540,26 +545,59 @@ const LoginScreen = () => {
           </div>
         )}
 
-        {authMethod === 'email-password' && renderEmailPasswordForm()}
-        {authMethod === 'email-otp' && showMobileOTP ? (
-          <MobileOTPForm 
-            onBack={() => {
-              setShowMobileOTP(false);
-              setAuthMethod('email-password');
-            }}
-            onSuccess={handleMobileOTPSuccess}
-            onError={handleMobileOTPError}
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
+          <div className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-center text-base text-gray-600">
+            Customer
+          </div>
+          <input
+            type="email"
+            placeholder="Email or phone number"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400"
+            required
           />
-        ) : (
-          authMethod === 'email-otp' && renderResendEmailOTPForm()
-        )}
-        {authMethod === 'whatsapp-otp' && renderWhatsAppOTPForm()}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+          <div className="text-right">
+            <button 
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-base text-red-500 hover:underline"
+            >
+              Forgotten Password
+            </button>
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-green-500 text-white py-3 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-500/70"
+          >
+            {isLoading ? 'Logging in...' : 'Log In'}
+          </button>
+        </form>
 
-        <div className="w-full max-w-sm space-y-3">
-          <div className="flex items-center justify-center space-x-2">
-            <hr className="w-1/4 border-gray-300 dark:border-gray-600" />
-            <span className="text-gray-500 dark:text-gray-400 text-sm mobile-text-sm">Or</span>
-            <hr className="w-1/4 border-gray-300 dark:border-gray-600" />
+        <div className="w-full max-w-sm space-y-4">
+          <div className="flex items-center justify-center space-x-4">
+            <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+            <span className="text-gray-500 dark:text-gray-400 text-base">Or</span>
+            <hr className="flex-1 border-gray-300 dark:border-gray-600" />
           </div>
 
           <button
@@ -578,21 +616,21 @@ const LoginScreen = () => {
               }
             }}
             disabled={isLoading}
-            className="w-full flex items-center justify-center bg-transparent border-2 border-primary text-light-text dark:text-dark-text py-2.5 rounded-full text-base font-semibold transition-all active:scale-95 hover:shadow-md mobile-btn-md disabled:opacity-50 ripple"
+            className="w-full flex items-center justify-center bg-transparent border-2 border-green-500 text-gray-700 dark:text-dark-text py-3 rounded-full text-base font-medium transition-all active:scale-95 hover:shadow-md disabled:opacity-50"
           >
-            {isLoading && authMethod === 'email-password' ? (
+            {isLoading ? (
               'Connecting...'
             ) : (
               <>
-                <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-4 h-4 mr-2" />
+                <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-5 h-5 mr-3" />
                 Continue with Google
               </>
             )}
           </button>
         </div>
 
-        <p className="text-center text-gray-500 dark:text-gray-400 text-sm mobile-text-sm">
-          Don't have an account? <span onClick={() => navigate('/register')} className="text-primary font-semibold cursor-pointer mobile-text-sm">Sign up</span>
+        <p className="text-center text-gray-500 dark:text-gray-400 text-base">
+          Don't have an account? <span onClick={() => navigate('/register')} className="text-green-500 font-semibold cursor-pointer">Sign up</span>
         </p>
       </div>
     </AnimatedPage>

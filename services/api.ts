@@ -93,6 +93,11 @@ export const apiVerifyOTP = async (identifier: string, otp: string) => {
   return data;
 };
 
+export const apiResetPassword = async (email: string, newPassword: string) => {
+  const { data } = await api.post('/api/auth/reset-password', { email, newPassword });
+  return data;
+};
+
 // ==========================================
 // ORDERS
 // ==========================================
