@@ -9,8 +9,10 @@ class WhatsAppService {
     this.sock = null
     this.isConnected = false
     this.sessionPath = path.join(process.cwd(), 'server', 'wa-session')
+    this.lockFile = path.join(process.cwd(), 'server', 'wa-lock')
     this.retryCount = 0
     this.maxRetries = 3
+    this.isInitializing = false
   }
 
   async clearSession() {
@@ -23,8 +25,61 @@ class WhatsAppService {
     }
   }
 
-  async initialize() {
+  async checkLock() {
     try {
+      const lockExists = await fs.access(this.lockFile).then(() => true).catch(() => false)
+      if (lockExists) {
+        const lockContent = await fs.readFile(this.lockFile, 'utf8')
+        const lockData = JSON.parse(lockContent)
+        const lockAge = Date.now() - lockData.timestamp
+        
+        // If lock is older than 2 minutes, consider it stale
+        if (lockAge > 120000) {
+          await fs.unlink(this.lockFile)
+          return false
+        }
+        return true
+      }
+      return false
+    } catch (error) {
+      return false
+    }
+  }
+
+  async createLock() {
+    const lockData = {
+      pid: process.pid,
+      timestamp: Date.now()
+    }
+    await fs.writeFile(this.lockFile, JSON.stringify(lockData))
+  }
+
+  async removeLock() {
+    try {
+      await fs.unlink(this.lockFile)
+    } catch (error) {
+      // Lock file doesn't exist, ignore
+    }
+  }
+
+  async initialize() {
+    if (this.isInitializing) {
+      console.log('⚠️ WhatsApp initialization already in progress')
+      return
+    }
+
+    // Check if another instance is running
+    const isLocked = await this.checkLock()
+    if (isLocked) {
+      console.log('⚠️ Another WhatsApp instance is running, skipping initialization')
+      return
+    }
+
+    this.isInitializing = true
+    
+    try {
+      await this.createLock()
+      
       // Ensure session directory exists
       await fs.mkdir(this.sessionPath, { recursive: true })
       
@@ -78,7 +133,10 @@ class WhatsAppService {
         
         if (connection === 'close') {
           this.isConnected = false
+          this.isInitializing = false
           this.updateStatus()
+          await this.removeLock()
+          
           const shouldReconnect = (lastDisconnect?.error instanceof Boom) 
             ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
             : true
@@ -87,10 +145,10 @@ class WhatsAppService {
           
           if (shouldReconnect && this.retryCount < this.maxRetries) {
             this.retryCount++
-            console.log(`🔄 Attempting to reconnect (${this.retryCount}/${this.maxRetries}) in 10 seconds...`)
+            console.log(`🔄 Attempting to reconnect (${this.retryCount}/${this.maxRetries}) in 15 seconds...`)
             setTimeout(() => {
               this.initialize()
-            }, 10000)
+            }, 15000)
           } else {
             console.log('🚫 Max retries reached or logged out')
             this.retryCount = 0
@@ -99,6 +157,7 @@ class WhatsAppService {
           console.log('✅ WhatsApp connected successfully!')
           console.log('🎉 Ready to send OTP messages!')
           this.isConnected = true
+          this.isInitializing = false
           this.retryCount = 0
           this.updateStatus()
         }
@@ -108,11 +167,14 @@ class WhatsAppService {
       
     } catch (error) {
       console.error('❌ WhatsApp initialization error:', error)
-      // Retry after 10 seconds
+      this.isInitializing = false
+      await this.removeLock()
+      
+      // Retry after 15 seconds
       setTimeout(() => {
         console.log('🔄 Retrying WhatsApp initialization...')
         this.initialize()
-      }, 10000)
+      }, 15000)
     }
   }
 
@@ -198,6 +260,7 @@ class WhatsAppService {
       await this.sock.logout()
       this.isConnected = false
     }
+    await this.removeLock()
   }
 }
 

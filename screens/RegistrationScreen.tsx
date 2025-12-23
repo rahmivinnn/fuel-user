@@ -134,9 +134,9 @@ const RegistrationScreen = () => {
                     onComplete={() => setStep(9)}
                 />;
             case 8:
-                return <VerificationSuccess type="email" />;
+                return <VerificationSuccess type="email" formData={formData} />;
             case 9:
-                return <VerificationSuccess type="whatsapp" />;
+                return <VerificationSuccess type="whatsapp" formData={formData} />;
             default:
                 return <Step1 next={handleNext} formData={formData} handleChange={handleChange} />;
         }

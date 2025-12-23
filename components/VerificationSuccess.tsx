@@ -2,9 +2,33 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check } from 'lucide-react';
 import AnimatedPage from './AnimatedPage';
+import { useAppContext } from '../App';
 
-const VerificationSuccess = ({ type = 'email' }: { type?: 'email' | 'whatsapp' }) => {
+const VerificationSuccess = ({ type = 'email', formData }: { type?: 'email' | 'whatsapp'; formData?: any }) => {
   const navigate = useNavigate();
+  const { updateUser } = useAppContext();
+
+  const handleGoToHome = () => {
+    if (formData) {
+      const userData = {
+        id: `user-${Date.now()}`,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        city: '',
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
+        vehicles: [{
+          id: `v-${Date.now()}`,
+          brand: formData.vehicleBrand,
+          color: formData.vehicleColor,
+          licenseNumber: formData.licenseNumber,
+          fuelType: formData.fuelType
+        }]
+      };
+      updateUser(userData);
+    }
+    navigate('/home');
+  };
 
   return (
     <AnimatedPage>
@@ -12,7 +36,7 @@ const VerificationSuccess = ({ type = 'email' }: { type?: 'email' | 'whatsapp' }
         {/* Back Button */}
         <div className="flex items-center p-4">
           <button
-            onClick={() => navigate('/home')}
+            onClick={handleGoToHome}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <ArrowLeft size={24} className="text-gray-600" />
@@ -42,7 +66,7 @@ const VerificationSuccess = ({ type = 'email' }: { type?: 'email' | 'whatsapp' }
 
           {/* Go to Home Button */}
           <button
-            onClick={() => navigate('/home')}
+            onClick={handleGoToHome}
             className="w-full max-w-sm bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl"
           >
             Go to Home
