@@ -110,21 +110,21 @@ class WhatsAppService {
         maxMsgRetryCount: 5
       })
 
-      this.sock.ev.on('connection.update', (update) => {
+      this.sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
         
         if (qr) {
           console.log('\n📱 SCAN QR CODE INI DENGAN WHATSAPP:')
-          console.log('=' .repeat(60))
+          console.log('='.repeat(60))
           qrcode.generate(qr, { small: true })
-          console.log('=' .repeat(60))
+          console.log('='.repeat(60))
           console.log('📱 Langkah-langkah:')
           console.log('1. Buka WhatsApp di ponsel')
           console.log('2. Tap menu (3 titik) > Perangkat Tertaut')
           console.log('3. Tap "Tautkan Perangkat"')
           console.log('4. Scan QR code di atas')
           console.log('5. Tunggu pesan "WhatsApp connected successfully!"')
-          console.log('=' .repeat(60))
+          console.log('='.repeat(60))
         }
         
         if (connection === 'connecting') {
