@@ -338,6 +338,27 @@ app.post('/api/orders', async (req, res) => {
       paymentMethod: orderData.paymentMethod || 'credit_card'
     }).returning();
     
+    // 🔔 Notify fuel-agent drivers about new order
+    try {
+      const fuelAgentUrl = process.env.FUEL_AGENT_URL || 'https://api.kelolahrd.life';
+      await fetch(`${fuelAgentUrl}/api/notifications/new-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: newOrder.id,
+          trackingNumber: newOrder.trackingNumber,
+          message: `New ${orderData.fuelType || 'fuel'} delivery order`,
+          customerAddress: orderData.deliveryAddress,
+          fuelType: orderData.fuelType || 'Regular',
+          totalAmount: orderData.totalAmount
+        })
+      });
+      console.log('✅ Notified fuel-agent drivers about new order:', trackingNumber);
+    } catch (notifyError) {
+      console.warn('⚠️ Failed to notify fuel-agent:', notifyError.message);
+      // Don't fail the order creation if notification fails
+    }
+    
     res.status(201).json({ success: true, order: newOrder, trackingId: trackingNumber });
   } catch (error) {
     console.error('Order creation error:', error);
