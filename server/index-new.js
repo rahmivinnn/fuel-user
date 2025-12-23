@@ -129,20 +129,38 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
       type: 'whatsapp'
     });
     
+    // Check WhatsApp connection status
+    if (!whatsappService.isConnected) {
+      console.log(`📱 WhatsApp not connected, using fallback for ${phoneNumber}`);
+      console.log(`📱 WhatsApp OTP (fallback): ${otp} for ${phoneNumber}`);
+      
+      return res.json({ 
+        success: true, 
+        message: 'OTP generated (WhatsApp service connecting)',
+        fallback: true
+      });
+    }
+    
     // Send via WhatsApp using Baileys
     try {
       await whatsappService.sendOTP(phoneNumber, otp);
       console.log(`📱 WhatsApp OTP sent to ${phoneNumber}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'OTP sent via WhatsApp'
+      });
     } catch (whatsappError) {
       console.error('❌ WhatsApp send error:', whatsappError);
       // Fallback: just log the OTP for development
       console.log(`📱 WhatsApp OTP (fallback): ${otp} for ${phoneNumber}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'OTP generated (WhatsApp delivery failed)',
+        fallback: true
+      });
     }
-    
-    res.json({ 
-      success: true, 
-      message: 'OTP sent via WhatsApp'
-    });
   } catch (error) {
     console.error('WhatsApp OTP error:', error);
     res.status(500).json({ error: 'Failed to send WhatsApp OTP' });
