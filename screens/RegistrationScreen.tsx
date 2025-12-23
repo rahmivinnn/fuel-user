@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Eye, EyeOff, Mail, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../App';
@@ -486,8 +486,7 @@ const EmailVerificationStep = ({ formData, onBack, onNext, onTryAnotherWay }: {
         setError('');
         
         try {
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/email/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -614,8 +613,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
         
         try {
             const otpCode = otp.join('');
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -662,8 +660,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
         setError('');
         
         try {
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/email/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -759,8 +756,7 @@ const WhatsAppVerificationStep = ({ formData, onBack, onNext }: {
         setError('');
         
         try {
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/whatsapp/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -887,8 +883,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
         
         try {
             const otpCode = otp.join('');
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -935,8 +930,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
         setError('');
         
         try {
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/whatsapp/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

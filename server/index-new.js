@@ -7,6 +7,7 @@ import { eq, sql } from 'drizzle-orm';
 import axios from 'axios';
 import nodemailer from 'nodemailer';
 import Stripe from 'stripe';
+import whatsappService from './whatsapp-service.js';
 
 dotenv.config({ path: '.env.local' });
 
@@ -20,12 +21,13 @@ app.use(express.json());
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
-// Email transporter - Use Resend instead of SendGrid
+// Email transporter - Use SendGrid
 let emailService = null;
-if (process.env.RESEND_API_KEY) {
-  const { Resend } = await import('resend');
-  emailService = new Resend(process.env.RESEND_API_KEY);
-  console.log('✅ Resend email service initialized');
+if (process.env.SENDGRID_API_KEY) {
+  const sgMail = await import('@sendgrid/mail');
+  sgMail.default.setApiKey(process.env.SENDGRID_API_KEY);
+  emailService = sgMail.default;
+  console.log('✅ SendGrid email service initialized');
 } else {
   console.log('⚠️ No email service configured');
 }
@@ -127,13 +129,19 @@ app.post('/api/otp/whatsapp/send', async (req, res) => {
       type: 'whatsapp'
     });
     
-    // In production, integrate with WhatsApp Business API
-    console.log(`📱 WhatsApp OTP: ${otp} for ${phoneNumber}`);
+    // Send via WhatsApp using Baileys
+    try {
+      await whatsappService.sendOTP(phoneNumber, otp);
+      console.log(`📱 WhatsApp OTP sent to ${phoneNumber}`);
+    } catch (whatsappError) {
+      console.error('❌ WhatsApp send error:', whatsappError);
+      // Fallback: just log the OTP for development
+      console.log(`📱 WhatsApp OTP (fallback): ${otp} for ${phoneNumber}`);
+    }
     
     res.json({ 
       success: true, 
-      message: 'OTP sent via WhatsApp',
-      developmentCode: otp // Remove in production
+      message: 'OTP sent via WhatsApp'
     });
   } catch (error) {
     console.error('WhatsApp OTP error:', error);
@@ -157,12 +165,12 @@ app.post('/api/otp/email/send', async (req, res) => {
       type: 'email'
     });
     
-    // Send email using Resend
+    // Send email using SendGrid
     if (emailService) {
       try {
-        const result = await emailService.emails.send({
-          from: 'FuelFriendly <noreply@fuelfriendly.com>',
+        const msg = {
           to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@fuelfriendly.com',
           subject: 'FuelFriendly Verification Code',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -174,10 +182,11 @@ app.post('/api/otp/email/send', async (req, res) => {
               <p>This code will expire in 5 minutes.</p>
             </div>
           `
-        });
-        console.log(`📧 Email OTP sent to ${email} via Resend`);
+        };
+        await emailService.send(msg);
+        console.log(`📧 Email OTP sent to ${email} via SendGrid`);
       } catch (emailError) {
-        console.error('❌ Resend email error:', emailError);
+        console.error('❌ SendGrid email error:', emailError);
       }
     } else {
       console.log(`📧 Email OTP: ${otp} for ${email} (no email service configured)`);
@@ -185,8 +194,7 @@ app.post('/api/otp/email/send', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'OTP sent to email',
-      developmentCode: otp // Remove in production
+      message: 'OTP sent to email'
     });
   } catch (error) {
     console.error('Email OTP error:', error);
@@ -533,10 +541,19 @@ app.post('/api/seed', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 FuelFriendly Production Server running on port ${PORT}`);
   console.log(`📊 Database: PostgreSQL`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  
+  // Initialize WhatsApp service
+  console.log('🔄 Initializing WhatsApp service...');
+  try {
+    await whatsappService.initialize();
+  } catch (error) {
+    console.error('❌ WhatsApp initialization failed:', error);
+  }
+  
   console.log(`\n📋 Available endpoints:`);
   console.log(`   POST /api/auth/register`);
   console.log(`   POST /api/auth/login`);
