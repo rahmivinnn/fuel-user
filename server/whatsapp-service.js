@@ -87,11 +87,7 @@ class WhatsAppService {
     try {
       await this.createLock()
       
-      // Clear any existing session to force QR code
-      console.log('🧹 Clearing existing session for fresh start...')
-      await this.clearSession()
-      
-      // Ensure session directory exists
+      // Ensure session directory exists first
       await fs.mkdir(this.sessionPath, { recursive: true })
       
       const { state, saveCreds } = await useMultiFileAuthState(this.sessionPath)
