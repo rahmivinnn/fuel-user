@@ -5,6 +5,7 @@ import { useAppContext } from '../App';
 import { apiRegister, apiLogin } from '../services/api';
 import Logo from '../components/Logo';
 import AnimatedPage from '../components/AnimatedPage';
+import VerificationSuccess from '../components/VerificationSuccess';
 import { verificationService } from '../services/verificationService';
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
@@ -108,18 +109,34 @@ const RegistrationScreen = () => {
             case 3:
                 return <Step3 createAccount={createAccount} editDetails={() => setStep(1)} formData={formData} loading={loading} error={error} />;
             case 4:
-                return <VerificationStep 
+                return <EmailVerificationStep 
                     formData={formData} 
-                    onSelectMethod={setVerificationMethod} 
-                    selectedMethod={verificationMethod}
+                    onBack={handleBack}
                     onNext={() => setStep(5)}
+                    onTryAnotherWay={() => setStep(6)}
                 />;
             case 5:
-                return <VerificationProcess 
-                    method={verificationMethod} 
+                return <EmailOTPVerification 
                     formData={formData} 
-                    onComplete={() => navigate('/home')}
+                    onBack={() => setStep(4)}
+                    onComplete={() => setStep(8)}
                 />;
+            case 6:
+                return <WhatsAppVerificationStep 
+                    formData={formData} 
+                    onBack={() => setStep(4)}
+                    onNext={() => setStep(7)}
+                />;
+            case 7:
+                return <WhatsAppOTPVerification 
+                    formData={formData} 
+                    onBack={() => setStep(6)}
+                    onComplete={() => setStep(9)}
+                />;
+            case 8:
+                return <VerificationSuccess type="email" />;
+            case 9:
+                return <VerificationSuccess type="whatsapp" />;
             default:
                 return <Step1 next={handleNext} formData={formData} handleChange={handleChange} />;
         }
@@ -137,8 +154,8 @@ const RegistrationScreen = () => {
                     </button>
                 </header>
                 
-                <div className="flex flex-col items-center -mt-10 mb-0">
-                    <div className="w-20 h-20 mb-2">
+                <div className="flex flex-col items-center mb-4">
+                    <div className="w-32 h-32 mb-4">
                         <Logo />
                     </div>
                 </div>
@@ -152,11 +169,38 @@ const RegistrationScreen = () => {
                         <Stepper currentStep={step} />
                         {step === 1 && (
                             <div className="flex justify-center mb-4">
-                                <div className="w-12 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                                    <svg width="24" height="16" viewBox="0 0 24 16" fill="white">
-                                        <path d="M2 8h16M6 4l4 4-4 4" stroke="white" strokeWidth="2" fill="none"/>
-                                    </svg>
-                                </div>
+                                <img 
+                                    src="/car.png" 
+                                    alt="Car icon" 
+                                    className="w-12 h-8"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="flex justify-center mb-4">
+                                <img 
+                                    src="/car.png" 
+                                    alt="Car icon" 
+                                    className="w-12 h-8"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="flex justify-center mb-4">
+                                <img 
+                                    src="/car.png" 
+                                    alt="Car icon" 
+                                    className="w-12 h-8"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
                             </div>
                         )}
                     </>
@@ -286,203 +330,253 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
 };
 
 const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
-    <form onSubmit={(e) => { e.preventDefault(); next(); }} className="space-y-3">
-        <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Vehicle Brand</label>
+    <div className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); next(); }} className="space-y-4">
             <input 
                 name="vehicleBrand" 
                 type="text" 
+                placeholder="Vehicle Brand"
                 value={formData.vehicleBrand} 
                 onChange={handleChange} 
-                className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                 required 
             />
-        </div>
-        
-        <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Vehicle Color</label>
+            
             <input 
                 name="vehicleColor" 
                 type="text" 
+                placeholder="Vehicle Color"
                 value={formData.vehicleColor} 
                 onChange={handleChange} 
-                className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                 required 
             />
-        </div>
-        
-        <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">License Number</label>
+            
             <input 
                 name="licenseNumber" 
                 type="text" 
+                placeholder="License Number"
                 value={formData.licenseNumber} 
                 onChange={handleChange} 
-                className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm" 
+                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
                 required 
             />
-        </div>
-        
-        <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Fuel Type</label>
-            <select 
-                name="fuelType" 
-                value={formData.fuelType} 
-                onChange={handleChange} 
-                className="w-full px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary text-sm mobile-text-sm"
-            >
-                <option value="Petrol">Petrol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Electric">Electric</option>
-                <option value="Hybrid">Hybrid</option>
-            </select>
-        </div>
-        
-        <div className="flex space-x-2">
+            
+            <div className="relative">
+                <select 
+                    name="fuelType" 
+                    value={formData.fuelType} 
+                    onChange={handleChange} 
+                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base appearance-none"
+                >
+                    <option value="" disabled>Fuel type</option>
+                    <option value="Petrol">Petrol</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Electric">Electric</option>
+                    <option value="Hybrid">Hybrid</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            
             <button 
-                type="button" 
-                onClick={back} 
-                className="flex-1 bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-gray-300 py-2.5 rounded-full text-base font-semibold shadow transition-all active:scale-95 hover:shadow-md mobile-btn-md ripple"
+                type="button"
+                className="w-full flex items-center justify-center px-6 py-4 rounded-full border border-gray-300 bg-white text-green-500 text-base font-medium transition-all active:scale-95 hover:shadow-md"
             >
-                Back
+                <span className="text-2xl mr-3">+</span>
+                Add Vehicle
             </button>
+            
             <button 
                 type="submit" 
-                className="flex-1 bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-primary/70 mobile-btn-md ripple"
+                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
             >
                 Next
             </button>
-        </div>
-    </form>
+        </form>
+    </div>
 );
 
 const Step3 = ({ createAccount, editDetails, formData, loading, error }: { createAccount: () => void; editDetails: () => void; formData: any; loading: boolean; error?: string }) => (
-    <div className="space-y-4">
+    <div className="space-y-6">
         {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                 <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
             </div>
         )}
         
-        <div className="bg-light-card dark:bg-dark-card rounded-2xl p-4">
-            <h3 className="font-bold mb-2">Account Details</h3>
-            <div className="space-y-1 text-sm">
-                <p><span className="text-gray-500">Name:</span> {formData.fullName}</p>
-                <p><span className="text-gray-500">Email:</span> {formData.email}</p>
-                <p><span className="text-gray-500">Phone:</span> {formData.phone}</p>
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Name</span>
+                    <span className="text-gray-800 font-medium">{formData.fullName}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Emai Address</span>
+                    <span className="text-gray-800 font-medium">{formData.email}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Phone No.</span>
+                    <span className="text-gray-800 font-medium">{formData.phone}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Password</span>
+                    <span className="text-gray-800 font-medium">••••••••</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Vehicle Brand</span>
+                    <span className="text-gray-800 font-medium">{formData.vehicleBrand}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">Vehicle color</span>
+                    <span className="text-gray-800 font-medium">{formData.vehicleColor}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b border-dotted border-gray-300">
+                    <span className="text-gray-600 font-medium">License Number</span>
+                    <span className="text-gray-800 font-medium">{formData.licenseNumber}</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-600 font-medium">Fuel Type</span>
+                    <span className="text-gray-800 font-medium">{formData.fuelType}</span>
+                </div>
             </div>
         </div>
         
-        <div className="bg-light-card dark:bg-dark-card rounded-2xl p-4">
-            <h3 className="font-bold mb-2">Vehicle Details</h3>
-            <div className="space-y-1 text-sm">
-                <p><span className="text-gray-500">Brand:</span> {formData.vehicleBrand}</p>
-                <p><span className="text-gray-500">Color:</span> {formData.vehicleColor}</p>
-                <p><span className="text-gray-500">License:</span> {formData.licenseNumber}</p>
-                <p><span className="text-gray-500">Fuel Type:</span> {formData.fuelType}</p>
-            </div>
-        </div>
+        <button 
+            onClick={createAccount} 
+            disabled={loading}
+            className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+        >
+            {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
         
-        <div className="flex space-x-2">
+        <div className="text-center">
             <button 
                 onClick={editDetails} 
-                className="flex-1 bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-gray-300 py-2.5 rounded-full text-base font-semibold shadow transition-all active:scale-95 hover:shadow-md mobile-btn-md ripple"
+                className="text-green-500 font-semibold text-base underline hover:no-underline"
             >
-                Edit
-            </button>
-            <button 
-                onClick={createAccount} 
-                disabled={loading}
-                className="flex-1 bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-primary/70 mobile-btn-md ripple"
-            >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                Edit Details
             </button>
         </div>
     </div>
 );
 
-const VerificationStep = ({ formData, onSelectMethod, selectedMethod, onNext }: { 
+const EmailVerificationStep = ({ formData, onBack, onNext, onTryAnotherWay }: { 
     formData: any; 
-    onSelectMethod: (method: 'sms' | 'email') => void; 
-    selectedMethod: 'sms' | 'email' | null;
+    onBack: () => void;
     onNext: () => void;
-}) => (
-    <div className="space-y-4">
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            How would you like to verify your account?
-        </p>
-        
-        <div className="space-y-3">
-            <button
-                onClick={() => onSelectMethod('sms')}
-                className={`w-full flex items-center p-4 rounded-2xl border transition-all ${
-                    selectedMethod === 'sms' 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-gray-300 dark:border-gray-600 bg-light-card dark:bg-dark-card'
-                }`}
-            >
-                <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
-                    selectedMethod === 'sms' ? 'border-primary bg-primary' : 'border-gray-300 dark:border-gray-600'
-                }`}>
-                    {selectedMethod === 'sms' && <Check size={16} className="text-white" />}
-                </div>
-                <div className="text-left">
-                    <p className="font-semibold">WhatsApp</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Send code to {formData.phone}</p>
-                </div>
-            </button>
-            
-            <button
-                onClick={() => onSelectMethod('email')}
-                className={`w-full flex items-center p-4 rounded-2xl border transition-all ${
-                    selectedMethod === 'email' 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-gray-300 dark:border-gray-600 bg-light-card dark:bg-dark-card'
-                }`}
-            >
-                <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
-                    selectedMethod === 'email' ? 'border-primary bg-primary' : 'border-gray-300 dark:border-gray-600'
-                }`}>
-                    {selectedMethod === 'email' && <Check size={16} className="text-white" />}
-                </div>
-                <div className="text-left">
-                    <p className="font-semibold">Email</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Send code to {formData.email}</p>
-                </div>
-            </button>
-        </div>
-        
-        <button
-            onClick={onNext}
-            disabled={!selectedMethod}
-            className="w-full bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-primary/70 mobile-btn-md ripple"
-        >
-            Continue
-        </button>
-    </div>
-);
+    onTryAnotherWay: () => void;
+}) => {
+    const [email, setEmail] = useState(formData.email);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-const VerificationProcess = ({ method, formData, onComplete }: { 
-    method: 'sms' | 'email' | null; 
+    const handleSendCode = async () => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                onNext();
+            } else {
+                setError(data.error || 'Failed to send email OTP');
+            }
+        } catch (err) {
+            setError('Failed to send email OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* Email Icon */}
+            <div className="flex justify-center">
+                <div className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center">
+                    <Mail size={48} className="text-green-500" />
+                </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                Email Verification
+            </h2>
+
+            {/* Description */}
+            <p className="text-base text-gray-600 text-center">
+                Enter your email address to receive verification code
+            </p>
+
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
+                </div>
+            )}
+
+            {/* Email Input */}
+            <input 
+                type="email" 
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+            />
+
+            {/* Send Code Button */}
+            <button 
+                onClick={handleSendCode}
+                disabled={loading || !email}
+                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+            >
+                {loading ? 'Sending...' : 'Send Code'}
+            </button>
+
+            {/* Try Another Way */}
+            <div className="text-center">
+                <button 
+                    onClick={onTryAnotherWay}
+                    className="text-gray-600 text-base hover:underline"
+                >
+                    Try another way
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const EmailOTPVerification = ({ formData, onBack, onComplete }: { 
     formData: any;
+    onBack: () => void;
     onComplete: () => void;
 }) => {
     const { updateUser } = useAppContext();
-    const [otp, setOtp] = useState('');
-    const [timer, setTimer] = useState(60);
-    const [canResend, setCanResend] = useState(false);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [otpSent, setOtpSent] = useState(false);
-    const hasSentRef = React.useRef(false);
-
-    useEffect(() => {
-        if (!hasSentRef.current) {
-            hasSentRef.current = true;
-            sendOTP();
-        }
-    }, []);
+    const [timer, setTimer] = useState(60);
+    const [canResend, setCanResend] = useState(false);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
         if (timer > 0) {
@@ -495,108 +589,47 @@ const VerificationProcess = ({ method, formData, onComplete }: {
         }
     }, [timer]);
 
-    const sendOTP = async () => {
-        try {
-            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-            
-            if (method === 'email') {
-                const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email: formData.email })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    setOtpSent(true);
-                    setSuccess(data.message || 'OTP sent to your email!');
-                } else {
-                    setError(data.error || 'Failed to send email OTP');
-                }
-            } else {
-                // WhatsApp method
-                const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ phoneNumber: formData.phone })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    setOtpSent(true);
-                    setSuccess(data.message || 'OTP sent via WhatsApp!');
-                } else {
-                    setError(data.error || 'Failed to send WhatsApp OTP');
-                }
-            }
-        } catch (err) {
-            setError('Failed to send OTP');
-        } finally {
-            setOtpSent(true);
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length > 1) return;
+        
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        // Auto focus next input
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
         }
     };
 
     const handleVerify = async () => {
         setLoading(true);
         setError('');
-        setSuccess('');
         
         try {
-            let verified = false;
-            let userData = null;
-
-            if (method === 'email') {
-                const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-                const response = await fetch(`${API_BASE_URL}/api/otp/email/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        email: formData.email, 
-                        otp: otp 
-                    })
-                });
-                
-                const data = await response.json();
-                verified = data.success;
-                
-                if (!verified) {
-                    setError(data.error || 'Invalid verification code');
-                    return;
-                }
-            } else {
-                // WhatsApp method - use backend API
-                const API_BASE_URL = 'https://apidecor.kelolahrd.life';
-                const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        phoneNumber: formData.phone, 
-                        otp: otp 
-                    })
-                });
-                
-                const data = await response.json();
-                verified = data.success;
-                
-                if (!verified) {
-                    setError(data.error || 'Invalid verification code');
-                    return;
-                }
-            }
-
-            if (verified) {
-                setSuccess('Account verified successfully!');
-                userData = {
+            const otpCode = otp.join('');
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    identifier: formData.email, 
+                    otp: otpCode 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const userData = {
                     id: `user-${Date.now()}`,
                     fullName: formData.fullName,
                     email: formData.email,
@@ -612,12 +645,9 @@ const VerificationProcess = ({ method, formData, onComplete }: {
                     }]
                 };
                 updateUser(userData);
-                
-                // Complete registration with welcome message
-                const emailKey = method === 'email' ? formData.email : `${formData.phone}@whatsapp.register`;
-                await verificationService.completeRegistration(emailKey);
-                
-                setTimeout(onComplete, 1500);
+                onComplete();
+            } else {
+                setError(data.error || 'Invalid verification code');
             }
         } catch (err) {
             setError('Verification failed');
@@ -629,57 +659,360 @@ const VerificationProcess = ({ method, formData, onComplete }: {
     const handleResend = async () => {
         setTimer(60);
         setCanResend(false);
-        setOtpSent(false);
-        setTimeout(() => sendOTP(), 500);
+        setError('');
+        
+        try {
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/email/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: formData.email })
+            });
+        } catch (err) {
+            // Handle error silently
+        }
     };
 
     return (
-        <div className="space-y-4">
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Enter the 6-digit code sent to your {method === 'sms' ? 'WhatsApp' : 'email'}
+        <div className="space-y-8">
+            {/* Email Icon */}
+            <div className="flex justify-center">
+                <div className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center">
+                    <Mail size={48} className="text-green-500" />
+                </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                Verify code
+            </h2>
+
+            {/* Description */}
+            <p className="text-base text-gray-600 text-center">
+                Enter four-digits verification code sent to {formData.email}
             </p>
-            
-            <div className="relative">
-                <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="w-full pl-10 pr-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary text-sm mobile-text-sm text-center tracking-widest text-lg font-semibold"
-                    maxLength={6}
-                    required
-                />
+
+            {/* OTP Input Boxes */}
+            <div className="flex justify-center space-x-3">
+                {otp.map((digit, index) => (
+                    <input
+                        key={index}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        className="w-16 h-16 text-center text-xl font-semibold border-2 border-green-300 rounded-2xl focus:outline-none focus:border-green-500 bg-white"
+                    />
+                ))}
             </div>
             
             {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
-                    <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
-                </div>
-            )}
-            
-            {success && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
-                    <p className="text-green-600 dark:text-green-400 text-sm text-center">{success}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
                 </div>
             )}
             
             <button
                 onClick={handleVerify}
-                disabled={loading || otp.length !== 6}
-                className="w-full bg-primary text-white py-2.5 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-primary/70 mobile-btn-md ripple"
+                disabled={loading || otp.some(digit => !digit)}
+                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
             >
                 {loading ? 'Verifying...' : 'Verify'}
             </button>
-            
-            <div className="flex justify-between items-center">
+
+            {/* Resend Section */}
+            <div className="text-center space-y-2">
+                <p className="text-gray-600">
+                    Haven't received the verification code?
+                </p>
                 <button
                     onClick={handleResend}
-                    disabled={!canResend}
-                    className="text-primary text-sm font-semibold hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+                    disabled={!canResend || loading}
+                    className="text-green-500 font-semibold hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
-                    {canResend ? 'Resend Code' : `Resend in ${timer}s`}
+                    {canResend ? 'Resend' : 'Resend'}
                 </button>
+                {!canResend && (
+                    <p className="text-gray-500 text-sm">{timer}s</p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const WhatsAppVerificationStep = ({ formData, onBack, onNext }: { 
+    formData: any; 
+    onBack: () => void;
+    onNext: () => void;
+}) => {
+    const [phone, setPhone] = useState(formData.phone);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSendCode = async () => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phoneNumber: phone })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                onNext();
+            } else {
+                setError(data.error || 'Failed to send WhatsApp OTP');
+            }
+        } catch (err) {
+            setError('Failed to send WhatsApp OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* WhatsApp Icon */}
+            <div className="flex justify-center">
+                <div className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center">
+                    <MessageSquare size={48} className="text-green-500" />
+                </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                WhatsApp Verification
+            </h2>
+
+            {/* Description */}
+            <p className="text-base text-gray-600 text-center">
+                Enter your phone number to receive verification code via WhatsApp
+            </p>
+
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
+                </div>
+            )}
+
+            {/* Phone Input */}
+            <input 
+                type="tel" 
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+            />
+
+            {/* Send Code Button */}
+            <button 
+                onClick={handleSendCode}
+                disabled={loading || !phone}
+                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+            >
+                {loading ? 'Sending...' : 'Send Code'}
+            </button>
+
+            {/* Back to Email */}
+            <div className="text-center">
+                <button 
+                    onClick={onBack}
+                    className="text-gray-600 text-base hover:underline"
+                >
+                    Back to Email
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: { 
+    formData: any;
+    onBack: () => void;
+    onComplete: () => void;
+}) => {
+    const { updateUser } = useAppContext();
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [timer, setTimer] = useState(60);
+    const [canResend, setCanResend] = useState(false);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    useEffect(() => {
+        if (timer > 0) {
+            const interval = setInterval(() => {
+                setTimer(t => t - 1);
+            }, 1000);
+            return () => clearInterval(interval);
+        } else {
+            setCanResend(true);
+        }
+    }, [timer]);
+
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length > 1) return;
+        
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        // Auto focus next input
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleVerify = async () => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            const otpCode = otp.join('');
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    identifier: formData.phone, 
+                    otp: otpCode 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const userData = {
+                    id: `user-${Date.now()}`,
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    city: '',
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
+                    vehicles: [{
+                        id: `v-${Date.now()}`,
+                        brand: formData.vehicleBrand,
+                        color: formData.vehicleColor,
+                        licenseNumber: formData.licenseNumber,
+                        fuelType: formData.fuelType
+                    }]
+                };
+                updateUser(userData);
+                onComplete();
+            } else {
+                setError(data.error || 'Invalid verification code');
+            }
+        } catch (err) {
+            setError('Verification failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        setTimer(60);
+        setCanResend(false);
+        setError('');
+        
+        try {
+            const API_BASE_URL = 'https://apidecor.kelolahrd.life';
+            const response = await fetch(`${API_BASE_URL}/api/otp/whatsapp/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phoneNumber: formData.phone })
+            });
+        } catch (err) {
+            // Handle error silently
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* WhatsApp Icon */}
+            <div className="flex justify-center">
+                <div className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center">
+                    <MessageSquare size={48} className="text-green-500" />
+                </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                Verify code
+            </h2>
+
+            {/* Description */}
+            <p className="text-base text-gray-600 text-center">
+                Enter four-digits verification code sent to {formData.phone}
+            </p>
+
+            {/* OTP Input Boxes */}
+            <div className="flex justify-center space-x-3">
+                {otp.map((digit, index) => (
+                    <input
+                        key={index}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        className="w-16 h-16 text-center text-xl font-semibold border-2 border-green-300 rounded-2xl focus:outline-none focus:border-green-500 bg-white"
+                    />
+                ))}
+            </div>
+            
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
+                </div>
+            )}
+            
+            <button
+                onClick={handleVerify}
+                disabled={loading || otp.some(digit => !digit)}
+                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+            >
+                {loading ? 'Verifying...' : 'Verify'}
+            </button>
+
+            {/* Resend Section */}
+            <div className="text-center space-y-2">
+                <p className="text-gray-600">
+                    Haven't received the verification code?
+                </p>
+                <button
+                    onClick={handleResend}
+                    disabled={!canResend || loading}
+                    className="text-green-500 font-semibold hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                    {canResend ? 'Resend' : 'Resend'}
+                </button>
+                {!canResend && (
+                    <p className="text-gray-500 text-sm">{timer}s</p>
+                )}
             </div>
         </div>
     );
