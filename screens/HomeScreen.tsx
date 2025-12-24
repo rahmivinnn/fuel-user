@@ -107,54 +107,57 @@ const HomeScreen = () => {
   return (
     <AnimatedPage>
       <div className="bg-white overflow-y-auto" style={{ height: '100vh' }}>
-        {/* Header */}
-        <div className="flex justify-between items-center px-4 py-3 sticky top-0 bg-white z-10 shadow-sm">
-          <div className="flex items-center gap-3">
+        {/* Header & Search Bar */}
+        <div className="sticky top-0 bg-white z-10 shadow-sm">
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-3">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/avatar.png" 
+                alt="Avatar" 
+                className="w-7 h-7 rounded-full"
+                onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23e5e7eb'/%3E%3C/svg%3E";
+                }}
+              />
+              <img 
+                src="/tulisan.png" 
+                alt="FuelFriendly" 
+                className="h-6"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
             <img 
-              src="/avatar.png" 
-              alt="Avatar" 
-              className="w-7 h-7 rounded-full"
+              src="/ring.png" 
+              alt="Notifications" 
+              className="w-7 h-7 cursor-pointer"
+              onClick={() => navigate('/notifications')}
               onError={(e) => {
-                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23e5e7eb'/%3E%3C/svg%3E";
-              }}
-            />
-            <img 
-              src="/tulisan.png" 
-              alt="FuelFriendly" 
-              className="h-6"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
+                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%233F4249' stroke-width='2'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E";
               }}
             />
           </div>
-          <img 
-            src="/ring.png" 
-            alt="Notifications" 
-            className="w-7 h-7 cursor-pointer"
-            onClick={() => navigate('/notifications')}
-            onError={(e) => {
-              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%233F4249' stroke-width='2'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E";
-            }}
-          />
-        </div>
-
-        {/* Search Bar */}
-        <div className="px-4 mb-4 sticky top-[72px] bg-white z-10 py-2">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center bg-white border border-gray-400 rounded-full px-4 py-3">
-              <Search size={20} className="text-[#3F4249] mr-2" />
-              <input
-                type="text"
-                placeholder="Search for fuel and groceries"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 outline-none text-base text-gray-500 font-['Poppins']"
-              />
-              <Mic size={20} className="text-[#3F4249] ml-2" />
+          
+          {/* Search Bar */}
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex items-center bg-white border border-gray-400 rounded-full px-4 py-3">
+                <Search size={20} className="text-[#3F4249] mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search for fuel and groceries"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 outline-none text-base text-gray-500"
+                />
+                <Mic size={20} className="text-[#3F4249] ml-2" />
+              </div>
+              <button className="w-12 h-12 bg-[#E3FFEE] border border-gray-400 rounded-full flex items-center justify-center">
+                <SlidersHorizontal size={24} className="text-[#3F4249] rotate-180" />
+              </button>
             </div>
-            <button className="w-12 h-12 bg-[#E3FFEE] border border-gray-400 rounded-full flex items-center justify-center">
-              <SlidersHorizontal size={24} className="text-[#3F4249] rotate-180" />
-            </button>
           </div>
         </div>
 
@@ -181,7 +184,7 @@ const HomeScreen = () => {
 
         {/* Fuel Stations List */}
         <div className="px-4 pb-28">
-          <h2 className="text-xl font-semibold text-[#3F4249] font-['Poppins'] mb-4">Fuel Station nearby</h2>
+          <h2 className="text-xl font-semibold text-[#3F4249] mb-4">Fuel Station nearby</h2>
           
           <div className="space-y-4 mb-8">
             {isLoading ? (

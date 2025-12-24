@@ -11,10 +11,10 @@ import { verificationService } from '../services/verificationService';
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [1, 2, 3];
     return (
-        <div className="flex items-center justify-center w-full my-6">
+        <div className="flex items-center justify-center w-full my-2">
             {steps.map((step, index) => (
                 <React.Fragment key={index}>
-                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-semibold ${
+                    <div className={`mobile-stepper-circle rounded-full border-2 flex items-center justify-center font-semibold ${
                         index + 1 === currentStep 
                             ? 'bg-green-500 border-green-500 text-white' 
                             : index + 1 < currentStep
@@ -24,9 +24,17 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
                         {index + 1 < currentStep ? <Check size={20} /> : step}
                     </div>
                     {index < steps.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-4 ${
-                            index + 1 < currentStep ? 'bg-green-500' : 'bg-gray-300'
-                        }`} style={{ minWidth: '60px' }}></div>
+                        <div className="flex items-center mx-4" style={{ minWidth: '40px', maxWidth: '80px' }}>
+                            <div className={`w-2 h-2 rounded-full ${
+                                index + 1 < currentStep ? 'bg-green-500' : 'bg-gray-300'
+                            }`}></div>
+                            <div className={`flex-1 h-0.5 mx-1 border-t-2 border-dotted ${
+                                index + 1 < currentStep ? 'border-green-500' : 'border-gray-300'
+                            }`}></div>
+                            <div className={`w-2 h-2 rounded-full ${
+                                index + 1 < currentStep ? 'bg-green-500' : 'bg-gray-300'
+                            }`}></div>
+                        </div>
                     )}
                 </React.Fragment>
             ))}
@@ -144,35 +152,35 @@ const RegistrationScreen = () => {
 
     return (
         <AnimatedPage>
-            <div className="min-h-screen flex flex-col p-4 bg-white dark:bg-dark-bg text-light-text dark:text-dark-text">
+            <div className="min-h-screen flex flex-col p-4 bg-white">
                 <header className="flex items-center mb-0">
                     <button 
                         onClick={handleBack} 
-                        className="p-2 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                        className="p-2 rounded-full border border-gray-300 flex items-center justify-center"
                     >
-                        <ArrowLeft size={20} />
+                        <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                 </header>
                 
-                <div className="flex flex-col items-center mb-4">
-                    <div className="w-32 h-32 mb-4">
-                        <Logo />
-                    </div>
-                </div>
-
-                <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Registration</h2>
-                </div>
-
                 {step < 4 && (
                     <>
+                        <div className="flex flex-col items-center mb-2">
+                            <div className="mobile-logo-size mb-2">
+                                <Logo />
+                            </div>
+                        </div>
+
+                        <div className="text-center mb-4">
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Registration</h2>
+                        </div>
+
                         <Stepper currentStep={step} />
                         {step === 1 && (
-                            <div className="flex justify-center mb-4">
+                            <div className="flex justify-center mb-6">
                                 <img 
                                     src="/car.png" 
                                     alt="Car icon" 
-                                    className="w-12 h-8"
+                                    className="w-8 h-4"
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                     }}
@@ -180,11 +188,11 @@ const RegistrationScreen = () => {
                             </div>
                         )}
                         {step === 2 && (
-                            <div className="flex justify-center mb-4">
+                            <div className="flex justify-center mb-6">
                                 <img 
                                     src="/car.png" 
                                     alt="Car icon" 
-                                    className="w-12 h-8"
+                                    className="w-8 h-4"
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                     }}
@@ -192,11 +200,11 @@ const RegistrationScreen = () => {
                             </div>
                         )}
                         {step === 3 && (
-                            <div className="flex justify-center mb-4">
+                            <div className="flex justify-center mb-6">
                                 <img 
                                     src="/car.png" 
                                     alt="Car icon" 
-                                    className="w-12 h-8"
+                                    className="w-8 h-4"
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                     }}
@@ -245,7 +253,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                     placeholder="Full Name"
                     value={formData.fullName} 
                     onChange={handleChange} 
-                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                    className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                     required 
                 />
                 
@@ -255,7 +263,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                     placeholder="Email address"
                     value={formData.email} 
                     onChange={handleChange} 
-                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                    className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                     required 
                 />
                 
@@ -265,7 +273,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                     placeholder="Phone Number"
                     value={formData.phone} 
                     onChange={handleChange} 
-                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                    className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                     required 
                 />
                 
@@ -276,7 +284,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                         placeholder="Password"
                         value={formData.password} 
                         onChange={handleChange} 
-                        className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                        className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                         required 
                     />
                     <button 
@@ -294,7 +302,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                         placeholder="Confirm Password"
                         value={confirmPassword} 
                         onChange={(e) => setConfirmPassword(e.target.value)} 
-                        className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                        className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                         required 
                     />
                     <button 
@@ -308,7 +316,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
                 
                 <button 
                     type="submit" 
-                    className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
+                    className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
                 >
                     Next
                 </button>
@@ -320,7 +328,7 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
             
             <button 
                 type="button"
-                className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-gray-700 py-4 rounded-full text-base font-medium transition-all active:scale-95 hover:shadow-md"
+                className="w-full mobile-form-button flex items-center justify-center bg-white border-2 border-green-500 text-gray-700 rounded-full font-medium transition-all active:scale-95 hover:shadow-md"
             >
                 <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-5 h-5 mr-3" />
                 Continue with Google
@@ -338,7 +346,7 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
                 placeholder="Vehicle Brand"
                 value={formData.vehicleBrand} 
                 onChange={handleChange} 
-                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                 required 
             />
             
@@ -348,7 +356,7 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
                 placeholder="Vehicle Color"
                 value={formData.vehicleColor} 
                 onChange={handleChange} 
-                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                 required 
             />
             
@@ -358,7 +366,7 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
                 placeholder="License Number"
                 value={formData.licenseNumber} 
                 onChange={handleChange} 
-                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
                 required 
             />
             
@@ -367,7 +375,7 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
                     name="fuelType" 
                     value={formData.fuelType} 
                     onChange={handleChange} 
-                    className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base appearance-none"
+                    className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none"
                 >
                     <option value="" disabled>Fuel type</option>
                     <option value="Petrol">Petrol</option>
@@ -384,15 +392,15 @@ const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
             
             <button 
                 type="button"
-                className="w-full flex items-center justify-center px-6 py-4 rounded-full border border-gray-300 bg-white text-green-500 text-base font-medium transition-all active:scale-95 hover:shadow-md"
+                className="w-full mobile-form-button rounded-full border border-green-500 bg-white hover:bg-white text-green-500 font-medium flex items-center justify-center gap-2 transition-colors"
             >
-                <span className="text-2xl mr-3">+</span>
+                <span className="text-lg">+</span>
                 Add Vehicle
             </button>
             
             <button 
                 type="submit" 
-                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
+                className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl mt-6"
             >
                 Next
             </button>
@@ -455,7 +463,7 @@ const Step3 = ({ createAccount, editDetails, formData, loading, error }: { creat
         <button 
             onClick={createAccount} 
             disabled={loading}
-            className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+            className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
         >
             {loading ? 'Creating Account...' : 'Create Account'}
         </button>
@@ -539,14 +547,14 @@ const EmailVerificationStep = ({ formData, onBack, onNext, onTryAnotherWay }: {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
             />
 
             {/* Send Code Button */}
             <button 
                 onClick={handleSendCode}
                 disabled={loading || !email}
-                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+                className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
             >
                 {loading ? 'Sending...' : 'Send Code'}
             </button>
@@ -676,7 +684,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
             </p>
 
             {/* OTP Input Boxes */}
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center space-x-2">
                 {otp.map((digit, index) => (
                     <input
                         key={index}
@@ -687,7 +695,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
                         onKeyDown={(e) => handleKeyDown(index, e)}
-                        className="w-16 h-16 text-center text-xl font-semibold border-2 border-green-300 rounded-2xl focus:outline-none focus:border-green-500 bg-white"
+                        className="w-12 h-12 text-center text-lg font-semibold border-2 border-green-300 rounded-xl focus:outline-none focus:border-green-500 bg-white"
                     />
                 ))}
             </div>
@@ -701,7 +709,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
             <button
                 onClick={handleVerify}
                 disabled={loading || otp.some(digit => !digit)}
-                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+                className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
             >
                 {loading ? 'Verifying...' : 'Verify'}
             </button>
@@ -793,14 +801,14 @@ const WhatsAppVerificationStep = ({ formData, onBack, onNext }: {
                 placeholder="Phone Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400" 
+                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
             />
 
             {/* Send Code Button */}
             <button 
                 onClick={handleSendCode}
                 disabled={loading || !phone}
-                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+                className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
             >
                 {loading ? 'Sending...' : 'Send Code'}
             </button>
@@ -929,7 +937,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
             </p>
 
             {/* OTP Input Boxes */}
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center space-x-2">
                 {otp.map((digit, index) => (
                     <input
                         key={index}
@@ -940,7 +948,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
                         onKeyDown={(e) => handleKeyDown(index, e)}
-                        className="w-16 h-16 text-center text-xl font-semibold border-2 border-green-300 rounded-2xl focus:outline-none focus:border-green-500 bg-white"
+                        className="w-12 h-12 text-center text-lg font-semibold border-2 border-green-300 rounded-xl focus:outline-none focus:border-green-500 bg-white"
                     />
                 ))}
             </div>
@@ -954,7 +962,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
             <button
                 onClick={handleVerify}
                 disabled={loading || otp.some(digit => !digit)}
-                className="w-full bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
+                className="w-full mobile-form-button bg-green-500 text-white rounded-full font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:bg-green-500/70"
             >
                 {loading ? 'Verifying...' : 'Verify'}
             </button>

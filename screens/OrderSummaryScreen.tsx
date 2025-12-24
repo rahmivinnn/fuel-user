@@ -26,7 +26,7 @@ const OrderSummaryScreen = () => {
             onClick={() => navigate(-1)}
             className="p-2 -ml-2"
           >
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
+            <img src="/Back.png" alt="Back" className="w-5 h-5" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Order summary</h1>
           <div className="w-10"></div>

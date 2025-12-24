@@ -39,7 +39,7 @@ const VerificationSuccess = ({ type = 'email', formData }: { type?: 'email' | 'w
             onClick={handleGoToHome}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <ArrowLeft size={24} className="text-gray-600" />
+            <img src="/Back.png" alt="Back" className="w-6 h-6" />
           </button>
         </div>
 

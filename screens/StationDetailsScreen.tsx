@@ -156,7 +156,7 @@ const StationDetailsScreen = () => {
               onClick={() => navigate(-1)}
               className="absolute top-4 left-4 p-2 bg-white/80 rounded-full"
             >
-              <ArrowLeft className="w-6 h-6 text-gray-700" />
+              <img src="/Back.png" alt="Back" className="w-5 h-5" />
             </button>
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
               <h1 className="text-lg font-semibold text-white">Station Details</h1>

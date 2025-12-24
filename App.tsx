@@ -97,29 +97,27 @@ const AppNavigator = () => {
     const showBottomNav = isAuthenticated && ['/home', '/orders', '/track', '/settings'].includes(location.pathname);
 
     return (
-        <div className="w-full h-full flex flex-col min-h-0 overflow-y-auto">
-            <main className="flex-grow pb-20 md:pb-24 overflow-y-auto">
-                <Routes>
-                    <Route path="/" element={<SplashScreen />} />
-                    <Route path="/login" element={<LoginScreen />} />
-                    <Route path="/login-form" element={<LoginFormScreen />} />
-                    <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
-                    <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
-                    <Route path="/register" element={<RegistrationScreen />} />
-                    <Route path="/home" element={<HomeScreen />} />
-                    <Route path="/station/:id" element={<StationDetailsScreen />} />
-                    <Route path="/checkout" element={<CheckoutScreen />} />
-                    <Route path="/order-summary" element={<OrderSummaryScreen />} />
-                    <Route path="/payment" element={<PaymentScreen />} />
-                    <Route path="/track" element={<TrackOrderScreen />} />
-                    <Route path="/orders" element={<MyOrdersScreen />} />
-                    <Route path="/notifications" element={<NotificationsScreen />} />
-                    <Route path="/settings" element={<SettingsScreen />} />
-                    <Route path="/profile" element={<ProfileScreen />} />
-                </Routes>
-            </main>
+        <>
+            <Routes>
+                <Route path="/" element={<SplashScreen />} />
+                <Route path="/login" element={<LoginScreen />} />
+                <Route path="/login-form" element={<LoginFormScreen />} />
+                <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+                <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
+                <Route path="/register" element={<RegistrationScreen />} />
+                <Route path="/home" element={<HomeScreen />} />
+                <Route path="/station/:id" element={<StationDetailsScreen />} />
+                <Route path="/checkout" element={<CheckoutScreen />} />
+                <Route path="/order-summary" element={<OrderSummaryScreen />} />
+                <Route path="/payment" element={<PaymentScreen />} />
+                <Route path="/track" element={<TrackOrderScreen />} />
+                <Route path="/orders" element={<MyOrdersScreen />} />
+                <Route path="/notifications" element={<NotificationsScreen />} />
+                <Route path="/settings" element={<SettingsScreen />} />
+                <Route path="/profile" element={<ProfileScreen />} />
+            </Routes>
             {showBottomNav && <BottomNav />}
-        </div>
+        </>
     )
 }
 
@@ -186,7 +184,7 @@ const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, login, loginWithGoogle, logout, updateUser }}>
-                <div className="w-full h-full font-sans bg-white text-gray-900" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw' }}>
+                <div className="w-full h-full font-sans bg-white text-gray-900" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw', fontFamily: 'Poppins, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', backgroundColor: 'white' }}>
                     <Toaster
                         position="top-center"
                         toastOptions={{
@@ -208,11 +206,9 @@ const App = () => {
                             duration: 3000,
                         }}
                     />
-                    <div className="w-full h-full bg-white overflow-y-auto" style={{ height: '100dvh', maxHeight: '100dvh' }}>
-                        <BrowserRouter>
-                            <AppNavigator />
-                        </BrowserRouter>
-                    </div>
+                    <BrowserRouter>
+                        <AppNavigator />
+                    </BrowserRouter>
                 </div>
             </AppContext.Provider>
         </QueryClientProvider>

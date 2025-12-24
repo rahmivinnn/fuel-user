@@ -75,7 +75,7 @@ const MyOrdersScreen = () => {
             <div className="min-h-screen flex flex-col bg-white dark:bg-dark-bg text-light-text dark:text-dark-text">
                 <header className="p-4 flex items-center sticky top-0 bg-light-bg dark:bg-dark-bg z-10">
                     <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-card">
-                        <ArrowLeft size={24} />
+                        <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                     <h2 className="text-xl font-bold text-center flex-grow -ml-10">Manage Orders</h2>
                 </header>

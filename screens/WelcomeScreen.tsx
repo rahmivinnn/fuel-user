@@ -34,8 +34,7 @@ const WelcomeScreen = () => {
 
   return (
     <AnimatedPage>
-      <div className="relative min-h-screen flex flex-col justify-between p-4 bg-white dark:bg-dark-bg text-light-text dark:text-dark-text overflow-hidden">
-        <img src={atas} alt="" className="absolute top-0 left-0 w-full pointer-events-none select-none z-20" style={{ height: '45%', objectFit: 'cover' }} />
+      <div className="relative min-h-screen flex flex-col justify-center items-center p-4 bg-white">
         <div className="flex-grow flex flex-col items-center justify-center z-10 space-y-8">
           <Logo />
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -74,8 +73,6 @@ const WelcomeScreen = () => {
             </button>
           </div>
         </div>
-        <img src={bawah} alt="" className="absolute bottom-0 left-0 w-full pointer-events-none select-none z-20" style={{ height: '30%', objectFit: 'cover' }} />
-        <img src={diagonal} alt="" className="absolute bottom-0 pointer-events-none select-none z-20" style={{ left: '50%', width: '110%', transform: 'translate(-50%, 0)' }} />
       </div>
     </AnimatedPage>
   );

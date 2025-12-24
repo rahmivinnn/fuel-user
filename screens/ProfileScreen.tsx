@@ -76,7 +76,7 @@ const ProfileScreen = () => {
         <div className="min-h-screen bg-white dark:bg-dark-bg text-light-text dark:text-dark-text">
             <header className="p-4 flex items-center justify-between sticky top-0 bg-white dark:bg-dark-bg z-10">
                 <button onClick={() => isEditing ? handleCancel() : navigate(-1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-card">
-                    <ArrowLeft size={24} />
+                    <img src="/Back.png" alt="Back" className="w-5 h-5" />
                 </button>
                 <h2 className="text-xl font-bold">My Profile</h2>
                 <button onClick={() => setIsEditing(!isEditing)} className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-card ${isEditing ? 'text-primary' : ''}`}>
