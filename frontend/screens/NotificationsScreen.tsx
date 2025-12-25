@@ -21,6 +21,21 @@ const NotificationsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
 
+  const loadNotifications = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (user.id) {
+        const data = await apiGetNotifications(user.id);
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Check if user is logged in
     const userData = localStorage.getItem('user');
@@ -77,23 +92,6 @@ const NotificationsScreen = () => {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [showDeleteMenu]);
-
-  const loadNotifications = async () => {
-    if (!isLoggedIn) return;
-    
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      if (user.id) {
-        const data = await apiGetNotifications(user.id);
-        setNotifications(data);
-      }
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const markAsRead = async (notificationId: string) => {
     try {

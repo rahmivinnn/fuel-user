@@ -22,7 +22,7 @@ const ThemeScreen = () => {
         },
         {
             id: Theme.DEFAULT,
-            name: 'Default',
+            name: 'System Default',
             icon: <Settings size={20} className="text-gray-600" />
         }
     ];
@@ -30,22 +30,36 @@ const ThemeScreen = () => {
     const handleThemeSelect = (selectedTheme: Theme) => {
         setTheme(selectedTheme);
         console.log('Theme changed to:', selectedTheme);
+        // Force re-render by updating document class
+        if (selectedTheme === Theme.DARK) {
+            document.documentElement.classList.add('dark');
+        } else if (selectedTheme === Theme.LIGHT) {
+            document.documentElement.classList.remove('dark');
+        } else {
+            // System default
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
     };
 
     return (
         <AnimatedPage>
-            <div className="min-h-screen bg-white">
-                <header className="p-4 flex items-center bg-white border-b border-gray-100">
-                    <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <div className="min-h-screen bg-white dark:bg-gray-900">
+                <header className="p-4 flex items-center bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     </button>
-                    <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">Theme</h2>
+                    <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900 dark:text-white">Theme</h2>
                 </header>
 
                 <div className="p-4">
                     <div className="mb-6">
-                        <h3 className="text-gray-900 font-medium text-lg mb-2">Appearance</h3>
-                        <p className="text-gray-600 text-sm">Select your preferred theme</p>
+                        <h3 className="text-gray-900 dark:text-white font-medium text-lg mb-2">Appearance</h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">Select your preferred theme</p>
                     </div>
 
                     <div className="space-y-0">
@@ -53,16 +67,20 @@ const ThemeScreen = () => {
                             <div key={option.id}>
                                 <button
                                     onClick={() => handleThemeSelect(option.id)}
-                                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                 >
                                     <div className="flex items-center">
-                                        <div className="mr-4">{option.icon}</div>
-                                        <span className="text-gray-800 text-base">{option.name}</span>
+                                        <div className="mr-4">
+                                            {React.cloneElement(option.icon, {
+                                                className: "w-5 h-5 text-gray-600 dark:text-gray-300"
+                                            })}
+                                        </div>
+                                        <span className="text-gray-800 dark:text-gray-200 text-base">{option.name}</span>
                                     </div>
                                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                         theme === option.id 
-                                            ? 'border-[#3AC36C] bg-white' 
-                                            : 'border-gray-300 bg-white'
+                                            ? 'border-[#3AC36C] bg-white dark:bg-gray-800' 
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
                                     }`}>
                                         {theme === option.id && (
                                             <div className="w-3 h-3 rounded-full bg-[#3AC36C]"></div>
@@ -70,7 +88,7 @@ const ThemeScreen = () => {
                                     </div>
                                 </button>
                                 {index < themeOptions.length - 1 && (
-                                    <div className="border-t border-gray-100 ml-12"></div>
+                                    <div className="border-t border-gray-100 dark:border-gray-700 ml-12"></div>
                                 )}
                             </div>
                         ))}

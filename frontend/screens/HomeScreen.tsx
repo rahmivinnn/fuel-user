@@ -12,9 +12,19 @@ const StationCard = ({ station, index }: { station: any; index: number }) => {
   const navigate = useNavigate();
   const imageUrl = index % 2 === 0 ? '/image-card-1.png' : '/image-card-2.png';
   
+  // Station types with different characteristics
+  const stationTypes = [
+    { name: 'TurboFuel Express', tag: '24/7', color: 'bg-blue-600' },
+    { name: 'EcoFuel Station', tag: 'ECO', color: 'bg-green-600' },
+    { name: 'QuickStop Fuel', tag: 'FAST', color: 'bg-orange-600' },
+    { name: 'Premium Fuel Hub', tag: 'VIP', color: 'bg-purple-600' }
+  ];
+  
+  const stationType = stationTypes[index % stationTypes.length];
+  
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-0 flex flex-col sm:flex-row hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-      <div className="w-full sm:w-[118px] h-[200px] sm:h-[183px] p-2">
+      <div className="w-full sm:w-[118px] h-[200px] sm:h-[183px] p-2 relative">
         <img 
           src={station.image || imageUrl} 
           alt={station.name} 
@@ -23,10 +33,14 @@ const StationCard = ({ station, index }: { station: any; index: number }) => {
             e.currentTarget.src = imageUrl;
           }}
         />
+        {/* Station Type Tag */}
+        <div className={`absolute top-3 right-3 ${stationType.color} text-white px-2 py-1 rounded-full text-xs font-bold`}>
+          {stationType.tag}
+        </div>
       </div>
       <div className="flex-1 p-2">
         <div className="p-2">
-          <h3 className="text-base font-bold text-[#3F4249] mb-3">{station.name}</h3>
+          <h3 className="text-base font-bold text-[#3F4249] mb-3">{stationType.name}</h3>
           
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -35,21 +49,30 @@ const StationCard = ({ station, index }: { station: any; index: number }) => {
                 <span className="text-sm font-medium text-[#3F4249]">Fuel Price</span>
               </div>
               <span className="text-sm sm:text-base font-bold text-[#3F4249]">
-                Rp {station.regularPrice ? Number(station.regularPrice).toLocaleString('id-ID') : '15,500'}
+                ${station.regularPrice || '36.67'}
               </span>
             </div>
             
             <div className="flex items-center gap-2">
               <MapPin size={20} className="text-[#FF5630]" />
-              <span className="text-sm font-medium text-[#3F4249] flex-1 truncate">{station.address || 'Jakarta'}</span>
-              <span className="text-sm font-bold text-[#3F4249]">{station.distance || '2.5km'}</span>
+              <span className="text-sm font-medium text-[#3F4249] flex-1 truncate">
+                Distance: {station.distance || '2.7 miles away'}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              </div>
+              <span className="text-sm font-medium text-[#3F4249] flex-1">
+                Average Delivery time: 30 minutes
+              </span>
             </div>
             
             <div className="flex items-center gap-2">
               <Star size={20} className="text-[#FFC107] fill-current" />
-              <span className="text-sm font-medium text-[#3F4249] flex-1">Reviews</span>
-              <span className="text-sm font-bold text-[#3F4249]">{station.rating || '4.5'}</span>
-              <span className="text-xs text-gray-600">({station.totalReviews || 24} Reviews)</span>
+              <span className="text-sm font-bold text-[#3F4249]">{station.rating || '4.7'} Rating</span>
+              <span className="text-xs text-[#3AC36C]">({station.totalReviews || 146} reviews)</span>
             </div>
           </div>
           

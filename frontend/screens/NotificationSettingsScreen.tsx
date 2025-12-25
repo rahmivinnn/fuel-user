@@ -48,7 +48,7 @@ const NotificationSettingsScreen = () => {
             <AnimatedPage>
                 <div className="min-h-screen flex flex-col bg-white">
                     <header className="p-4 flex items-center bg-white border-b border-gray-100">
-                        <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
+                        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
                             <img src="/Back.png" alt="Back" className="w-5 h-5" />
                         </button>
                         <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
@@ -139,7 +139,7 @@ const NotificationSettingsScreen = () => {
         <AnimatedPage>
             <div className="min-h-screen bg-white">
                 <header className="p-4 flex items-center bg-white border-b border-gray-100">
-                    <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2">
                         <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                     <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">

@@ -10,6 +10,10 @@ backend/node_modules/
 frontend/.env.local
 backend/.env.local
 
+# Google OAuth credentials
+client_secret_*.json
+frontend/client_secret_*.json
+
 # Build outputs
 frontend/dist/
 frontend/build/

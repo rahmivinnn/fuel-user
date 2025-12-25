@@ -56,16 +56,27 @@ const StationDetailsScreen = () => {
         setStation(data);
       } catch (err: any) {
         setError(err.message);
-        // Mock data for demo
+        // Mock data with station type variations
+        const stationTypes = [
+          { name: 'TurboFuel Express', tag: '24/7', description: 'EcoFuel Express is committed to providing high-quality fuel at competitive prices. Conveniently located at 1234 Energy Drive, Houston, TX 77002, we ensure a seamless refueling experience with our state-of-the-art pumps and quick service.' },
+          { name: 'EcoFuel Station', tag: 'ECO', description: 'Premium eco-friendly fuel station dedicated to sustainable energy solutions. Our green technology ensures cleaner fuel delivery with minimal environmental impact.' },
+          { name: 'QuickStop Fuel', tag: 'FAST', description: 'Fast and efficient fuel service designed for busy customers. Get quality fuel quickly with our express service lanes and automated systems.' },
+          { name: 'Premium Fuel Hub', tag: 'VIP', description: 'Luxury fuel experience with premium services. Enjoy VIP treatment with our concierge fuel delivery and premium grade fuels.' }
+        ];
+        
+        const stationIndex = parseInt(id?.replace(/\D/g, '') || '0') % stationTypes.length;
+        const stationType = stationTypes[stationIndex];
+        
         setStation({
           id: id,
-          name: 'Petro Tennessee',
+          name: stationType.name,
           address: 'Abcd Tennessee',
           distance: '2.7 miles away',
           deliveryTime: '30 minutes',
           rating: 4.7,
           reviews: 146,
           image: '/brand1.png',
+          description: stationType.description,
           fuelPrices: {
             regular: 1.23,
             premium: 1.75,
@@ -182,6 +193,16 @@ const StationDetailsScreen = () => {
             <MapPin className="w-4 h-4 mr-1 text-red-500" />
             <span className="text-sm">{station?.address}</span>
           </div>
+          
+          {/* About Section */}
+          {station?.description && (
+            <div className="mt-6 text-left">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">About</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {station.description}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Fuel Prices */}
