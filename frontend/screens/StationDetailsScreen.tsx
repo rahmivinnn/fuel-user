@@ -215,10 +215,18 @@ const StationDetailsScreen = () => {
             <Clock className="w-4 h-4 mr-2 text-gray-500" />
             <span className="text-sm">Average Delivery time: {station?.deliveryTime}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <Star className="w-4 h-4 mr-2 text-yellow-500 fill-current" />
-            <span className="text-sm">{station?.rating} Rating </span>
-            <span className="text-sm text-green-600">({station?.reviews} reviews)</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-gray-600">
+              <Star className="w-4 h-4 mr-2 text-yellow-500 fill-current" />
+              <span className="text-sm">{station?.rating} Rating </span>
+              <span className="text-sm text-green-600">({station?.reviews} reviews)</span>
+            </div>
+            <button 
+              onClick={() => navigate(`/station/${id}/reviews`)}
+              className="text-green-600 text-sm font-medium hover:underline"
+            >
+              See all reviews
+            </button>
           </div>
         </div>
 
@@ -309,7 +317,10 @@ const StationDetailsScreen = () => {
                   <span className="text-xs text-gray-600">{friend.rating}</span>
                   <span className="text-xs text-green-600">({friend.reviews} reviews)</span>
                 </div>
-                <button className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium">
+                <button 
+                  onClick={() => navigate(`/fuel-friend/${friend.id}`)}
+                  className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
+                >
                   Select
                 </button>
               </div>

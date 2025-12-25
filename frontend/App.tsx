@@ -13,6 +13,8 @@ import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import RegistrationScreen from './screens/RegistrationScreen';
 import HomeScreen from './screens/HomeScreen';
 import StationDetailsScreen from './screens/StationDetailsScreen';
+import StationReviewsScreen from './screens/StationReviewsScreen';
+import FuelFriendDetailsScreen from './screens/FuelFriendDetailsScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
 import TrackOrderScreen from './screens/TrackOrderScreen';
 import MyOrdersScreen from './screens/MyOrdersScreen';
@@ -109,6 +111,8 @@ const AppNavigator = () => {
                 <Route path="/register" element={<RegistrationScreen />} />
                 <Route path="/home" element={<HomeScreen />} />
                 <Route path="/station/:id" element={<StationDetailsScreen />} />
+                <Route path="/station/:id/reviews" element={<StationReviewsScreen />} />
+                <Route path="/fuel-friend/:id" element={<FuelFriendDetailsScreen />} />
                 <Route path="/checkout" element={<CheckoutScreen />} />
                 <Route path="/order-summary" element={<OrderSummaryScreen />} />
                 <Route path="/payment" element={<PaymentScreen />} />
