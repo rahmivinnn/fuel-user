@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { db } from './db.js';
-import { customers, vehicles, orders, fuelStations, products, fuelFriends } from './shared/schema.js';
+import { customers, vehicles, orders, fuelStations, products, fuelFriends, fcmTokens, notifications } from './shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import axios from 'axios';
 import Stripe from 'stripe';
 import whatsappService from './whatsapp-service.js';
 import { initializeDatabase } from './database-checker.js';
+import notificationService from './services/notification.service.js';
 
 // Import utilities
 import { RESPONSE_CODES } from '../utils/responseHandler.js';
@@ -535,6 +536,84 @@ app.post('/api/payments/create-intent', validateRequest(createPaymentIntentSchem
   } catch (error) {
     console.error('Payment intent error:', error);
     return res.error(RESPONSE_CODES.PAYMENT_FAILED);
+  }
+});
+
+// ==========================================
+// NOTIFICATION ROUTES
+// ==========================================
+
+app.post('/api/notifications/register-token', async (req, res) => {
+  try {
+    const { customerId, token, deviceType } = req.body;
+    
+    if (!customerId || !token) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID and token required');
+    }
+    
+    const result = await notificationService.registerToken(customerId, token, deviceType);
+    return res.success(RESPONSE_CODES.SUCCESS, result);
+  } catch (error) {
+    console.error('Register token error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.post('/api/notifications/send', async (req, res) => {
+  try {
+    const { customerId, title, body, data } = req.body;
+    
+    if (!customerId || !title || !body) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID, title, and body required');
+    }
+    
+    const result = await notificationService.sendToCustomer(customerId, title, body, data);
+    return res.success(RESPONSE_CODES.SUCCESS, result);
+  } catch (error) {
+    console.error('Send notification error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.get('/api/notifications/customer/:customerId', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { limit = 20 } = req.query;
+    
+    const notifications = await notificationService.getCustomerNotifications(customerId, parseInt(limit));
+    return res.success(RESPONSE_CODES.SUCCESS, notifications);
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.patch('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { customerId } = req.body;
+    
+    if (!customerId) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID required');
+    }
+    
+    const result = await notificationService.markAsRead(id, customerId);
+    return res.success(RESPONSE_CODES.SUCCESS, result);
+  } catch (error) {
+    console.error('Mark as read error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.post('/api/notifications/test/:customerId', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    
+    const result = await notificationService.sendTestNotification(customerId);
+    return res.success(RESPONSE_CODES.SUCCESS, result);
+  } catch (error) {
+    console.error('Test notification error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });
 

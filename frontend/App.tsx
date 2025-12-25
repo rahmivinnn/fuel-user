@@ -25,17 +25,7 @@ import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
 
-// API functions
-const apiLogin = async (email: string, password: string) => {
-  const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error);
-  return data.user;
-};
+import { apiLogin } from './services/api';
 
 const apiLogout = () => {
   // Clear any stored tokens/session data
@@ -147,7 +137,7 @@ const App = () => {
     const login = async (email: string, pass: string) => {
         try {
             const userData = await apiLogin(email, pass);
-            setUser(userData);
+            setUser(userData.customer);
             setIsAuthenticated(true);
         } catch (error) {
             console.error('Login error:', error);

@@ -106,9 +106,9 @@ const HomeScreen = () => {
 
   return (
     <AnimatedPage>
-      <div className="bg-white overflow-y-auto" style={{ height: '100vh' }}>
+      <div className="bg-white overflow-y-auto min-h-screen overflow-x-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', width: '100vw', maxWidth: '100vw' }}>
         {/* Header & Search Bar */}
-        <div className="sticky top-0 bg-white z-10 shadow-sm">
+        <div className="sticky top-0 bg-white z-10 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           {/* Header */}
           <div className="flex justify-between items-center px-4 py-3">
             <div className="flex items-center gap-3">
@@ -132,10 +132,10 @@ const HomeScreen = () => {
             <img 
               src="/ring.png" 
               alt="Notifications" 
-              className="w-7 h-7 cursor-pointer"
+              className="w-5 h-5 cursor-pointer"
               onClick={() => navigate('/notifications')}
               onError={(e) => {
-                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%233F4249' stroke-width='2'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E";
+                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%233F4249' stroke-width='2'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E";
               }}
             />
           </div>
@@ -162,7 +162,7 @@ const HomeScreen = () => {
         </div>
 
         {/* Map */}
-        <div className="mx-4 mb-4 relative">
+        <div className="mx-4 mb-4 relative" style={{ maxWidth: 'calc(100vw - 2rem)' }}>
           <div className="h-[300px] sm:h-[350px] md:h-[420px] rounded-2xl overflow-hidden border-2 border-[#3F4249]">
             <MapboxMap
               stations={stations}
@@ -183,7 +183,7 @@ const HomeScreen = () => {
         </div>
 
         {/* Fuel Stations List */}
-        <div className="px-4 pb-28">
+        <div className="px-4 pb-28" style={{ maxWidth: '100vw', boxSizing: 'border-box' }}>
           <h2 className="text-xl font-semibold text-[#3F4249] mb-4">Fuel Station nearby</h2>
           
           <div className="space-y-4 mb-8">

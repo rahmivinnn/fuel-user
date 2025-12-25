@@ -1,125 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreVertical, Trash2, CheckCircle, XCircle, Mail, User, CreditCard } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
+import { apiGetNotifications, apiMarkNotificationAsRead } from '../services/api';
 
 interface Notification {
   id: string;
-  type: 'success' | 'error' | 'info' | 'account' | 'payment';
   title: string;
-  message: string;
-  time: string;
-  section: 'Today' | 'Yesterday' | 'Last week';
+  body: string;
+  data?: string;
+  isRead: boolean;
+  sentAt: string;
+  createdAt: string;
 }
 
 const NotificationsScreen = () => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'success',
-      title: 'Your order arrived',
-      message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-      time: '2h ago',
-      section: 'Today'
-    },
-    {
-      id: '2',
-      type: 'success',
-      title: 'Your order arrived',
-      message: 'Your payment of $XX.XX has been successfully processed.',
-      time: '4h ago',
-      section: 'Today'
-    },
-    {
-      id: '3',
-      type: 'error',
-      title: 'Order Cancelled',
-      message: 'Your recent order has been canceled. you can reorder.',
-      time: '6h ago',
-      section: 'Today'
-    },
-    {
-      id: '4',
-      type: 'info',
-      title: 'Order Cancelled',
-      message: 'Recently!',
-      time: '1d ago',
-      section: 'Yesterday'
-    },
-    {
-      id: '5',
-      type: 'account',
-      title: 'Account setup',
-      message: 'Your Account has been Setup Successful',
-      time: '1d ago',
-      section: 'Yesterday'
-    },
-    {
-      id: '6',
-      type: 'payment',
-      title: 'Credit Card Connected',
-      message: 'Credit card added ...',
-      time: '1d ago',
-      section: 'Yesterday'
-    },
-    {
-      id: '7',
-      type: 'info',
-      title: 'Order Cancelled',
-      message: 'Recently!',
-      time: '1w ago',
-      section: 'Last week'
-    },
-    {
-      id: '8',
-      type: 'account',
-      title: 'Account setup',
-      message: 'Your Account has been Setup Successful',
-      time: '1w ago',
-      section: 'Last week'
-    },
-    {
-      id: '9',
-      type: 'payment',
-      title: 'Credit Card Connected',
-      message: 'Credit card added ...',
-      time: '1w ago',
-      section: 'Last week'
-    }
-  ]);
-
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
 
-  const getIcon = (type: string) => {
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.id) {
+        const data = await apiGetNotifications(user.id);
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await apiMarkNotificationAsRead(notificationId);
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const getIcon = (notification: Notification) => {
+    const data = notification.data ? JSON.parse(notification.data) : {};
+    const type = data.type || 'info';
+    
     switch (type) {
-      case 'success':
+      case 'order_confirmed':
+      case 'order_delivered':
         return <CheckCircle className="w-6 h-6 text-green-500" />;
-      case 'error':
+      case 'order_cancelled':
         return <XCircle className="w-6 h-6 text-red-500" />;
-      case 'info':
-        return <Mail className="w-6 h-6 text-blue-500" />;
-      case 'account':
-        return <User className="w-6 h-6 text-gray-600" />;
       case 'payment':
         return <CreditCard className="w-6 h-6 text-orange-500" />;
+      case 'account':
+        return <User className="w-6 h-6 text-gray-600" />;
       default:
-        return <Mail className="w-6 h-6 text-gray-500" />;
+        return <Mail className="w-6 h-6 text-blue-500" />;
     }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-    setShowDeleteMenu(null);
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
-  const groupedNotifications = notifications.reduce((acc, notification) => {
-    if (!acc[notification.section]) {
-      acc[notification.section] = [];
-    }
-    acc[notification.section].push(notification);
-    return acc;
-  }, {} as Record<string, Notification[]>);
+  const groupNotificationsByTime = (notifications: Notification[]) => {
+    const groups: Record<string, Notification[]> = {
+      'Today': [],
+      'Yesterday': [],
+      'Last week': [],
+      'Older': []
+    };
+
+    notifications.forEach(notification => {
+      const date = new Date(notification.sentAt);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        groups['Today'].push(notification);
+      } else if (diffDays === 1) {
+        groups['Yesterday'].push(notification);
+      } else if (diffDays <= 7) {
+        groups['Last week'].push(notification);
+      } else {
+        groups['Older'].push(notification);
+      }
+    });
+
+    // Remove empty groups
+    Object.keys(groups).forEach(key => {
+      if (groups[key].length === 0) {
+        delete groups[key];
+      }
+    });
+
+    return groups;
+  };
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="bg-white min-h-screen">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+              <img src="/Back.png" alt="Back" className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Notifications</h1>
+            <div className="w-10"></div>
+          </div>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Loading notifications...</div>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  const groupedNotifications = groupNotificationsByTime(notifications);
 
   return (
     <AnimatedPage>
@@ -138,51 +154,51 @@ const NotificationsScreen = () => {
 
         {/* Notifications List */}
         <div className="px-4 py-4">
-          {Object.entries(groupedNotifications).map(([section, sectionNotifications]) => (
-            <div key={section} className="mb-6">
-              <h2 className="text-sm font-medium text-gray-500 mb-3">{section}</h2>
-              <div className="space-y-3">
-                {sectionNotifications.map((notification) => (
-                  <div key={notification.id} className="relative">
-                    <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-shrink-0 mt-1">
-                        {getIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {notification.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {notification.message}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0 relative">
-                        <button
-                          onClick={() => setShowDeleteMenu(showDeleteMenu === notification.id ? null : notification.id)}
-                          className="p-1 text-gray-400 hover:text-gray-600"
-                        >
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-                        
-                        {/* Delete Menu */}
-                        {showDeleteMenu === notification.id && (
-                          <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
-                            <button
-                              onClick={() => deleteNotification(notification.id)}
-                              className="flex items-center space-x-2 w-full px-4 py-3 text-left text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              <span className="text-sm">Delete this notification</span>
-                            </button>
+          {Object.keys(groupedNotifications).length === 0 ? (
+            <div className="text-center py-12">
+              <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No notifications yet</p>
+            </div>
+          ) : (
+            Object.entries(groupedNotifications).map(([section, sectionNotifications]) => (
+              <div key={section} className="mb-6">
+                <h2 className="text-sm font-medium text-gray-500 mb-3">{section}</h2>
+                <div className="space-y-3">
+                  {sectionNotifications.map((notification) => (
+                    <div 
+                      key={notification.id} 
+                      className={`relative cursor-pointer ${
+                        notification.isRead ? 'opacity-70' : ''
+                      }`}
+                      onClick={() => !notification.isRead && markAsRead(notification.id)}
+                    >
+                      <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-shrink-0 mt-1">
+                          {getIcon(notification)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-sm font-medium text-gray-900">
+                              {notification.title}
+                            </h3>
+                            {!notification.isRead && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
                           </div>
-                        )}
+                          <p className="text-sm text-gray-600 mt-1">
+                            {notification.body}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {formatTime(notification.sentAt)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </AnimatedPage>

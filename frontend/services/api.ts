@@ -1,14 +1,8 @@
 import axios from 'axios';
-import { networkHandler } from './networkHandler';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-
-// Use fetch instead of axios for better mobile compatibility
-const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const response = await networkHandler.makeRequest(url, options);
-  return response.json();
-};
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://apidecor.kelolahrd.life' 
+  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -22,42 +16,95 @@ const api = axios.create({
 // AUTHENTICATION
 // ==========================================
 
-export const apiRegister = async (userData: any) => {
-  try {
-    const data = await apiCall('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
-    return data;
-  } catch (error) {
-    // Fallback for mobile
-    const { data } = await api.post('/api/auth/register', userData);
-    return data;
-  }
+export const apiLogin = async (emailOrPhone: string, password: string) => {
+  const { data } = await api.post('/api/auth/login', { emailOrPhone, password });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
 };
 
-export const apiLogin = async (email: string, password: string) => {
-  const { data } = await api.post('/api/auth/login', { email, password });
-  if (!data.success) throw new Error(data.error);
-  return data.user;
+export const apiRegisterStep1 = async (userData: {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+}) => {
+  const { data } = await api.post('/api/auth/register/step1', userData);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
 };
 
-export const apiLogout = () => {
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-};
-
-export const apiLoginWithGoogleCredential = async () => {
-  // Simulate Google login for now
-  return {
-    id: `user-${Date.now()}`,
-    fullName: 'Google User',
-    email: 'google.user@example.com',
-    phone: '',
-    city: '',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
-    vehicles: []
+export const apiRegisterComplete = async (registrationData: {
+  step1: {
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
   };
+  step2: {
+    brand: string;
+    color: string;
+    licenseNumber: string;
+    fuelType: string;
+  };
+}) => {
+  const { data } = await api.post('/api/auth/register/complete', registrationData);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiGoogleAuth = async (googleData: {
+  uid: string;
+  email: string;
+  displayName: string;
+}) => {
+  const { data } = await api.post('/api/auth/google', googleData);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiForgotPassword = async (emailOrPhone: string) => {
+  const { data } = await api.post('/api/auth/forgot-password', { emailOrPhone });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+export const apiResetPassword = async (email: string, password: string) => {
+  const { data } = await api.post('/api/auth/reset-password', { email, password });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+// ==========================================
+// OTP SERVICES
+// ==========================================
+
+export const apiSendEmailOTP = async (email: string) => {
+  const { data } = await api.post('/api/auth/otp/email/send', { email });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+export const apiVerifyEmailOTP = async (email: string, otp: string) => {
+  const { data } = await api.post('/api/auth/otp/email/verify', { email, otp });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+export const apiSendWhatsAppOTP = async (phoneNumber: string) => {
+  const { data } = await api.post('/api/auth/otp/whatsapp/send', { phoneNumber });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+export const apiVerifyWhatsAppOTP = async (phoneNumber: string, otp: string) => {
+  const { data } = await api.post('/api/auth/otp/whatsapp/verify', { phoneNumber, otp });
+  if (!data.success) throw new Error(data.message || data.error);
+  return data;
+};
+
+export const apiGetWhatsAppStatus = async () => {
+  const { data } = await api.get('/api/auth/otp/whatsapp/status');
+  return data;
 };
 
 // ==========================================
@@ -66,92 +113,102 @@ export const apiLoginWithGoogleCredential = async () => {
 
 export const apiGetStations = async (lat: number, lng: number, radius = 10000) => {
   const { data } = await api.get(`/api/stations?lat=${lat}&lng=${lng}&radius=${radius}`);
+  if (!data.success) throw new Error(data.message || data.error);
   return data.data;
 };
 
 export const apiGetStationDetails = async (id: string) => {
-  const { data } = await api.get(`/api/station/${id}`);
+  const { data } = await api.get(`/api/stations/${id}`);
+  if (!data.success) throw new Error(data.message || data.error);
   return data.data;
-};
-
-// ==========================================
-// OTP VERIFICATION
-// ==========================================
-
-export const apiSendWhatsAppOTP = async (phoneNumber: string) => {
-  const { data } = await api.post('/api/otp/whatsapp/send', { phoneNumber });
-  return data;
-};
-
-export const apiSendEmailOTP = async (email: string) => {
-  const { data } = await api.post('/api/otp/email/send', { email });
-  return data;
-};
-
-export const apiVerifyOTP = async (identifier: string, otp: string) => {
-  const { data } = await api.post('/api/otp/verify', { identifier, otp });
-  return data;
-};
-
-export const apiResetPassword = async (email: string, newPassword: string) => {
-  const { data } = await api.post('/api/auth/reset-password', { email, newPassword });
-  return data;
 };
 
 // ==========================================
 // ORDERS
 // ==========================================
 
-export const apiCreateOrder = async (orderData: any) => {
+export const apiCreateOrder = async (orderData: {
+  customerId: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
+  fuelType: string;
+  fuelQuantity: string;
+  totalAmount: string;
+  deliveryFee: string;
+  stationId?: string;
+  fuelFriendId?: string;
+  vehicleId?: string;
+  groceriesCost?: string;
+  orderType?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  estimatedDeliveryTime?: string;
+  paymentMethod?: string;
+}) => {
   const { data } = await api.post('/api/orders', orderData);
+  if (!data.success) throw new Error(data.message || data.error);
   return data.data;
 };
 
-export const apiGetOrders = async (customerId?: string) => {
-  const url = customerId ? `/api/orders?customerId=${customerId}` : '/api/orders';
+export const apiGetOrders = async (customerId?: string, status?: string) => {
+  let url = '/api/orders';
+  const params = new URLSearchParams();
+  
+  if (customerId) params.append('customerId', customerId);
+  if (status) params.append('status', status);
+  
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  
   const { data } = await api.get(url);
+  if (!data.success) throw new Error(data.message || data.error);
   return data.data;
 };
 
-export const apiCreateOrderFromPayment = async (orderData: any) => {
-  const { data } = await api.post('/api/orders', orderData);
-  return data;
-};
-
-export const apiUpdateOrderStatus = async (id: string, status: string) => {
-  const { data } = await api.patch(`/api/orders/${id}/status`, { status });
-  return data;
-};
-
 // ==========================================
-// PAYMENTS (STRIPE)
+// PAYMENTS
 // ==========================================
 
-export const apiCreatePaymentIntent = async (amount: number, orderId: string, currency = 'gbp') => {
-  const { data } = await api.post('/api/stripe/create-payment-intent', {
+export const apiCreatePaymentIntent = async (amount: number, currency: string, orderId: string) => {
+  const { data } = await api.post('/api/payments/create-intent', {
     amount,
-    orderId,
-    currency
+    currency,
+    orderId
   });
-  return data;
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
 };
 
 // ==========================================
-// USER PROFILE
+// NOTIFICATIONS
 // ==========================================
 
-export const apiUpdateUserProfile = async (userData: any) => {
-  const { data } = await api.patch('/api/user/profile', userData);
+export const apiRegisterFCMToken = async (customerId: string, token: string, deviceType?: string) => {
+  const { data } = await api.post('/api/notifications/register-token', {
+    customerId,
+    token,
+    deviceType
+  });
+  if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
 
-export const apiRegisterPushToken = async (email: string, token: string) => {
-  const { data } = await api.post('/api/notifications/register', { email, token });
+export const apiGetNotifications = async (customerId: string) => {
+  const { data } = await api.get(`/api/notifications/${customerId}`);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiMarkNotificationAsRead = async (notificationId: string) => {
+  const { data } = await api.put(`/api/notifications/${notificationId}/read`);
+  if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
 
-export const apiSendTestPush = async (token?: string) => {
-  const { data } = await api.post('/api/notifications/test', { token });
+export const apiSendTestNotification = async (customerId: string) => {
+  const { data } = await api.post('/api/notifications/test', { customerId });
+  if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
 
@@ -164,13 +221,9 @@ export const apiHealthCheck = async () => {
   return data;
 };
 
-export const apiSeedDatabase = async () => {
-  const { data } = await api.post('/api/seed');
-  return data;
-};
-
-export const apiSeedData = async () => {
-  return await apiSeedDatabase();
+export const apiLogout = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
 };
 
 // ==========================================
@@ -182,10 +235,23 @@ api.interceptors.response.use(
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     
-    if (error.response?.status === 401) {
-      // Unauthorized - clear auth data
-      apiLogout();
-      window.location.href = '/login';
+    // Handle standardized error responses
+    const errorData = error.response?.data;
+    if (errorData && !errorData.success) {
+      const errorMessage = errorData.message || errorData.error || 'An error occurred';
+      const responseCode = errorData.responseCode;
+      
+      // Handle specific response codes
+      if (responseCode === 'RC_401' || responseCode === 'RC_A004') {
+        // Unauthorized or token expired
+        apiLogout();
+        window.location.href = '/login';
+      }
+      
+      // Throw error with standardized message
+      const enhancedError = new Error(errorMessage);
+      (enhancedError as any).responseCode = responseCode;
+      return Promise.reject(enhancedError);
     }
     
     return Promise.reject(error);

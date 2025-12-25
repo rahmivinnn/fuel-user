@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Lock, CreditCard, Calculator, Sun, Moon, Bell, HelpCircle, FileText, Shield, Trash2, LogOut, User } from 'lucide-react';
 import { useAppContext } from '../App';
-import { apiRegisterPushToken, apiSendTestPush } from '../services/api';
+import { pushNotificationService } from '../services/pushNotification';
 import AnimatedPage from '../components/AnimatedPage';
 
 const SettingsItem = ({ icon, text, onClick }: { icon: React.ReactNode, text: string, onClick?: () => void }) => (
@@ -28,18 +28,29 @@ const SettingsScreen = () => {
 
     const enableNotifications = async () => {
         try {
-            // Simulate notification enabling
-            setNotifStatus('Enabled');
+            const token = await pushNotificationService.initializePushNotifications();
+            if (token) {
+                setNotifStatus('Notifications enabled');
+                console.log('FCM Token:', token);
+            } else {
+                setNotifStatus('Permission denied or not supported');
+            }
         } catch (e: any) {
-            setNotifStatus(e?.message || 'Failed');
+            setNotifStatus(e?.message || 'Failed to enable notifications');
         }
     };
 
     const testPush = async () => {
         try {
-            const r = await apiSendTestPush();
-            if ((r as any)?.ok) setNotifStatus('Test sent'); else setNotifStatus('Server key missing');
-        } catch { setNotifStatus('Failed'); }
+            const success = await pushNotificationService.sendTestNotification();
+            if (success) {
+                setNotifStatus('Test notification sent');
+            } else {
+                setNotifStatus('Failed to send test notification');
+            }
+        } catch {
+            setNotifStatus('Test failed');
+        }
     };
 
     return (

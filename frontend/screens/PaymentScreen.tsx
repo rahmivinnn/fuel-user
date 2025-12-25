@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Check, Plus, X } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
-import { apiCreateOrderFromPayment, apiSeedData } from '../services/api';
+import { apiCreateOrder, apiHealthCheck } from '../services/api';
 
 const PaymentScreen = () => {
   const navigate = useNavigate();
@@ -12,17 +12,17 @@ const PaymentScreen = () => {
   const [trackingId, setTrackingId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Seed data on component mount
+  // Check API health on component mount
   useEffect(() => {
-    const seedDatabase = async () => {
+    const checkAPI = async () => {
       try {
-        await apiSeedData();
-        console.log('Database seeded successfully');
+        await apiHealthCheck();
+        console.log('API connection successful');
       } catch (error) {
-        console.log('Seed data already exists or failed:', error);
+        console.log('API connection failed:', error);
       }
     };
-    seedDatabase();
+    checkAPI();
   }, []);
 
   const handlePlaceOrder = async () => {
@@ -43,10 +43,10 @@ const PaymentScreen = () => {
         paymentMethod: selectedPayment === 'card' ? 'credit_card' : selectedPayment
       };
 
-      const result = await apiCreateOrderFromPayment(orderData);
+      const result = await apiCreateOrder(orderData);
       
-      if (result.success) {
-        setTrackingId(result.trackingId);
+      if (result) {
+        setTrackingId(result.trackingNumber || '#12345');
         setShowSuccessModal(true);
       } else {
         throw new Error('Failed to create order');

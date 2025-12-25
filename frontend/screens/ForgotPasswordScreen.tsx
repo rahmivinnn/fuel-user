@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import PasswordResetSuccess from '../components/PasswordResetSuccess';
-import { apiSendEmailOTP, apiVerifyOTP, apiResetPassword } from '../services/api';
+import { apiSendEmailOTP, apiVerifyEmailOTP, apiResetPassword } from '../services/api';
 
 const ForgotPasswordScreen = () => {
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ const ForgotPasswordScreen = () => {
 
     try {
       const otpCode = otp.join('');
-      const result = await apiVerifyOTP(email, otpCode);
+      const result = await apiVerifyEmailOTP(email, otpCode);
       if (result.success) {
         setOtpVerified(true);
         setSuccess(result.message);

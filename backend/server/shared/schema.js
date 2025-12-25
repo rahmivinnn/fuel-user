@@ -77,7 +77,27 @@ export const fuelFriends = pgTable("fuel_friends", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Orders Schema
+// FCM Tokens Schema
+export const fcmTokens = pgTable("fcm_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  token: text("token").notNull(),
+  deviceType: text("device_type"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notifications Schema
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  data: text("data"), // JSON string
+  isRead: boolean("is_read").default(false),
+  sentAt: timestamp("sent_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   trackingNumber: text("tracking_number").notNull().unique(),

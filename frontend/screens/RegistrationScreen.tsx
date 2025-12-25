@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Eye, EyeOff, Mail, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../App';
-import { apiRegister, apiLogin } from '../services/api';
+import { apiRegisterComplete, apiLogin } from '../services/api';
 import Logo from '../components/Logo';
 import AnimatedPage from '../components/AnimatedPage';
 import VerificationSuccess from '../components/VerificationSuccess';
@@ -74,26 +74,30 @@ const RegistrationScreen = () => {
         setError('');
         try {
             // Transform data to match backend API expectations
-            const apiData = {
-                fullName: formData.fullName,
-                email: formData.email,
-                phoneNumber: formData.phone, // Backend expects phoneNumber, not phone
-                password: formData.password,
-                vehicleBrand: formData.vehicleBrand,
-                vehicleColor: formData.vehicleColor,
-                licenseNumber: formData.licenseNumber,
-                fuelType: formData.fuelType
+            const registrationData = {
+                step1: {
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    phoneNumber: formData.phone,
+                    password: formData.password
+                },
+                step2: {
+                    brand: formData.vehicleBrand,
+                    color: formData.vehicleColor,
+                    licenseNumber: formData.licenseNumber,
+                    fuelType: formData.fuelType
+                }
             };
             
-            await apiRegister(apiData);
+            await apiRegisterComplete(registrationData);
             setStep(4);
         } catch (error) {
             console.error("Registration failed:", error);
             
             // Extract error message from API response
             let errorMessage = "Registration failed. Please try again.";
-            if (error.response?.data?.error) {
-                errorMessage = error.response.data.error;
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
             } else if (error.message) {
                 errorMessage = error.message;
             }
@@ -494,7 +498,7 @@ const EmailVerificationStep = ({ formData, onBack, onNext, onTryAnotherWay }: {
         setError('');
         
         try {
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/email/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/email/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -621,13 +625,13 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
         
         try {
             const otpCode = otp.join('');
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/verify`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/email/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
-                    identifier: formData.email, 
+                    email: formData.email, 
                     otp: otpCode 
                 })
             });
@@ -652,7 +656,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
         setError('');
         
         try {
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/email/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/email/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -748,7 +752,7 @@ const WhatsAppVerificationStep = ({ formData, onBack, onNext }: {
         setError('');
         
         try {
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/whatsapp/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/whatsapp/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -874,13 +878,13 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
         
         try {
             const otpCode = otp.join('');
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/verify`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/whatsapp/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
-                    identifier: formData.phone, 
+                    phoneNumber: formData.phone, 
                     otp: otpCode 
                 })
             });
@@ -905,7 +909,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
         setError('');
         
         try {
-            const response = await fetch(`https://apidecor.kelolahrd.life/api/otp/whatsapp/send`, {
+            const response = await fetch(`https://apidecor.kelolahrd.life/api/auth/otp/whatsapp/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

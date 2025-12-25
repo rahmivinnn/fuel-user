@@ -27,7 +27,9 @@ export const checkTablesExist = async () => {
       'fuel_stations',
       'products',
       'fuel_friends',
-      'orders'
+      'orders',
+      'fcm_tokens',
+      'notifications'
     ];
     
     const results = [];
