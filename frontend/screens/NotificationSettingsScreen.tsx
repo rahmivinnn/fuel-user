@@ -30,6 +30,16 @@ const NotificationSettingsScreen = () => {
             return;
         }
         setIsLoggedIn(true);
+        
+        // Load saved notification settings only if logged in
+        const savedSettings = localStorage.getItem('notificationSettings');
+        if (savedSettings) {
+            try {
+                setSettings(JSON.parse(savedSettings));
+            } catch (error) {
+                console.error('Error loading notification settings:', error);
+            }
+        }
     }, []);
 
     // Show login prompt if not logged in
@@ -39,7 +49,7 @@ const NotificationSettingsScreen = () => {
                 <div className="min-h-screen flex flex-col bg-white">
                     <header className="p-4 flex items-center bg-white border-b border-gray-100">
                         <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            <img src="/Back.png" alt="Back" className="w-5 h-5" />
                         </button>
                         <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
                             Notification Settings
@@ -68,19 +78,7 @@ const NotificationSettingsScreen = () => {
         );
     }
 
-    useEffect(() => {
-        if (isLoggedIn) {
-            // Load saved notification settings
-            const savedSettings = localStorage.getItem('notificationSettings');
-            if (savedSettings) {
-                try {
-                    setSettings(JSON.parse(savedSettings));
-                } catch (error) {
-                    console.error('Error loading notification settings:', error);
-                }
-            }
-        }
-    }, [isLoggedIn]);
+
 
     const handleToggle = (key: keyof NotificationSettings) => {
         const newSettings = { ...settings, [key]: !settings[key] };
@@ -142,7 +140,7 @@ const NotificationSettingsScreen = () => {
             <div className="min-h-screen bg-white">
                 <header className="p-4 flex items-center bg-white border-b border-gray-100">
                     <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                     <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
                         Notification Settings

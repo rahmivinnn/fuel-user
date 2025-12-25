@@ -42,7 +42,7 @@ const LiveChatSupportScreen = () => {
                 <div className="min-h-screen flex flex-col bg-white">
                     <header className="p-4 flex items-center bg-white border-b border-gray-100">
                         <button onClick={() => navigate('/support-help')} className="p-2 -ml-2">
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            <img src="/Back.png" alt="Back" className="w-5 h-5" />
                         </button>
                         <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
                             Live Chat Support
@@ -123,7 +123,7 @@ const LiveChatSupportScreen = () => {
             <div className="min-h-screen bg-white flex flex-col">
                 <header className="p-4 flex items-center bg-white border-b border-gray-100">
                     <button onClick={() => navigate('/support-help')} className="p-2 -ml-2">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                     <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
                         Live Chat Support

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../App';
@@ -8,20 +8,12 @@ import AnimatedPage from '../components/AnimatedPage';
 const AccountDeletionScreen = () => {
     const navigate = useNavigate();
     const { logout, user } = useAppContext();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [selectedReason, setSelectedReason] = useState('');
     const [showReasonDropdown, setShowReasonDropdown] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        // Check if user is logged in
-        const userData = localStorage.getItem('user');
-        if (!userData) {
-            setIsLoggedIn(false);
-            return;
-        }
-        setIsLoggedIn(true);
-    }, []);
+    // Check if user is logged in
+    const isLoggedIn = !!user && !!localStorage.getItem('user');
 
     // Show login prompt if not logged in
     if (!isLoggedIn) {
@@ -67,11 +59,17 @@ const AccountDeletionScreen = () => {
     };
 
     const handleDeleteAccount = async () => {
+        if (!user?.id) {
+            alert('User not found. Please login again.');
+            navigate('/login');
+            return;
+        }
+        
         if (window.confirm('Are you absolutely sure? This action cannot be undone.')) {
             setIsDeleting(true);
             
             try {
-                await apiDeleteAccount(user?.id || '', selectedReason);
+                await apiDeleteAccount(user.id, selectedReason);
                 logout();
                 navigate('/account-deleted');
             } catch (error: any) {
