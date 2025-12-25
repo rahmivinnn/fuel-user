@@ -102,7 +102,7 @@ const SettingsScreen = () => {
                         <div className="border-t border-gray-100"></div>
                         <SettingsItem icon={<FileText size={20} />} text="Terms and Conditions" onClick={() => navigate('/terms-conditions')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<Shield size={20} />} text="Privacy Policy" onClick={() => alert('Privacy Policy coming soon!')} />
+                        <SettingsItem icon={<Shield size={20} />} text="Privacy Policy" onClick={() => navigate('/privacy-policy')} />
                         <div className="border-t border-gray-100"></div>
                         <SettingsItem icon={<Trash2 size={20} />} text="Request Account Deletion" onClick={() => alert('Account deletion request coming soon!')} />
                     </div>

@@ -30,6 +30,7 @@ import LiveChatSupportScreen from './screens/LiveChatSupportScreen';
 import ReportIssueScreen from './screens/ReportIssueScreen';
 import ReportSubmittedSuccessScreen from './screens/ReportSubmittedSuccessScreen';
 import TermsConditionsScreen from './screens/TermsConditionsScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -122,6 +123,7 @@ const AppNavigator = () => {
                 <Route path="/report-issue" element={<ReportIssueScreen />} />
                 <Route path="/report-submitted" element={<ReportSubmittedSuccessScreen />} />
                 <Route path="/terms-conditions" element={<TermsConditionsScreen />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
