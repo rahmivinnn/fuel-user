@@ -580,21 +580,26 @@ app.get('/api/stations/:id/reviews', async (req, res) => {
     const { id } = req.params;
     const { limit = 20 } = req.query;
     
-    const stationReviews = await db.select({
-      id: reviews.id,
-      rating: reviews.rating,
-      comment: reviews.comment,
-      createdAt: reviews.createdAt,
-      userName: customers.fullName,
-      userAvatar: customers.profilePhoto
-    })
-    .from(reviews)
-    .leftJoin(customers, eq(reviews.customerId, customers.id))
-    .where(eq(reviews.stationId, id))
-    .orderBy(sql`${reviews.createdAt} DESC`)
-    .limit(parseInt(limit));
-    
-    return res.success(RESPONSE_CODES.SUCCESS, stationReviews);
+    try {
+      const stationReviews = await db.select({
+        id: reviews.id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        createdAt: reviews.createdAt,
+        userName: customers.fullName,
+        userAvatar: customers.profilePhoto
+      })
+      .from(reviews)
+      .leftJoin(customers, eq(reviews.customerId, customers.id))
+      .where(eq(reviews.stationId, id))
+      .orderBy(sql`${reviews.createdAt} DESC`)
+      .limit(parseInt(limit));
+      
+      return res.success(RESPONSE_CODES.SUCCESS, stationReviews);
+    } catch (dbError) {
+      console.log('Reviews table not found, returning empty array');
+      return res.success(RESPONSE_CODES.SUCCESS, []);
+    }
   } catch (error) {
     console.error('Station reviews error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
@@ -623,21 +628,26 @@ app.get('/api/fuel-friends/:id/reviews', async (req, res) => {
     const { id } = req.params;
     const { limit = 20 } = req.query;
     
-    const friendReviews = await db.select({
-      id: reviews.id,
-      rating: reviews.rating,
-      comment: reviews.comment,
-      createdAt: reviews.createdAt,
-      userName: customers.fullName,
-      userAvatar: customers.profilePhoto
-    })
-    .from(reviews)
-    .leftJoin(customers, eq(reviews.customerId, customers.id))
-    .where(eq(reviews.fuelFriendId, id))
-    .orderBy(sql`${reviews.createdAt} DESC`)
-    .limit(parseInt(limit));
-    
-    return res.success(RESPONSE_CODES.SUCCESS, friendReviews);
+    try {
+      const friendReviews = await db.select({
+        id: reviews.id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        createdAt: reviews.createdAt,
+        userName: customers.fullName,
+        userAvatar: customers.profilePhoto
+      })
+      .from(reviews)
+      .leftJoin(customers, eq(reviews.customerId, customers.id))
+      .where(eq(reviews.fuelFriendId, id))
+      .orderBy(sql`${reviews.createdAt} DESC`)
+      .limit(parseInt(limit));
+      
+      return res.success(RESPONSE_CODES.SUCCESS, friendReviews);
+    } catch (dbError) {
+      console.log('Reviews table not found, returning empty array');
+      return res.success(RESPONSE_CODES.SUCCESS, []);
+    }
   } catch (error) {
     console.error('Fuel friend reviews error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
@@ -652,15 +662,20 @@ app.post('/api/reviews', async (req, res) => {
       return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID, rating, and either station ID or fuel friend ID required');
     }
     
-    const [newReview] = await db.insert(reviews).values({
-      customerId,
-      stationId: stationId || null,
-      fuelFriendId: fuelFriendId || null,
-      rating,
-      comment: comment || null
-    }).returning();
-    
-    return res.success(RESPONSE_CODES.CREATED, newReview, 'Review added successfully');
+    try {
+      const [newReview] = await db.insert(reviews).values({
+        customerId,
+        stationId: stationId || null,
+        fuelFriendId: fuelFriendId || null,
+        rating,
+        comment: comment || null
+      }).returning();
+      
+      return res.success(RESPONSE_CODES.CREATED, newReview, 'Review added successfully');
+    } catch (dbError) {
+      console.log('Reviews table not found, cannot add review');
+      return res.error(RESPONSE_CODES.INTERNAL_ERROR, 'Reviews feature not available');
+    }
   } catch (error) {
     console.error('Add review error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);

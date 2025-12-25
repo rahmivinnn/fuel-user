@@ -49,5 +49,10 @@ frontend/ios/App/build/
 *.db
 *.sqlite
 
+# Database seeds and migrations (temporary)
+backend/seed-*.sql
+backend/migrate-*.sql
+backend/create-*.sql
+
 # WhatsApp session
 backend/server/wa-session/

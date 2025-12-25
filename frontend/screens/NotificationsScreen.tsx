@@ -97,7 +97,10 @@ const NotificationsScreen = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await apiMarkNotificationAsRead(notificationId);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.id) return;
+      
+      await apiMarkNotificationAsRead(notificationId, user.id);
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );

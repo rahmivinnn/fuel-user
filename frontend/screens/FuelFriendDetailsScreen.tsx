@@ -1,50 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Star, MapPin } from 'lucide-react';
+import { apiGetFuelFriendDetails, apiGetFuelFriendReviews, apiAddReview } from '../services/api';
+import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
 
 interface Review {
   id: string;
   userName: string;
   rating: number;
-  date: string;
+  createdAt: string;
   comment: string;
+  userAvatar: string;
+}
+
+interface FuelFriend {
+  id: string;
+  fullName: string;
+  deliveryFee: number;
+  location: string;
+  rating: number;
+  totalReviews: number;
+  profilePhoto: string;
+  about: string;
 }
 
 const FuelFriendDetailsScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAppContext();
+  const [fuelFriend, setFuelFriend] = useState<FuelFriend | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newReview, setNewReview] = useState('');
   const [newRating, setNewRating] = useState(0);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Mock fuel friend data
-  const fuelFriend = {
-    id: id || '1',
-    name: 'Shah Hussain',
-    price: 505.00,
-    location: 'Abc Tennessee',
-    rating: 4.8,
-    totalReviews: 26,
-    avatar: '/avatar.png',
-    about: 'Fuel Friend is a reliable on-demand fuel delivery service designed to provide convenience and efficiency to customers. Whether you\'re stranded on the road or simply looking to avoid the hassle of gas stations, our trusted Fuel Friends ensure that you get quality fuel delivered right to your location.'
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const [friendData, reviewsData] = await Promise.all([
+          apiGetFuelFriendDetails(id),
+          apiGetFuelFriendReviews(id)
+        ]);
+        
+        setFuelFriend(friendData);
+        setReviews(reviewsData.map((review: any) => ({
+          id: review.id,
+          userName: review.userName || 'Anonymous',
+          rating: review.rating,
+          createdAt: formatDate(review.createdAt),
+          comment: review.comment || '',
+          userAvatar: review.userAvatar || '/avatar.png'
+        })));
+      } catch (error: any) {
+        console.error('Failed to fetch fuel friend data:', error);
+        if (error.message?.includes('not found')) {
+          alert('Fuel friend not found');
+          navigate(-1);
+        } else {
+          alert('Failed to load fuel friend details. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    if (diffDays < 60) return '1 month ago';
+    return `${Math.floor(diffDays / 30)} months ago`;
   };
-
-  const reviews: Review[] = [
-    {
-      id: '1',
-      userName: 'Saeed',
-      rating: 5,
-      date: '2 months ago',
-      comment: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce euismod, nunc vel tristique feugiat, libero justo vehicula purus.'
-    },
-    {
-      id: '2',
-      userName: 'Saeed',
-      rating: 5,
-      date: '2 months ago',
-      comment: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce euismod, nunc vel tristique feugiat, libero justo vehicula purus.'
-    }
-  ];
 
   const ratingDistribution = [
     { stars: 5, percentage: 95 },
@@ -66,13 +104,40 @@ const FuelFriendDetailsScreen = () => {
     ));
   };
 
-  const handleAddReview = () => {
-    if (newReview.trim() && newRating > 0) {
-      // Here you would typically send the review to your API
-      console.log('Adding review:', { rating: newRating, comment: newReview });
+  const handleAddReview = async () => {
+    if (!newReview.trim() || newRating === 0 || !user?.id || !id) {
+      alert('Please provide a rating and comment');
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      await apiAddReview({
+        customerId: user.id,
+        fuelFriendId: id,
+        rating: newRating,
+        comment: newReview.trim()
+      });
+      
+      // Refresh reviews
+      const reviewsData = await apiGetFuelFriendReviews(id);
+      setReviews(reviewsData.map((review: any) => ({
+        id: review.id,
+        userName: review.userName || 'Anonymous',
+        rating: review.rating,
+        createdAt: formatDate(review.createdAt),
+        comment: review.comment || '',
+        userAvatar: review.userAvatar || '/avatar.png'
+      })));
+      
       setNewReview('');
       setNewRating(0);
       alert('Review added successfully!');
+    } catch (error: any) {
+      console.error('Failed to add review:', error);
+      alert(error.message || 'Failed to add review');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -80,6 +145,26 @@ const FuelFriendDetailsScreen = () => {
     // Navigate back to station details or checkout with selected fuel friend
     navigate(-1);
   };
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="w-8 h-8 border-4 border-[#3AC36C] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  if (!fuelFriend) {
+    return (
+      <AnimatedPage>
+        <div className="flex justify-center items-center min-h-screen">
+          <p className="text-red-500">Fuel friend not found</p>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   return (
     <AnimatedPage>
@@ -101,8 +186,8 @@ const FuelFriendDetailsScreen = () => {
         <div className="px-4 py-6 text-center">
           <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-orange-400 shadow-lg">
             <img 
-              src={fuelFriend.avatar} 
-              alt={fuelFriend.name}
+              src={fuelFriend.profilePhoto || '/avatar.png'} 
+              alt={fuelFriend.fullName}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Ccircle cx='48' cy='48' r='48' fill='%23e5e7eb'/%3E%3Cpath d='M48 24a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM24 72a24 24 0 0 1 48 0H24z' fill='%23999'/%3E%3C/svg%3E";
@@ -110,10 +195,10 @@ const FuelFriendDetailsScreen = () => {
             />
           </div>
           
-          <h1 className="text-xl font-semibold text-[#3F4249] mb-2">{fuelFriend.name}</h1>
+          <h1 className="text-xl font-semibold text-[#3F4249] mb-2">{fuelFriend.fullName}</h1>
           
           <div className="flex items-center justify-center space-x-4 mb-2">
-            <span className="text-lg font-bold text-[#3F4249]">${fuelFriend.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-[#3F4249]">${fuelFriend.deliveryFee.toFixed(2)}</span>
             <div className="flex items-center">
               <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
               <span className="font-semibold text-[#3F4249]">{fuelFriend.rating}</span>
@@ -131,7 +216,7 @@ const FuelFriendDetailsScreen = () => {
         <div className="px-4 mb-6">
           <h3 className="text-lg font-semibold text-[#3F4249] mb-3">About</h3>
           <p className="text-gray-700 text-sm leading-relaxed">
-            {fuelFriend.about}
+            {fuelFriend.about || 'No description available.'}
           </p>
         </div>
 
@@ -167,45 +252,64 @@ const FuelFriendDetailsScreen = () => {
             </div>
           </div>
 
-          {/* Add Review Section */}
-          <div className="mb-6">
-            <h4 className="font-semibold text-[#3F4249] mb-3">Add review</h4>
-            <div className="flex items-center mb-3">
-              {renderStars(newRating, true, setNewRating)}
+          {/* Add Review Section - Only show if user is logged in */}
+          {user ? (
+            <div className="mb-6">
+              <h4 className="font-semibold text-[#3F4249] mb-3">Add review</h4>
+              <div className="flex items-center mb-3">
+                {renderStars(newRating, true, setNewRating)}
+              </div>
+              <div className="relative">
+                <textarea
+                  value={newReview}
+                  onChange={(e) => setNewReview(e.target.value)}
+                  placeholder="Your review here"
+                  disabled={submittingReview}
+                  className="w-full p-3 border border-gray-300 rounded-lg resize-none h-20 text-sm focus:outline-none focus:border-[#3AC36C] disabled:opacity-50"
+                />
+                <button
+                  onClick={handleAddReview}
+                  disabled={!newReview.trim() || newRating === 0 || submittingReview}
+                  className="absolute bottom-3 right-3 bg-[#3AC36C] text-white px-4 py-1 rounded-full text-sm font-medium hover:bg-[#2ea85a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submittingReview ? 'Adding...' : 'Add'}
+                </button>
+              </div>
             </div>
-            <div className="relative">
-              <textarea
-                value={newReview}
-                onChange={(e) => setNewReview(e.target.value)}
-                placeholder="Your review here"
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none h-20 text-sm focus:outline-none focus:border-[#3AC36C]"
-              />
-              <button
-                onClick={handleAddReview}
-                disabled={!newReview.trim() || newRating === 0}
-                className="absolute bottom-3 right-3 bg-[#3AC36C] text-white px-4 py-1 rounded-full text-sm font-medium hover:bg-[#2ea85a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          ) : (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
+              <p className="text-gray-600 mb-3">Please login to add a review</p>
+              <button 
+                onClick={() => navigate('/login')}
+                className="bg-[#3AC36C] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#2ea85a] transition-colors"
               >
-                Add
+                Login
               </button>
             </div>
-          </div>
+          )}
 
           {/* Reviews List */}
           <div className="space-y-4">
-            {reviews.map((review) => (
+            {reviews.length > 0 ? reviews.map((review) => (
               <div key={review.id} className="border-b border-gray-100 pb-4">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="font-semibold text-[#3F4249]">{review.userName}</h5>
-                  <span className="text-xs text-gray-500">{review.date}</span>
+                  <span className="text-xs text-gray-500">{review.createdAt}</span>
                 </div>
                 <div className="flex items-center mb-2">
                   {renderStars(review.rating)}
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {review.comment}
-                </p>
+                {review.comment && (
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {review.comment}
+                  </p>
+                )}
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No reviews yet. Be the first to review!</p>
+              </div>
+            )}
           </div>
 
           {/* Read More */}

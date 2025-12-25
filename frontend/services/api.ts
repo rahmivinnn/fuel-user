@@ -225,19 +225,19 @@ export const apiRegisterFCMToken = async (customerId: string, token: string, dev
 };
 
 export const apiGetNotifications = async (customerId: string) => {
-  const { data } = await api.get(`/api/notifications/${customerId}`);
+  const { data } = await api.get(`/api/notifications/customer/${customerId}`);
   if (!data.success) throw new Error(data.message || data.error);
   return data.data;
 };
 
-export const apiMarkNotificationAsRead = async (notificationId: string) => {
-  const { data } = await api.put(`/api/notifications/${notificationId}/read`);
+export const apiMarkNotificationAsRead = async (notificationId: string, customerId: string) => {
+  const { data } = await api.patch(`/api/notifications/${notificationId}/read`, { customerId });
   if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
 
 export const apiSendTestNotification = async (customerId: string) => {
-  const { data } = await api.post('/api/notifications/test', { customerId });
+  const { data } = await api.post(`/api/notifications/test/${customerId}`);
   if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
@@ -326,6 +326,13 @@ api.interceptors.response.use(
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     
+    // Handle network errors
+    if (!error.response) {
+      const networkError = new Error('Network error. Please check your connection.');
+      (networkError as any).isNetworkError = true;
+      return Promise.reject(networkError);
+    }
+    
     // Handle standardized error responses
     const errorData = error.response?.data;
     if (errorData && !errorData.success) {
@@ -336,16 +343,46 @@ api.interceptors.response.use(
       if (responseCode === 'RC_401' || responseCode === 'RC_A004') {
         // Unauthorized or token expired
         apiLogout();
-        window.location.href = '/login';
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
       
       // Throw error with standardized message
       const enhancedError = new Error(errorMessage);
       (enhancedError as any).responseCode = responseCode;
+      (enhancedError as any).statusCode = error.response.status;
       return Promise.reject(enhancedError);
     }
     
-    return Promise.reject(error);
+    // Handle HTTP status codes
+    const status = error.response?.status;
+    let message = error.message;
+    
+    switch (status) {
+      case 400:
+        message = 'Invalid request. Please check your input.';
+        break;
+      case 401:
+        message = 'Authentication required. Please login.';
+        break;
+      case 403:
+        message = 'Access denied.';
+        break;
+      case 404:
+        message = 'Resource not found.';
+        break;
+      case 429:
+        message = 'Too many requests. Please try again later.';
+        break;
+      case 500:
+        message = 'Server error. Please try again later.';
+        break;
+    }
+    
+    const statusError = new Error(message);
+    (statusError as any).statusCode = status;
+    return Promise.reject(statusError);
   }
 );
 
