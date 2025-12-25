@@ -100,7 +100,7 @@ const SettingsScreen = () => {
                     <div className="bg-white border-t border-b border-gray-200">
                         <SettingsItem icon={<HelpCircle size={20} />} text="Help and Support" onClick={() => navigate('/support-help')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<FileText size={20} />} text="Terms and Conditions" onClick={() => alert('Terms and Conditions coming soon!')} />
+                        <SettingsItem icon={<FileText size={20} />} text="Terms and Conditions" onClick={() => navigate('/terms-conditions')} />
                         <div className="border-t border-gray-100"></div>
                         <SettingsItem icon={<Shield size={20} />} text="Privacy Policy" onClick={() => alert('Privacy Policy coming soon!')} />
                         <div className="border-t border-gray-100"></div>

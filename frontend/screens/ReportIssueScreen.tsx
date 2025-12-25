@@ -59,8 +59,7 @@ const ReportIssueScreen = () => {
         // Simulate API call
         setTimeout(() => {
             setIsSubmitting(false);
-            alert('Issue report submitted successfully! Our support team will review and respond soon.');
-            navigate('/support-help');
+            navigate('/report-submitted');
         }, 2000);
     };
 

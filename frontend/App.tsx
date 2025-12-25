@@ -28,6 +28,8 @@ import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
 import SupportHelpScreen from './screens/SupportHelpScreen';
 import LiveChatSupportScreen from './screens/LiveChatSupportScreen';
 import ReportIssueScreen from './screens/ReportIssueScreen';
+import ReportSubmittedSuccessScreen from './screens/ReportSubmittedSuccessScreen';
+import TermsConditionsScreen from './screens/TermsConditionsScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -118,6 +120,8 @@ const AppNavigator = () => {
                 <Route path="/support-help" element={<SupportHelpScreen />} />
                 <Route path="/live-chat" element={<LiveChatSupportScreen />} />
                 <Route path="/report-issue" element={<ReportIssueScreen />} />
+                <Route path="/report-submitted" element={<ReportSubmittedSuccessScreen />} />
+                <Route path="/terms-conditions" element={<TermsConditionsScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
