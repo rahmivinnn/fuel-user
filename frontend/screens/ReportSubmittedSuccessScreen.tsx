@@ -5,6 +5,42 @@ import AnimatedPage from '../components/AnimatedPage';
 
 const ReportSubmittedSuccessScreen = () => {
     const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // Check if user is logged in
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+            setIsLoggedIn(false);
+            return;
+        }
+        setIsLoggedIn(true);
+    }, []);
+
+    // Show login prompt if not logged in
+    if (!isLoggedIn) {
+        return (
+            <AnimatedPage>
+                <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+                    <div className="text-center max-w-sm">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Check className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h3>
+                        <p className="text-gray-600 mb-8 max-w-sm">
+                            Please login to view report submission status.
+                        </p>
+                        <button 
+                            onClick={() => navigate('/login')}
+                            className="bg-[#3AC36C] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#2ea85a] transition-colors"
+                        >
+                            Login Now
+                        </button>
+                    </div>
+                </div>
+            </AnimatedPage>
+        );
+    }
 
     const handleSubmitAnother = () => {
         navigate('/report-issue');

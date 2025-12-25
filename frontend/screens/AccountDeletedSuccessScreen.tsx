@@ -5,6 +5,19 @@ import AnimatedPage from '../components/AnimatedPage';
 
 const AccountDeletedSuccessScreen = () => {
     const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // This screen should only be accessible after account deletion
+        // Check if there's a deletion flag or if user is logged out
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            // If user is still logged in, redirect to settings
+            navigate('/settings');
+            return;
+        }
+        setIsLoggedIn(false);
+    }, [navigate]);
 
     const handleCreateAccount = () => {
         navigate('/register');

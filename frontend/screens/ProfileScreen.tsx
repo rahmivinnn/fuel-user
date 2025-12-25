@@ -5,6 +5,7 @@ import { useAppContext } from '../App';
 import { apiUpdateProfile } from '../services/api';
 import { User } from '../types';
 import AnimatedPage from '../components/AnimatedPage';
+import LogoutModal from '../components/LogoutModal';
 
 const ProfileInput = ({ label, value, name, onChange, type = "text", disabled = false }: { label: string, value: string, name: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, type?: string, disabled?: boolean }) => (
     <div>
@@ -26,6 +27,7 @@ const ProfileScreen = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<User | null>(user);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -350,7 +352,7 @@ const ProfileScreen = () => {
                         </button>
                     ) : (
                         <button 
-                            onClick={logout} 
+                            onClick={() => setShowLogoutModal(true)} 
                             className="w-full bg-red-500 text-white py-4 rounded-full font-bold hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center"
                         >
                             <LogOut size={20} className="mr-2" />
@@ -360,6 +362,12 @@ const ProfileScreen = () => {
                 </div>
             </div>
         </div>
+        
+        {/* Logout Modal */}
+        <LogoutModal 
+            isOpen={showLogoutModal}
+            onClose={() => setShowLogoutModal(false)}
+        />
         </AnimatedPage>
     );
 };

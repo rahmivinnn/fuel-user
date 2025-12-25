@@ -13,6 +13,7 @@ interface NotificationSettings {
 
 const NotificationSettingsScreen = () => {
     const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [settings, setSettings] = useState<NotificationSettings>({
         orderUpdates: true,
         paymentConfirmations: true,
@@ -22,16 +23,64 @@ const NotificationSettingsScreen = () => {
     });
 
     useEffect(() => {
-        // Load saved notification settings
-        const savedSettings = localStorage.getItem('notificationSettings');
-        if (savedSettings) {
-            try {
-                setSettings(JSON.parse(savedSettings));
-            } catch (error) {
-                console.error('Error loading notification settings:', error);
+        // Check if user is logged in
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+            setIsLoggedIn(false);
+            return;
+        }
+        setIsLoggedIn(true);
+    }, []);
+
+    // Show login prompt if not logged in
+    if (!isLoggedIn) {
+        return (
+            <AnimatedPage>
+                <div className="min-h-screen flex flex-col bg-white">
+                    <header className="p-4 flex items-center bg-white border-b border-gray-100">
+                        <button onClick={() => navigate('/settings')} className="p-2 -ml-2">
+                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
+                            Notification Settings
+                        </h2>
+                    </header>
+                    
+                    <div className="flex-1 flex flex-col items-center justify-center px-4">
+                        <div className="text-center">
+                            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Bell className="w-10 h-10 text-gray-400" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h3>
+                            <p className="text-gray-600 mb-8 max-w-sm">
+                                Please login to manage your notification preferences.
+                            </p>
+                            <button 
+                                onClick={() => navigate('/login')}
+                                className="bg-[#3AC36C] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#2ea85a] transition-colors"
+                            >
+                                Login Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </AnimatedPage>
+        );
+    }
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            // Load saved notification settings
+            const savedSettings = localStorage.getItem('notificationSettings');
+            if (savedSettings) {
+                try {
+                    setSettings(JSON.parse(savedSettings));
+                } catch (error) {
+                    console.error('Error loading notification settings:', error);
+                }
             }
         }
-    }, []);
+    }, [isLoggedIn]);
 
     const handleToggle = (key: keyof NotificationSettings) => {
         const newSettings = { ...settings, [key]: !settings[key] };

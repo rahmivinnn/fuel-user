@@ -24,6 +24,17 @@ const NotificationsScreen = () => {
     loadNotifications();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDeleteMenu(null);
+    };
+    
+    if (showDeleteMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showDeleteMenu]);
+
   const loadNotifications = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
