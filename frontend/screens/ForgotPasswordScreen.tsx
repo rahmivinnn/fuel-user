@@ -243,7 +243,7 @@ const ForgotPasswordScreen = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-green-500 text-white py-3 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-500/70"
+                className="w-full py-4 bg-[#3AC36C] hover:bg-[#2ea85a] text-white rounded-full font-semibold text-base shadow-lg transition-all duration-300 active:scale-95 disabled:opacity-70"
               >
                 {isLoading ? 'Resetting...' : 'Reset Password'}
               </button>
@@ -311,7 +311,7 @@ const ForgotPasswordScreen = () => {
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-14 h-14 text-center text-xl font-semibold border-2 border-green-300 rounded-xl focus:outline-none focus:border-green-500 bg-transparent"
+                    className="w-14 h-14 text-center text-xl font-semibold border-2 border-[#3AC36C] rounded-xl focus:outline-none focus:border-[#3AC36C] focus:ring-2 focus:ring-[#3AC36C]/20 bg-white transition-all duration-200"
                   />
                 ))}
               </div>
@@ -319,7 +319,7 @@ const ForgotPasswordScreen = () => {
               <button
                 type="submit"
                 disabled={isLoading || otp.some(digit => !digit)}
-                className="w-full bg-green-500 text-white py-3 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-500/70"
+                className="w-full py-4 bg-[#3AC36C] hover:bg-[#2ea85a] text-white rounded-full font-semibold text-base shadow-lg transition-all duration-300 active:scale-95 disabled:opacity-70"
               >
                 {isLoading ? 'Verifying...' : 'Verify'}
               </button>
@@ -397,14 +397,14 @@ const ForgotPasswordScreen = () => {
               placeholder="Email or phone number"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 text-base placeholder-gray-400"
+              className="w-full py-4 px-6 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3AC36C] focus:border-[#3AC36C] placeholder-gray-400 text-base transition-all duration-200"
               required
             />
             
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-green-500 text-white py-3 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl flex items-center justify-center disabled:bg-green-500/70"
+              className="w-full py-4 bg-[#3AC36C] hover:bg-[#2ea85a] text-white rounded-full font-semibold text-base shadow-lg transition-all duration-300 active:scale-95 disabled:opacity-70"
             >
               {isLoading ? 'Sending...' : 'Send Code'}
             </button>

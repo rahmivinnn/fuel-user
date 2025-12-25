@@ -216,6 +216,46 @@ export const apiSendTestNotification = async (customerId: string) => {
 // UTILITY FUNCTIONS
 // ==========================================
 
+export const apiUpdateProfile = async (profileData: any) => {
+  const response = await fetch(`${API_BASE_URL}/api/profile/update`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(profileData)
+  });
+  
+  const data = await response.json();
+  
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to update profile');
+  }
+  
+  return data.data;
+};
+
+export const apiChangePassword = async (customerId: string, currentPassword: string, newPassword: string) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      customerId,
+      currentPassword,
+      newPassword
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to change password');
+  }
+  
+  return data.data;
+};
+
 export const apiHealthCheck = async () => {
   const { data } = await api.get('/api/health');
   return data;

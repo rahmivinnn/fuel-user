@@ -27,6 +27,8 @@ const NotificationsScreen = () => {
   const loadNotifications = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('User from localStorage:', user);
+      
       if (user.id) {
         const data = await apiGetNotifications(user.id);
         setNotifications(data);

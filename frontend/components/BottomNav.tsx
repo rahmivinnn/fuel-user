@@ -11,20 +11,37 @@ const NavItem = ({ to, icon, label }: { to: string; icon: string; label: string 
     <NavLink
         to={to}
         className={({ isActive }) =>
-            `flex flex-col items-center justify-center space-y-1 w-full text-sm md:text-base transition-transform active:scale-95 hover:opacity-90 ${
-                isActive ? 'text-primary' : 'text-gray-400'
+            `flex flex-col items-center justify-center space-y-1 w-full text-sm md:text-base transition-all duration-200 active:scale-95 hover:opacity-90 ${
+                isActive ? 'text-[#3AC36C]' : 'text-gray-400'
             }`
         }
     >
-        <img src={icon} alt={label} className={`w-8 h-8 md:w-10 md:h-10 object-contain ${'rounded-full'} ${'ring-0'} ${''}`} />
-        <span className="text-xs md:text-sm mt-1">{label}</span>
+        {({ isActive }) => (
+            <>
+                <img 
+                    src={icon} 
+                    alt={label} 
+                    className={`w-6 h-6 md:w-7 md:h-7 object-contain transition-all duration-200 ${
+                        isActive ? 'filter-green' : 'grayscale'
+                    }`} 
+                    style={{
+                        filter: isActive ? 'brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(451%) hue-rotate(81deg) brightness(95%) contrast(87%)' : 'grayscale(100%)'
+                    }}
+                />
+                <span className={`text-xs md:text-sm mt-1 font-medium transition-colors duration-200 ${
+                    isActive ? 'text-[#3AC36C]' : 'text-gray-400'
+                }`}>
+                    {label}
+                </span>
+            </>
+        )}
     </NavLink>
 );
 
 const BottomNav = () => {
     return (
         <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg w-full z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-            <div className="flex justify-around items-center h-20 md:h-24 px-2 md:px-4">
+            <div className="flex justify-around items-center h-16 md:h-20 px-2 md:px-4">
                 <NavItem to="/home" icon={homeIcon} label="Home" />
                 <NavItem to="/orders" icon={myOrdersIcon} label="My Orders" />
                 <NavItem to="/track" icon={trackOrderIcon} label="Track Order" />

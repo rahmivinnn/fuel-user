@@ -5,42 +5,38 @@ const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Navigate to login after 2 seconds
+    // Navigate to login after 3 seconds
     const timer = setTimeout(() => {
       navigate('/login');
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-green-500 relative overflow-hidden">
-      {/* Top Hexagons */}
-      <div className="absolute -top-10 left-0 w-full flex justify-center">
-        <img 
-          src="/hexagon.png" 
-          alt="" 
-          className="w-80 h-auto opacity-40"
-          style={{ transform: 'scaleY(-1)' }}
-        />
-      </div>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#3AC36C] relative overflow-hidden">
+      {/* Top Hexagon */}
+      <img 
+        src="/hexagon.png" 
+        alt="" 
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-80 h-56 z-20"
+        style={{ filter: 'brightness(0) invert(1)', transform: 'translateX(-50%) scaleY(-1)' }}
+      />
+      
+      {/* Hexagon */}
+      <img 
+        src="/hexagon.png" 
+        alt="" 
+        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-80 h-56 z-20"
+        style={{ filter: 'brightness(0) invert(1)' }}
+      />
       
       {/* Center Logo */}
-      <div className="relative z-20 flex flex-col items-center">
+      <div className="relative z-30 flex flex-col items-center">
         <img 
-          src="/logo.png" 
+          src="/logo-white.png" 
           alt="FuelFriendly Logo" 
-          className="w-32 h-32 relative z-30"
-          style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))', transform: 'rotate(360deg)' }}
-        />
-      </div>
-      
-      {/* Bottom Hexagons */}
-      <div className="absolute -bottom-10 left-0 w-full flex justify-center">
-        <img 
-          src="/hexagon.png" 
-          alt="" 
-          className="w-80 h-auto opacity-40"
+          className="w-48 h-32"
         />
       </div>
     </div>

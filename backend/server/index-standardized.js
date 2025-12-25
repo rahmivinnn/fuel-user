@@ -346,6 +346,88 @@ app.post('/api/auth/forgot-password', validateRequest(forgotPasswordSchema), asy
   }
 });
 
+app.put('/api/profile/update', async (req, res) => {
+  try {
+    const { customerId, fullName, email, phoneNumber, city, gender, vehicle } = req.body;
+    
+    if (!customerId) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID required');
+    }
+    
+    // Update customer profile
+    const [updatedCustomer] = await db.update(customers)
+      .set({ 
+        fullName: fullName || undefined,
+        email: email || undefined, 
+        phoneNumber: phoneNumber || undefined,
+        city: city || undefined,
+        gender: gender || undefined
+      })
+      .where(eq(customers.id, customerId))
+      .returning();
+    
+    // Update vehicle if provided
+    if (vehicle && Object.keys(vehicle).length > 0) {
+      await db.update(vehicles)
+        .set({
+          brand: vehicle.brand || undefined,
+          color: vehicle.color || undefined,
+          licenseNumber: vehicle.licenseNumber || undefined
+        })
+        .where(eq(vehicles.customerId, customerId));
+    }
+    
+    // Get updated vehicles
+    const userVehicles = await db.select().from(vehicles).where(eq(vehicles.customerId, customerId));
+    
+    return res.success(RESPONSE_CODES.SUCCESS, {
+      customer: {
+        id: updatedCustomer.id,
+        fullName: updatedCustomer.fullName,
+        email: updatedCustomer.email,
+        phoneNumber: updatedCustomer.phoneNumber,
+        city: updatedCustomer.city,
+        gender: updatedCustomer.gender,
+        avatarUrl: updatedCustomer.profilePhoto
+      },
+      vehicles: userVehicles
+    }, 'Profile updated successfully');
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    const { customerId, currentPassword, newPassword } = req.body;
+    
+    if (!customerId || !currentPassword || !newPassword) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID, current password, and new password required');
+    }
+    
+    // Verify current password
+    const user = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+    if (!user.length) {
+      return res.error(RESPONSE_CODES.USER_NOT_FOUND);
+    }
+    
+    if (user[0].password !== currentPassword) {
+      return res.error(RESPONSE_CODES.INVALID_CREDENTIALS, 'Current password is incorrect');
+    }
+    
+    // Update password
+    await db.update(customers)
+      .set({ password: newPassword })
+      .where(eq(customers.id, customerId));
+    
+    return res.success(RESPONSE_CODES.SUCCESS, null, 'Password changed successfully');
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
 app.post('/api/auth/reset-password', validateRequest(resetPasswordSchema), async (req, res) => {
   try {
     const { email, password } = req.validatedData;

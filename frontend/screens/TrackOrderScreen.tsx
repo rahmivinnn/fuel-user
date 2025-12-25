@@ -7,6 +7,53 @@ import MapboxMap from '../components/MapboxMap';
 const TrackOrderScreen = () => {
   const navigate = useNavigate();
   const [orderStatus, setOrderStatus] = useState('in_progress');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user) {
+      setIsLoggedIn(false);
+      return;
+    }
+    setIsLoggedIn(true);
+  }, []);
+
+  // Show login prompt if not logged in
+  if (!isLoggedIn) {
+    return (
+      <AnimatedPage>
+        <div className="min-h-screen flex flex-col bg-white">
+          <header className="p-4 flex items-center sticky top-0 bg-white z-10 shadow-sm">
+            <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+              <img src="/Back.png" alt="Back" className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-center flex-grow -ml-10 text-[#3F4249]">Track Order</h2>
+          </header>
+          
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h3>
+              <p className="text-gray-600 mb-8 max-w-sm">
+                Please login to track your orders and view delivery status.
+              </p>
+              <button 
+                onClick={() => navigate('/login')}
+                className="bg-[#3AC36C] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#2ea85a] transition-colors"
+              >
+                Login Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   // Mock order data
   const orderData = {
@@ -32,14 +79,14 @@ const TrackOrderScreen = () => {
     <AnimatedPage>
       <div className="bg-white min-h-screen pb-24">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 shadow-sm bg-white">
           <button
             onClick={() => navigate('/home')}
-            className="p-2 -ml-2"
+            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Track Your Order</h1>
+          <h1 className="text-lg font-bold text-[#3F4249]">Track Your Order</h1>
           <div className="w-10"></div>
         </div>
 
@@ -53,90 +100,103 @@ const TrackOrderScreen = () => {
         </div>
 
         {/* Driver Info Card */}
-        <div className="mx-4 mt-4 bg-white rounded-2xl shadow-lg p-4">
+        <div className="mx-4 mt-4 bg-white rounded-2xl shadow-xl border border-gray-100 p-5">
           {/* Driver Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center space-x-4">
               <img 
                 src={orderData.driver.avatar} 
                 alt={orderData.driver.name}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-md"
                 onError={(e) => {
-                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%23e5e7eb'/%3E%3Cpath d='M24 12c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 28c-6.6 0-12-5.4-12-12 0-1.3.2-2.5.6-3.6 2.4 1.8 5.4 2.9 8.7 2.9h5.4c3.3 0 6.3-1.1 8.7-2.9.4 1.1.6 2.3.6 3.6 0 6.6-5.4 12-12 12z' fill='%23fff'/%3E%3C/svg%3E";
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Ccircle cx='28' cy='28' r='28' fill='%23e5e7eb'/%3E%3Cpath d='M28 14c3.9 0 7 3.1 7 7s-3.1 7-7 7-7-3.1-7-7 3.1-7 7-7zm0 32c-7.7 0-14-6.3-14-14 0-1.5.2-2.9.7-4.2 2.8 2.1 6.3 3.4 10.1 3.4h6.4c3.8 0 7.3-1.3 10.1-3.4.5 1.3.7 2.7.7 4.2 0 7.7-6.3 14-14 14z' fill='%23999'/%3E%3C/svg%3E";
                 }}
               />
               <div>
-                <h3 className="font-semibold text-gray-900">{orderData.driver.name}</h3>
-                <p className="text-sm text-gray-600">{orderData.driver.location}</p>
+                <h3 className="font-bold text-[#3F4249] text-lg">{orderData.driver.name}</h3>
+                <p className="text-sm text-gray-600 flex items-center mt-1">
+                  <MapPin size={14} className="mr-1 text-[#FF5630]" />
+                  {orderData.driver.location}
+                </p>
               </div>
             </div>
             
             {/* Action Buttons */}
-            <div className="flex space-x-2">
-              <button className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+            <div className="flex space-x-3">
+              <button className="w-12 h-12 bg-[#3AC36C] rounded-full flex items-center justify-center shadow-lg hover:bg-[#2ea85a] transition-all duration-200 active:scale-95">
                 <MessageCircle className="w-6 h-6 text-white" />
               </button>
-              <button className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <button className="w-12 h-12 bg-[#3AC36C] rounded-full flex items-center justify-center shadow-lg hover:bg-[#2ea85a] transition-all duration-200 active:scale-95">
                 <Phone className="w-6 h-6 text-white" />
               </button>
             </div>
           </div>
 
           {/* Delivery Time */}
-          <div className="mb-6">
-            <h4 className="font-semibold text-gray-900 mb-2">Your Delivery Time</h4>
-            <p className="text-gray-600">Estimated {orderData.deliveryTime.estimated}</p>
+          <div className="mb-6 bg-[#E3FFEE] rounded-xl p-4">
+            <h4 className="font-bold text-[#3F4249] mb-2">Your Delivery Time</h4>
+            <p className="text-[#3AC36C] font-semibold text-lg">Estimated {orderData.deliveryTime.estimated}</p>
           </div>
 
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mb-2">
-                <User className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 bg-[#3AC36C] rounded-full flex items-center justify-center mb-2 shadow-md">
+                <User className="w-5 h-5 text-white" />
               </div>
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-[#3AC36C] rounded-full shadow-sm"></div>
+              <span className="text-xs text-[#3AC36C] font-medium mt-1">Order</span>
             </div>
             
-            <div className="flex-1 h-0.5 bg-gray-300 mx-2 relative">
-              <div className="h-full bg-green-500 w-1/3"></div>
+            <div className="flex-1 h-1 bg-gray-200 mx-3 relative rounded-full">
+              <div className="h-full bg-[#3AC36C] w-1/3 rounded-full shadow-sm"></div>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mb-2">
-                <Truck className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 bg-[#3AC36C] rounded-full flex items-center justify-center mb-2 shadow-md">
+                <Truck className="w-5 h-5 text-white" />
               </div>
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-[#3AC36C] rounded-full shadow-sm"></div>
+              <span className="text-xs text-[#3AC36C] font-medium mt-1">Pickup</span>
             </div>
             
-            <div className="flex-1 h-0.5 bg-gray-300 mx-2"></div>
+            <div className="flex-1 h-1 bg-gray-200 mx-3 rounded-full"></div>
             
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mb-2">
-                <MapPin className="w-4 h-4 text-gray-500" />
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mb-2">
+                <MapPin className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+              <span className="text-xs text-gray-400 font-medium mt-1">Transit</span>
             </div>
             
-            <div className="flex-1 h-0.5 bg-gray-300 mx-2"></div>
+            <div className="flex-1 h-1 bg-gray-200 mx-3 rounded-full"></div>
             
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mb-2">
-                <Clock className="w-4 h-4 text-gray-500" />
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mb-2">
+                <Clock className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+              <span className="text-xs text-gray-400 font-medium mt-1">Delivered</span>
             </div>
           </div>
 
           {/* Order Details */}
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Order</h4>
-            <div className="space-y-2">
+          <div className="bg-gray-50 rounded-xl p-4">
+            <h4 className="font-bold text-[#3F4249] mb-4">Order Details</h4>
+            <div className="space-y-3">
               {orderData.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-gray-700">{item.name}</span>
-                  <span className="font-medium text-gray-900">${item.price}</span>
+                <div key={index} className="flex justify-between items-center py-2">
+                  <span className="text-gray-700 font-medium">{item.name}</span>
+                  <span className="font-bold text-[#3F4249]">${item.price}</span>
                 </div>
               ))}
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#3F4249]">Total</span>
+                  <span className="font-bold text-[#3AC36C] text-lg">${orderData.items.reduce((sum, item) => sum + item.price, 0)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

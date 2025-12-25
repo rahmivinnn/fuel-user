@@ -21,6 +21,9 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import PaymentScreen from './screens/PaymentScreen';
 import OrderSummaryScreen from './screens/OrderSummaryScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ManagePasswordScreen from './screens/ManagePasswordScreen';
+import ThemeScreen from './screens/ThemeScreen';
+import FuelEfficiencyCalculatorScreen from './screens/FuelEfficiencyCalculatorScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -104,6 +107,9 @@ const AppNavigator = () => {
                 <Route path="/orders" element={<MyOrdersScreen />} />
                 <Route path="/notifications" element={<NotificationsScreen />} />
                 <Route path="/settings" element={<SettingsScreen />} />
+                <Route path="/manage-password" element={<ManagePasswordScreen />} />
+                <Route path="/theme" element={<ThemeScreen />} />
+                <Route path="/fuel-calculator" element={<FuelEfficiencyCalculatorScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
@@ -117,6 +123,30 @@ const App = () => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
+        // Check for existing user session on app start
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            try {
+                const userData = JSON.parse(savedUser);
+                setUser(userData);
+                setIsAuthenticated(true);
+            } catch (error) {
+                console.error('Error parsing saved user data:', error);
+                localStorage.removeItem('user');
+            }
+        }
+        
+        // Load saved theme or detect system preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            setThemeState(savedTheme as Theme);
+        } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setThemeState(prefersDark ? Theme.DARK : Theme.LIGHT);
+        }
+    }, []);
+
+    useEffect(() => {
         const root = window.document.documentElement;
         if (theme === Theme.DARK) {
             root.classList.add('dark');
@@ -128,9 +158,12 @@ const App = () => {
     const setTheme = (newTheme: Theme) => {
         if (newTheme === Theme.DEFAULT) {
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setThemeState(prefersDark ? Theme.DARK : Theme.LIGHT);
+            const actualTheme = prefersDark ? Theme.DARK : Theme.LIGHT;
+            setThemeState(actualTheme);
+            localStorage.setItem('theme', Theme.DEFAULT);
         } else {
             setThemeState(newTheme);
+            localStorage.setItem('theme', newTheme);
         }
     };
 
@@ -139,6 +172,8 @@ const App = () => {
             const userData = await apiLogin(email, pass);
             setUser(userData.customer);
             setIsAuthenticated(true);
+            // Save to localStorage
+            localStorage.setItem('user', JSON.stringify(userData.customer));
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -150,6 +185,8 @@ const App = () => {
             const userData = await apiLoginWithGoogleCredential();
             setUser(userData);
             setIsAuthenticated(true);
+            // Save to localStorage
+            localStorage.setItem('user', JSON.stringify(userData));
         } catch (error) {
             console.error('Google login error:', error);
             throw error;
@@ -168,7 +205,10 @@ const App = () => {
 
     const updateUser = (updatedUser: User) => {
         setUser(updatedUser);
-        if (updatedUser) setIsAuthenticated(true);
+        if (updatedUser) {
+            setIsAuthenticated(true);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
     }
 
     return (
