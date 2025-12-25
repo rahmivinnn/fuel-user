@@ -77,6 +77,17 @@ export const fuelFriends = pgTable("fuel_friends", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Reviews Schema
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  stationId: varchar("station_id").references(() => fuelStations.id),
+  fuelFriendId: varchar("fuel_friend_id").references(() => fuelFriends.id),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // FCM Tokens Schema
 export const fcmTokens = pgTable("fcm_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

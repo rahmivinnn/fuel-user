@@ -123,6 +123,36 @@ export const apiGetStationDetails = async (id: string) => {
   return data.data;
 };
 
+export const apiGetStationReviews = async (id: string, limit = 20) => {
+  const { data } = await api.get(`/api/stations/${id}/reviews?limit=${limit}`);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiGetFuelFriendDetails = async (id: string) => {
+  const { data } = await api.get(`/api/fuel-friends/${id}`);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiGetFuelFriendReviews = async (id: string, limit = 20) => {
+  const { data } = await api.get(`/api/fuel-friends/${id}/reviews?limit=${limit}`);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
+export const apiAddReview = async (reviewData: {
+  customerId: string;
+  stationId?: string;
+  fuelFriendId?: string;
+  rating: number;
+  comment?: string;
+}) => {
+  const { data } = await api.post('/api/reviews', reviewData);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
 // ==========================================
 // ORDERS
 // ==========================================

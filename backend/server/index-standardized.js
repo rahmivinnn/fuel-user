@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { db } from './db.js';
-import { customers, vehicles, orders, fuelStations, products, fuelFriends, fcmTokens, notifications } from './shared/schema.js';
+import { customers, vehicles, orders, fuelStations, products, fuelFriends, fcmTokens, notifications, reviews } from './shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import axios from 'axios';
 import Stripe from 'stripe';
@@ -571,6 +571,98 @@ app.get('/api/stations/:id', async (req, res) => {
     return res.error(RESPONSE_CODES.STATION_NOT_FOUND);
   } catch (error) {
     console.error('Station details error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.get('/api/stations/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 20 } = req.query;
+    
+    const stationReviews = await db.select({
+      id: reviews.id,
+      rating: reviews.rating,
+      comment: reviews.comment,
+      createdAt: reviews.createdAt,
+      userName: customers.fullName,
+      userAvatar: customers.profilePhoto
+    })
+    .from(reviews)
+    .leftJoin(customers, eq(reviews.customerId, customers.id))
+    .where(eq(reviews.stationId, id))
+    .orderBy(sql`${reviews.createdAt} DESC`)
+    .limit(parseInt(limit));
+    
+    return res.success(RESPONSE_CODES.SUCCESS, stationReviews);
+  } catch (error) {
+    console.error('Station reviews error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.get('/api/fuel-friends/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const fuelFriend = await db.select().from(fuelFriends).where(eq(fuelFriends.id, id)).limit(1);
+    
+    if (!fuelFriend.length) {
+      return res.error(RESPONSE_CODES.NOT_FOUND, 'Fuel friend not found');
+    }
+    
+    return res.success(RESPONSE_CODES.SUCCESS, fuelFriend[0]);
+  } catch (error) {
+    console.error('Fuel friend details error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.get('/api/fuel-friends/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 20 } = req.query;
+    
+    const friendReviews = await db.select({
+      id: reviews.id,
+      rating: reviews.rating,
+      comment: reviews.comment,
+      createdAt: reviews.createdAt,
+      userName: customers.fullName,
+      userAvatar: customers.profilePhoto
+    })
+    .from(reviews)
+    .leftJoin(customers, eq(reviews.customerId, customers.id))
+    .where(eq(reviews.fuelFriendId, id))
+    .orderBy(sql`${reviews.createdAt} DESC`)
+    .limit(parseInt(limit));
+    
+    return res.success(RESPONSE_CODES.SUCCESS, friendReviews);
+  } catch (error) {
+    console.error('Fuel friend reviews error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { customerId, stationId, fuelFriendId, rating, comment } = req.body;
+    
+    if (!customerId || !rating || (!stationId && !fuelFriendId)) {
+      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID, rating, and either station ID or fuel friend ID required');
+    }
+    
+    const [newReview] = await db.insert(reviews).values({
+      customerId,
+      stationId: stationId || null,
+      fuelFriendId: fuelFriendId || null,
+      rating,
+      comment: comment || null
+    }).returning();
+    
+    return res.success(RESPONSE_CODES.CREATED, newReview, 'Review added successfully');
+  } catch (error) {
+    console.error('Add review error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });
