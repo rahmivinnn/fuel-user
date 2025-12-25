@@ -26,7 +26,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   createOrderSchema,
-  createPaymentIntentSchema
+  createPaymentIntentSchema,
+  deleteAccountSchema
 } from '../utils/validation.js';
 
 dotenv.config({ path: '.env.local' });
@@ -424,6 +425,44 @@ app.post('/api/auth/change-password', async (req, res) => {
     return res.success(RESPONSE_CODES.SUCCESS, null, 'Password changed successfully');
   } catch (error) {
     console.error('Change password error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+app.delete('/api/auth/delete-account', validateRequest(deleteAccountSchema), async (req, res) => {
+  try {
+    const { customerId, reason } = req.validatedData;
+    
+    // Check if user exists
+    const user = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+    if (!user.length) {
+      return res.error(RESPONSE_CODES.USER_NOT_FOUND);
+    }
+    
+    // Delete related data in order (foreign key constraints)
+    // 1. Delete FCM tokens
+    await db.delete(fcmTokens).where(eq(fcmTokens.customerId, customerId));
+    
+    // 2. Delete notifications
+    await db.delete(notifications).where(eq(notifications.customerId, customerId));
+    
+    // 3. Delete orders
+    await db.delete(orders).where(eq(orders.customerId, customerId));
+    
+    // 4. Delete vehicles
+    await db.delete(vehicles).where(eq(vehicles.customerId, customerId));
+    
+    // 5. Finally delete customer
+    await db.delete(customers).where(eq(customers.id, customerId));
+    
+    // Log deletion reason for analytics (optional)
+    if (reason) {
+      console.log(`Account deleted - Customer ID: ${customerId}, Reason: ${reason}`);
+    }
+    
+    return res.success(RESPONSE_CODES.ACCOUNT_DELETED);
+  } catch (error) {
+    console.error('Delete account error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });

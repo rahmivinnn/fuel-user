@@ -256,6 +256,27 @@ export const apiChangePassword = async (customerId: string, currentPassword: str
   return data.data;
 };
 
+export const apiDeleteAccount = async (customerId: string, reason?: string) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/delete-account`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      customerId,
+      reason
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to delete account');
+  }
+  
+  return data.data;
+};
+
 export const apiHealthCheck = async () => {
   const { data } = await api.get('/api/health');
   return data;

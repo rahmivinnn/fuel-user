@@ -85,6 +85,12 @@ export const createPaymentIntentSchema = z.object({
   orderId: z.string().min(1, 'Order ID is required')
 });
 
+// Account Management Schemas
+export const deleteAccountSchema = z.object({
+  customerId: z.string().min(1, 'Customer ID is required'),
+  reason: z.string().optional()
+});
+
 // Validation middleware
 export const validateRequest = (schema) => {
   return (req, res, next) => {

@@ -43,7 +43,10 @@ export const RESPONSE_CODES = {
   
   // Payment Codes
   PAYMENT_SUCCESS: 'RC_P001',
-  PAYMENT_FAILED: 'RC_P002'
+  PAYMENT_FAILED: 'RC_P002',
+  
+  // Account Management Codes
+  ACCOUNT_DELETED: 'RC_AC001'
 };
 
 // Response Messages
@@ -81,7 +84,9 @@ export const RESPONSE_MESSAGES = {
   [RESPONSE_CODES.STATION_NOT_FOUND]: 'Station not found',
   
   [RESPONSE_CODES.PAYMENT_SUCCESS]: 'Payment successful',
-  [RESPONSE_CODES.PAYMENT_FAILED]: 'Payment failed'
+  [RESPONSE_CODES.PAYMENT_FAILED]: 'Payment failed',
+  
+  [RESPONSE_CODES.ACCOUNT_DELETED]: 'Account deleted successfully'
 };
 
 // Response Utility Functions
@@ -140,5 +145,7 @@ export const HTTP_STATUS = {
   [RESPONSE_CODES.STATION_NOT_FOUND]: 404,
   
   [RESPONSE_CODES.PAYMENT_SUCCESS]: 200,
-  [RESPONSE_CODES.PAYMENT_FAILED]: 400
+  [RESPONSE_CODES.PAYMENT_FAILED]: 400,
+  
+  [RESPONSE_CODES.ACCOUNT_DELETED]: 200
 };

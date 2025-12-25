@@ -51,6 +51,16 @@ const NotificationsScreen = () => {
     }
   };
 
+  const deleteNotification = (notificationId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setShowDeleteMenu(null);
+  };
+
+  const handleMenuClick = (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation();
+    setShowDeleteMenu(showDeleteMenu === notificationId ? null : notificationId);
+  };
+
   const getIcon = (notification: Notification) => {
     const data = notification.data ? JSON.parse(notification.data) : {};
     const type = data.type || 'info';
@@ -193,6 +203,29 @@ const NotificationsScreen = () => {
                           <p className="text-xs text-gray-400 mt-1">
                             {formatTime(notification.sentAt)}
                           </p>
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => handleMenuClick(e, notification.id)}
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                          >
+                            <MoreVertical className="w-4 h-4 text-gray-400" />
+                          </button>
+                          
+                          {showDeleteMenu === notification.id && (
+                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotification(notification.id);
+                                }}
+                                className="w-full flex items-center px-4 py-3 text-left hover:bg-gray-50 text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-3" />
+                                Delete this notification
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -459,6 +459,73 @@ curl -X POST http://localhost:4000/api/otp/whatsapp/verify \
   -d '{"phoneNumber":"6289502694005","otp":"123456"}'
 ```
 
+**Delete Account:**
+```bash
+curl -X DELETE http://localhost:4000/api/auth/delete-account \
+  -H "Content-Type: application/json" \
+  -d '{"customerId":"customer_123","reason":"No longer need the service"}'
+```
+
+---
+
+## Account Management Endpoints
+
+### Delete Account
+
+Permanently delete a user account and all associated data.
+
+**Endpoint:** `DELETE /api/auth/delete-account`
+
+**Request Body:**
+```json
+{
+  "customerId": "customer_123",
+  "reason": "No longer need the service"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Account deleted successfully",
+  "responseCode": "RC_200",
+  "timestamp": "2024-12-25T15:40:12.541Z"
+}
+```
+
+**Error Responses:**
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "error": "Customer ID required",
+  "responseCode": "RC_400",
+  "timestamp": "2024-12-25T15:40:12.541Z"
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "success": false,
+  "error": "User not found",
+  "responseCode": "RC_A003",
+  "timestamp": "2024-12-25T15:40:12.541Z"
+}
+```
+
+**Data Deletion Process:**
+When an account is deleted, the following data is permanently removed:
+1. FCM tokens (push notification tokens)
+2. User notifications
+3. Order history
+4. Vehicle information
+5. Customer profile data
+
+**Note:** This action is irreversible. All user data will be permanently deleted from the system.
+
 ### JavaScript Examples
 
 **Send Email OTP:**

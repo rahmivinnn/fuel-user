@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../App';
+import { apiDeleteAccount } from '../services/api';
 import AnimatedPage from '../components/AnimatedPage';
 
 const AccountDeletionScreen = () => {
     const navigate = useNavigate();
-    const { logout } = useAppContext();
+    const { logout, user } = useAppContext();
     const [selectedReason, setSelectedReason] = useState('');
     const [showReasonDropdown, setShowReasonDropdown] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -33,12 +34,16 @@ const AccountDeletionScreen = () => {
         if (window.confirm('Are you absolutely sure? This action cannot be undone.')) {
             setIsDeleting(true);
             
-            // Simulate API call for account deletion
-            setTimeout(() => {
-                setIsDeleting(false);
+            try {
+                await apiDeleteAccount(user?.id || '', selectedReason);
                 logout();
                 navigate('/account-deleted');
-            }, 3000);
+            } catch (error: any) {
+                console.error('Delete account error:', error);
+                alert(error.message || 'Failed to delete account. Please try again.');
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
