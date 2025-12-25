@@ -31,6 +31,8 @@ import ReportIssueScreen from './screens/ReportIssueScreen';
 import ReportSubmittedSuccessScreen from './screens/ReportSubmittedSuccessScreen';
 import TermsConditionsScreen from './screens/TermsConditionsScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import AccountDeletionScreen from './screens/AccountDeletionScreen';
+import AccountDeletedSuccessScreen from './screens/AccountDeletedSuccessScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -124,6 +126,8 @@ const AppNavigator = () => {
                 <Route path="/report-submitted" element={<ReportSubmittedSuccessScreen />} />
                 <Route path="/terms-conditions" element={<TermsConditionsScreen />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicyScreen />} />
+                <Route path="/account-deletion" element={<AccountDeletionScreen />} />
+                <Route path="/account-deleted" element={<AccountDeletedSuccessScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
