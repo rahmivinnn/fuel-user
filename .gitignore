@@ -1,40 +1,53 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+frontend/.env.local
+backend/.env.local
+
+# Build outputs
+frontend/dist/
+frontend/build/
+backend/dist/
+backend/build/
+
 # Logs
-logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Coverage directory used by tools like istanbul
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
 
+# Capacitor
+frontend/android/app/build/
+frontend/ios/App/build/
 
-.env.local
-.env.local.example
-.env.local.template
+# Database
+*.db
+*.sqlite
 
-
-# environment
-.env
-
-# pm2
-ecosystem.config.cjs
-
-# whatsapp runtime session
-server/wa-session/
-server/data/users.json
+# WhatsApp session
+backend/server/wa-session/
