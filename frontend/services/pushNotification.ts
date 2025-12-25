@@ -1,4 +1,5 @@
-import { messaging, getToken, onMessage } from './firebase';
+// Temporarily disable push notifications for build
+// import { messaging, getToken, onMessage } from './firebase.ts';
 import { apiRegisterFCMToken } from './api';
 
 class PushNotificationService {
@@ -6,6 +7,7 @@ class PushNotificationService {
   
   async requestPermission(): Promise<boolean> {
     try {
+      if (!('Notification' in window)) return false;
       const permission = await Notification.requestPermission();
       return permission === 'granted';
     } catch (error) {
@@ -16,22 +18,9 @@ class PushNotificationService {
 
   async getRegistrationToken(): Promise<string | null> {
     try {
-      if (!messaging) {
-        console.warn('Firebase messaging not available');
-        return null;
-      }
-
-      if (!this.vapidKey) {
-        console.warn('VAPID key not configured');
-        return null;
-      }
-
-      const token = await getToken(messaging, {
-        vapidKey: this.vapidKey
-      });
-      
-      console.log('FCM Registration Token:', token);
-      return token;
+      // Temporarily disabled for build
+      console.warn('Firebase messaging temporarily disabled');
+      return null;
     } catch (error) {
       console.error('Error getting registration token:', error);
       return null;
@@ -40,30 +29,22 @@ class PushNotificationService {
 
   async initializePushNotifications(customerId?: string): Promise<string | null> {
     try {
-      // Check if notifications are supported
       if (!('Notification' in window)) {
         console.warn('This browser does not support notifications');
         return null;
       }
 
-      // Request permission
       const hasPermission = await this.requestPermission();
       if (!hasPermission) {
         console.warn('Notification permission denied');
         return null;
       }
 
-      // Get registration token
       const token = await this.getRegistrationToken();
       
       if (token && customerId) {
-        // Register token with backend
         await this.registerTokenWithBackend(customerId, token);
-        
-        // Listen for foreground messages
         this.setupForegroundMessageListener();
-        
-        // Register service worker for background messages
         this.registerServiceWorker();
       }
 
@@ -92,20 +73,8 @@ class PushNotificationService {
   }
 
   private setupForegroundMessageListener() {
-    if (!messaging) return;
-
-    onMessage(messaging, (payload) => {
-      console.log('Foreground message received:', payload);
-      
-      // Show notification when app is in foreground
-      if (payload.notification) {
-        this.showNotification(
-          payload.notification.title || 'FuelFriendly',
-          payload.notification.body || '',
-          payload.notification.icon || '/logo.png'
-        );
-      }
-    });
+    // Temporarily disabled
+    console.log('Foreground message listener disabled for build');
   }
 
   private async registerServiceWorker() {
@@ -132,8 +101,6 @@ class PushNotificationService {
 
   async sendTestNotification(): Promise<boolean> {
     try {
-      // This would typically be called from backend
-      // For demo purposes, show a local notification
       this.showNotification(
         'Test Notification',
         'Push notifications are working!',
