@@ -197,10 +197,27 @@ const App = () => {
         // Load saved theme or detect system preference
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
-            setThemeState(savedTheme as Theme);
+            const themeValue = savedTheme as Theme;
+            setThemeState(themeValue);
+            // Apply theme immediately to DOM
+            if (themeValue === Theme.DARK) {
+                document.documentElement.classList.add('dark');
+            } else if (themeValue === Theme.LIGHT) {
+                document.documentElement.classList.remove('dark');
+            } else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
         } else {
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             setThemeState(prefersDark ? Theme.DARK : Theme.LIGHT);
+            if (prefersDark) {
+                document.documentElement.classList.add('dark');
+            }
         }
     }, []);
 

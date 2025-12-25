@@ -83,14 +83,14 @@ const NotificationsScreen = () => {
   }
 
   useEffect(() => {
+    if (!showDeleteMenu) return;
+    
     const handleClickOutside = () => {
       setShowDeleteMenu(null);
     };
     
-    if (showDeleteMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [showDeleteMenu]);
 
   const markAsRead = async (notificationId: string) => {

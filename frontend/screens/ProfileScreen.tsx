@@ -150,7 +150,7 @@ const ProfileScreen = () => {
         setIsEditing(false);
     }
     
-    const vehicle = formData.vehicles[0] || {};
+    const vehicle = formData.vehicles?.[0] || {};
 
     return (
         <AnimatedPage>

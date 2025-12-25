@@ -415,8 +415,26 @@ const HomeScreen = () => {
           
           <div className="space-y-4 mb-8 max-h-[400px] overflow-y-auto">
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-8 h-8 border-4 border-[#3AC36C] border-t-transparent rounded-full animate-spin"></div>
+              <div className="space-y-4">
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-2xl shadow-xl border border-gray-100 p-0 flex flex-col sm:flex-row animate-pulse">
+                    <div className="w-full sm:w-[118px] h-[200px] sm:h-[183px] p-2">
+                      <div className="w-full sm:w-[102px] h-full sm:h-[164px] bg-gray-200 rounded-lg"></div>
+                    </div>
+                    <div className="flex-1 p-2">
+                      <div className="p-2 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="space-y-2">
+                          <div className="h-3 bg-gray-200 rounded w-full"></div>
+                          <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                          <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+                          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                        <div className="h-10 bg-gray-200 rounded-full mt-4"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="text-center text-red-500 py-8">

@@ -51,7 +51,7 @@ const ThemeScreen = () => {
             <div className="min-h-screen bg-white dark:bg-gray-900">
                 <header className="p-4 flex items-center bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
                     <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        <img src="/Back.png" alt="Back" className="w-5 h-5" />
                     </button>
                     <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900 dark:text-white">Theme</h2>
                 </header>
