@@ -75,7 +75,7 @@ const SettingsScreen = () => {
                         <div className="border-t border-gray-100"></div>
                         <SettingsItem icon={<Sun size={20} />} text="Themes" onClick={() => navigate('/theme')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<Bell size={20} />} text="Notifications" onClick={enableNotifications} />
+                        <SettingsItem icon={<Bell size={20} />} text="Notification Settings" onClick={() => navigate('/notification-settings')} />
                     </div>
                 </div>
 

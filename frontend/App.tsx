@@ -24,6 +24,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import ManagePasswordScreen from './screens/ManagePasswordScreen';
 import ThemeScreen from './screens/ThemeScreen';
 import FuelEfficiencyCalculatorScreen from './screens/FuelEfficiencyCalculatorScreen';
+import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -110,6 +111,7 @@ const AppNavigator = () => {
                 <Route path="/manage-password" element={<ManagePasswordScreen />} />
                 <Route path="/theme" element={<ThemeScreen />} />
                 <Route path="/fuel-calculator" element={<FuelEfficiencyCalculatorScreen />} />
+                <Route path="/notification-settings" element={<NotificationSettingsScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
