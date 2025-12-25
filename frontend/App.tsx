@@ -25,6 +25,9 @@ import ManagePasswordScreen from './screens/ManagePasswordScreen';
 import ThemeScreen from './screens/ThemeScreen';
 import FuelEfficiencyCalculatorScreen from './screens/FuelEfficiencyCalculatorScreen';
 import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
+import SupportHelpScreen from './screens/SupportHelpScreen';
+import LiveChatSupportScreen from './screens/LiveChatSupportScreen';
+import ReportIssueScreen from './screens/ReportIssueScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -112,6 +115,9 @@ const AppNavigator = () => {
                 <Route path="/theme" element={<ThemeScreen />} />
                 <Route path="/fuel-calculator" element={<FuelEfficiencyCalculatorScreen />} />
                 <Route path="/notification-settings" element={<NotificationSettingsScreen />} />
+                <Route path="/support-help" element={<SupportHelpScreen />} />
+                <Route path="/live-chat" element={<LiveChatSupportScreen />} />
+                <Route path="/report-issue" element={<ReportIssueScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}

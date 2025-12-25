@@ -21,35 +21,44 @@ const SettingsScreen = () => {
     const [notifStatus, setNotifStatus] = useState<string>('');
 
     const handleLogout = () => {
-        if (confirm('Are you sure you want to log out?')) {
+        if (window.confirm('Are you sure you want to log out?')) {
             logout();
+            navigate('/');
         }
     };
 
     const enableNotifications = async () => {
         try {
+            setNotifStatus('Requesting permission...');
             const token = await pushNotificationService.initializePushNotifications();
             if (token) {
-                setNotifStatus('Notifications enabled');
+                setNotifStatus('Notifications enabled successfully');
                 console.log('FCM Token:', token);
+                // Auto-clear status after 3 seconds
+                setTimeout(() => setNotifStatus(''), 3000);
             } else {
                 setNotifStatus('Permission denied or not supported');
+                setTimeout(() => setNotifStatus(''), 3000);
             }
         } catch (e: any) {
             setNotifStatus(e?.message || 'Failed to enable notifications');
+            setTimeout(() => setNotifStatus(''), 3000);
         }
     };
 
     const testPush = async () => {
         try {
+            setNotifStatus('Sending test notification...');
             const success = await pushNotificationService.sendTestNotification();
             if (success) {
-                setNotifStatus('Test notification sent');
+                setNotifStatus('Test notification sent successfully');
             } else {
                 setNotifStatus('Failed to send test notification');
             }
-        } catch {
-            setNotifStatus('Test failed');
+            setTimeout(() => setNotifStatus(''), 3000);
+        } catch (error) {
+            setNotifStatus('Test notification failed');
+            setTimeout(() => setNotifStatus(''), 3000);
         }
     };
 
@@ -64,12 +73,19 @@ const SettingsScreen = () => {
             </header>
 
             <div className="p-4 space-y-6">
+                {/* Status Message */}
+                {notifStatus && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <p className="text-blue-600 text-sm text-center">{notifStatus}</p>
+                    </div>
+                )}
+
                 <div>
                     <h3 className="text-gray-500 text-sm font-medium mb-3 px-2">Security & Passwords</h3>
                     <div className="bg-white border-t border-b border-gray-200">
                         <SettingsItem icon={<Lock size={20} />} text="Manage Passwords" onClick={() => navigate('/manage-password')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<CreditCard size={20} />} text="Manage Payment Method" />
+                        <SettingsItem icon={<CreditCard size={20} />} text="Manage Payment Method" onClick={() => alert('Payment method management coming soon!')} />
                         <div className="border-t border-gray-100"></div>
                         <SettingsItem icon={<Calculator size={20} />} text="Fuel Efficiency Calculator" onClick={() => navigate('/fuel-calculator')} />
                         <div className="border-t border-gray-100"></div>
@@ -82,15 +98,40 @@ const SettingsScreen = () => {
                 <div>
                     <h3 className="text-gray-500 text-sm font-medium mb-3 px-2">Customer Care</h3>
                     <div className="bg-white border-t border-b border-gray-200">
-                        <SettingsItem icon={<HelpCircle size={20} />} text="Help and Support" />
+                        <SettingsItem icon={<HelpCircle size={20} />} text="Help and Support" onClick={() => navigate('/support-help')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<FileText size={20} />} text="Terms and Conditions" />
+                        <SettingsItem icon={<FileText size={20} />} text="Terms and Conditions" onClick={() => alert('Terms and Conditions coming soon!')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<Shield size={20} />} text="Privacy Policy" />
+                        <SettingsItem icon={<Shield size={20} />} text="Privacy Policy" onClick={() => alert('Privacy Policy coming soon!')} />
                         <div className="border-t border-gray-100"></div>
-                        <SettingsItem icon={<Trash2 size={20} />} text="Request Account Deletion" />
+                        <SettingsItem icon={<Trash2 size={20} />} text="Request Account Deletion" onClick={() => alert('Account deletion request coming soon!')} />
                     </div>
                 </div>
+
+                {/* Push Notification Test Buttons - Development Only */}
+                {process.env.NODE_ENV === 'development' && (
+                    <div>
+                        <h3 className="text-gray-500 text-sm font-medium mb-3 px-2">Development Tools</h3>
+                        <div className="bg-white border-t border-b border-gray-200">
+                            <SettingsItem icon={<Bell size={20} />} text="Enable Push Notifications" onClick={enableNotifications} />
+                            <div className="border-t border-gray-100"></div>
+                            <SettingsItem icon={<Bell size={20} />} text="Test Push Notification" onClick={testPush} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Logout Button */}
+                {user && (
+                    <div className="pt-4">
+                        <button 
+                            onClick={handleLogout}
+                            className="w-full bg-red-500 text-white py-4 rounded-full font-bold hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center"
+                        >
+                            <LogOut size={20} className="mr-2" />
+                            Sign Out
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
         </AnimatedPage>

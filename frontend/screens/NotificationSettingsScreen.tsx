@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, CreditCard, X, Moon, Truck } from 'lucide-react';
+import { ArrowLeft, Bell, CreditCard, X, Moon, Truck, ChevronRight } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 
 interface NotificationSettings {
@@ -69,7 +69,7 @@ const NotificationSettingsScreen = () => {
                     onClick={onToggle}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                    <ArrowLeft className="w-4 h-4 text-gray-400 rotate-180" />
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
             ) : (
                 <button
