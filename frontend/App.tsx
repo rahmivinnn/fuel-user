@@ -49,16 +49,39 @@ const apiLogout = () => {
 const apiLoginWithGoogleCredential = async () => {
   // Check if running on mobile (Capacitor)
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    // For mobile, use mock data for now
-    return {
-      id: `google-${Date.now()}`,
-      fullName: 'Google User (Mobile)',
-      email: 'mobile.user@gmail.com',
-      phone: '',
-      city: '',
-      avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
-      vehicles: []
-    };
+    try {
+      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+      
+      await GoogleAuth.initialize({
+        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_ANDROID,
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+      
+      const result = await GoogleAuth.signIn();
+      
+      return {
+        id: `google-${result.id}`,
+        fullName: result.name,
+        email: result.email,
+        phone: '',
+        city: '',
+        avatarUrl: result.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(result.name)}&background=random`,
+        vehicles: []
+      };
+    } catch (error) {
+      console.error('Mobile Google Auth error:', error);
+      // Fallback to mock data
+      return {
+        id: `google-${Date.now()}`,
+        fullName: 'Google User (Mobile)',
+        email: 'mobile.user@gmail.com',
+        phone: '',
+        city: '',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Google+User&background=random',
+        vehicles: []
+      };
+    }
   }
   
   // Web Google OAuth
@@ -247,8 +270,9 @@ const App = () => {
             const userData = await apiLogin(email, pass);
             setUser(userData.customer);
             setIsAuthenticated(true);
-            // Save to localStorage
+            // Save user and token to localStorage
             localStorage.setItem('user', JSON.stringify(userData.customer));
+            localStorage.setItem('token', userData.token);
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -278,7 +302,11 @@ const App = () => {
             const userData = await apiLoginWithGoogleCredential();
             setUser(userData);
             setIsAuthenticated(true);
+            // Save user and token to localStorage
             localStorage.setItem('user', JSON.stringify(userData));
+            if (userData.token) {
+                localStorage.setItem('token', userData.token);
+            }
         } catch (error) {
             console.error('Google login error:', error);
             // Fallback to mock data on error

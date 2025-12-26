@@ -146,3 +146,65 @@ const NotificationSettingsScreen = () => {
                         Notification Settings
                     </h2>
                 </header>
+
+                <div className="p-4">
+                    <p className="text-gray-600 text-sm mb-6">
+                        Customize your notification preferences to stay updated.
+                    </p>
+
+                    <div className="space-y-1">
+                        <NotificationItem
+                            icon={<Bell className="w-5 h-5 text-[#3AC36C]" />}
+                            title="Order Updates"
+                            description="Get notified about your fuel order status"
+                            isEnabled={settings.orderUpdates}
+                            onToggle={() => handleToggle('orderUpdates')}
+                        />
+
+                        <NotificationItem
+                            icon={<CreditCard className="w-5 h-5 text-[#3AC36C]" />}
+                            title="Payment Confirmations"
+                            description="Get notified when a transaction is successful"
+                            isEnabled={settings.paymentConfirmations}
+                            onToggle={() => handleToggle('paymentConfirmations')}
+                        />
+
+                        <NotificationItem
+                            icon={<X className="w-5 h-5 text-gray-400" />}
+                            title="Order Cancellation Updates"
+                            description="Get notified if an order is cancelled"
+                            isEnabled={settings.orderCancellations}
+                            onToggle={() => handleToggle('orderCancellations')}
+                        />
+
+                        <NotificationItem
+                            icon={<Truck className="w-5 h-5 text-[#3AC36C]" />}
+                            title="Fuel Delivery Updates"
+                            description="Get notified before a scheduled fuel delivery."
+                            isEnabled={settings.fuelDelivery}
+                            onToggle={() => handleToggle('fuelDelivery')}
+                        />
+
+                        <NotificationItem
+                            icon={<X className="w-5 h-5 text-gray-400" />}
+                            title="Safety Alerts"
+                            description="Receive important safety notifications"
+                            isEnabled={settings.safetyAlerts}
+                            onToggle={() => handleToggle('safetyAlerts')}
+                        />
+
+                        <NotificationItem
+                            icon={<Moon className="w-5 h-5 text-gray-900" />}
+                            title="Change Theme"
+                            description=""
+                            isClickable={true}
+                            onToggle={handleThemeNavigation}
+                        />
+                    </div>
+                </div>
+            </div>
+        </AnimatedPage>
+    );
+};
+
+export default NotificationSettingsScreen;

@@ -10,7 +10,36 @@ import whatsappService from './whatsapp-service.js';
 import { initializeDatabase } from './database-checker.js';
 import notificationService from './services/notification.service.js';
 
-// Import utilities
+import jwt from 'jsonwebtoken';
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// Generate JWT token
+const generateToken = (userId, email) => {
+  return jwt.sign(
+    { userId, email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+};
+
+// Verify JWT token middleware
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.error(RESPONSE_CODES.UNAUTHORIZED, 'Token required');
+  }
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.error(RESPONSE_CODES.UNAUTHORIZED, 'Invalid token');
+  }
+};
 import { RESPONSE_CODES } from '../utils/responseHandler.js';
 import { responseMiddleware, errorHandler } from '../utils/middleware.js';
 import { 
@@ -80,7 +109,7 @@ app.post('/api/auth/login', validateRequest(loginSchema), async (req, res) => {
         isEmailVerified: user[0].isEmailVerified
       },
       vehicles: userVehicles,
-      token: 'jwt_token_placeholder'
+      token: generateToken(user[0].id, user[0].email)
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -142,7 +171,8 @@ app.post('/api/auth/register/complete', validateRequest(registerCompleteSchema),
         id: newUser.id,
         email: newUser.email,
         fullName: newUser.fullName
-      }
+      },
+      token: generateToken(newUser.id, newUser.email)
     });
   } catch (error) {
     console.error('Registration complete error:', error);
@@ -177,7 +207,7 @@ app.post('/api/auth/google', validateRequest(googleAuthSchema), async (req, res)
         email: user[0].email,
         isEmailVerified: user[0].isEmailVerified
       },
-      token: 'jwt_token_placeholder'
+      token: generateToken(user[0].id, user[0].email)
     });
   } catch (error) {
     console.error('Google auth error:', error);

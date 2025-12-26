@@ -6,28 +6,38 @@ import { useAppContext } from '../App';
 
 const VerificationSuccess = ({ type = 'email', formData }: { type?: 'email' | 'whatsapp'; formData?: any }) => {
   const navigate = useNavigate();
-  const { updateUser } = useAppContext();
+  const { login, updateUser } = useAppContext();
 
-  const handleGoToHome = () => {
+  const handleGoToHome = async () => {
     if (formData) {
-      const userData = {
-        id: `user-${Date.now()}`,
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        city: '',
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
-        vehicles: [{
-          id: `v-${Date.now()}`,
-          brand: formData.vehicleBrand,
-          color: formData.vehicleColor,
-          licenseNumber: formData.licenseNumber,
-          fuelType: formData.fuelType
-        }]
-      };
-      updateUser(userData);
+      try {
+        // Auto login with registered credentials
+        await login(formData.email, formData.password);
+        navigate('/home');
+      } catch (error) {
+        console.error('Auto login failed:', error);
+        // Fallback to manual user creation
+        const userData = {
+          id: `user-${Date.now()}`,
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          city: '',
+          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
+          vehicles: [{
+            id: `v-${Date.now()}`,
+            brand: formData.vehicleBrand,
+            color: formData.vehicleColor,
+            licenseNumber: formData.licenseNumber,
+            fuelType: formData.fuelType
+          }]
+        };
+        updateUser(userData);
+        navigate('/home');
+      }
+    } else {
+      navigate('/home');
     }
-    navigate('/home');
   };
 
   return (

@@ -48,7 +48,20 @@ const NotificationsScreen = () => {
     loadNotifications();
   }, []);
 
-  // Show login prompt if not logged in
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDeleteMenu(null);
+    };
+    
+    if (showDeleteMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showDeleteMenu]);
+
   if (!isLoggedIn) {
     return (
       <AnimatedPage>
@@ -81,17 +94,6 @@ const NotificationsScreen = () => {
       </AnimatedPage>
     );
   }
-
-  useEffect(() => {
-    if (!showDeleteMenu) return;
-    
-    const handleClickOutside = () => {
-      setShowDeleteMenu(null);
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [showDeleteMenu]);
 
   const markAsRead = async (notificationId: string) => {
     try {
