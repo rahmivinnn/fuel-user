@@ -50,7 +50,7 @@ const ProfileScreen = () => {
             <AnimatedPage>
                 <div className="min-h-screen flex flex-col bg-white">
                     <header className="p-4 flex items-center sticky top-0 bg-white z-10 shadow-sm">
-                        <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <button onClick={() => navigate('/home')} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
                             <img src="/Back.png" alt="Back" className="w-5 h-5" />
                         </button>
                         <h2 className="text-xl font-bold text-center flex-grow -ml-10 text-[#3F4249]">My Profile</h2>
@@ -156,7 +156,7 @@ const ProfileScreen = () => {
         <AnimatedPage>
         <div className="min-h-screen bg-white">
             <header className="p-4 flex items-center justify-between sticky top-0 bg-white z-10 shadow-sm">
-                <button onClick={() => isEditing ? handleCancel() : navigate('/settings')} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button onClick={() => isEditing ? handleCancel() : navigate('/home')} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
                     <img src="/Back.png" alt="Back" className="w-5 h-5" />
                 </button>
                 <h2 className="text-xl font-bold text-[#3F4249]">My Profile</h2>

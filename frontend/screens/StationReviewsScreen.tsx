@@ -38,7 +38,7 @@ const StationReviewsScreen = () => {
         console.error('Failed to fetch reviews:', error);
         if (error.message?.includes('not found')) {
           alert('Station not found');
-          navigate(-1);
+          navigate("/home");
         } else {
           alert('Failed to load reviews. Please try again.');
         }
@@ -79,7 +79,7 @@ const StationReviewsScreen = () => {
         {/* Header */}
         <header className="p-4 flex items-center sticky top-0 bg-white z-10 shadow-sm border-b border-gray-100">
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => navigate("/home")} 
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />

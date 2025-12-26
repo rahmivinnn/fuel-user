@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, Camera, X } from 'lucide-react';
+import { ChevronDown, Camera, X, AlertTriangle } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 
 const ReportIssueScreen = () => {
@@ -28,15 +28,6 @@ const ReportIssueScreen = () => {
         return (
             <AnimatedPage>
                 <div className="min-h-screen flex flex-col bg-white">
-                    <header className="p-4 flex items-center bg-white border-b border-gray-100">
-                        <button onClick={() => navigate('/support-help')} className="p-2 -ml-2">
-                            <img src="/Back.png" alt="Back" className="w-5 h-5" />
-                        </button>
-                        <h2 className="text-lg font-semibold text-center flex-grow -ml-10 text-gray-900">
-                            Report an Issue
-                        </h2>
-                    </header>
-                    
                     <div className="flex-1 flex flex-col items-center justify-center px-4">
                         <div className="text-center">
                             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">

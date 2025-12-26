@@ -353,7 +353,7 @@ const ForgotPasswordScreen = () => {
         {/* Back Button */}
         <div className="flex items-center p-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/login')}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />

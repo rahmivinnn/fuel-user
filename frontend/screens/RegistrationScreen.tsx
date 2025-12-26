@@ -65,7 +65,7 @@ const RegistrationScreen = () => {
         if (step > 1) {
             setStep(s => s - 1);
         } else {
-            navigate(-1);
+            navigate("/home");
         }
     };
     

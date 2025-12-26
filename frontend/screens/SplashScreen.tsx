@@ -37,6 +37,7 @@ const SplashScreen = () => {
           src="/logo-white.png" 
           alt="FuelFriendly Logo" 
           className="w-48 h-32"
+          style={{ transform: 'rotate(360deg)' }}
         />
       </div>
     </div>

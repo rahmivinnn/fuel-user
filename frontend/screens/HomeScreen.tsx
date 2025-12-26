@@ -255,10 +255,10 @@ const HomeScreen = () => {
           
           {/* Header - sesuai Figma */}
           <div className="flex justify-between items-center px-4 py-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <button 
                 onClick={() => navigate('/profile')}
-                className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden hover:ring-2 hover:ring-[#3AC36C] transition-all duration-200"
+                className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden hover:ring-2 hover:ring-[#3AC36C] transition-all duration-200 flex-shrink-0"
               >
                 <img 
                   src="/avatar.png" 
@@ -272,7 +272,8 @@ const HomeScreen = () => {
               <img 
                 src="/tulisan.svg" 
                 alt="FuelFriendly" 
-                className="h-6"
+                className="h-6 flex-1 max-w-none"
+                style={{ width: 'calc(100% - 3rem)' }}
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   // Show text fallback
@@ -280,11 +281,11 @@ const HomeScreen = () => {
                   if (textElement) textElement.style.display = 'block';
                 }}
               />
-              <span className="text-lg font-bold text-[#3AC36C] hidden">FuelFriendly</span>
+              <span className="text-lg font-bold text-[#3AC36C] hidden flex-1">FUELFRIENDLY</span>
             </div>
             <button 
               onClick={() => navigate('/notifications')}
-              className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors relative"
+              className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors relative flex-shrink-0 ml-3"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3F4249" strokeWidth="2">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
@@ -380,7 +381,7 @@ const HomeScreen = () => {
 
         {/* Map - sesuai Figma positioning */}
         <div className="px-4 mb-4 relative">
-          <div className="h-[420px] rounded-2xl overflow-hidden border-2 border-[#3F4249] relative">
+          <div className="h-[280px] rounded-2xl overflow-hidden border-2 border-[#3F4249] relative">
             <MapboxMap
               stations={stations}
               userLocation={userLocation}
@@ -410,10 +411,10 @@ const HomeScreen = () => {
         </div>
 
         {/* Fuel Stations List - sesuai Figma */}
-        <div className="px-4 pb-28">
-          <h2 className="text-xl font-semibold text-[#3F4249] mb-4 sticky top-0 bg-white py-2 z-10">Fuel Station nearby</h2>
+        <div className="px-4 pb-20">
+          <h2 className="text-xl font-semibold text-[#3F4249] mb-4">Fuel Station nearby</h2>
           
-          <div className="space-y-4 mb-8 max-h-[400px] overflow-y-auto">
+          <div className="space-y-4 max-h-96 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
@@ -455,7 +456,7 @@ const HomeScreen = () => {
                 <p>No stations found</p>
               </div>
             ) : (
-              stations.slice(0, 4).map((station, index) => (
+              stations.map((station, index) => (
                 <StationCard key={station.id} station={station} index={index} />
               ))
             )}

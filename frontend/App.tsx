@@ -35,6 +35,7 @@ import TermsConditionsScreen from './screens/TermsConditionsScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import AccountDeletionScreen from './screens/AccountDeletionScreen';
 import AccountDeletedSuccessScreen from './screens/AccountDeletedSuccessScreen';
+import ChatScreen from './screens/ChatScreen';
 import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
@@ -192,6 +193,7 @@ const AppNavigator = () => {
                 <Route path="/account-deletion" element={<AccountDeletionScreen />} />
                 <Route path="/account-deleted" element={<AccountDeletedSuccessScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
+                <Route path="/chat" element={<ChatScreen />} />
             </Routes>
             {showBottomNav && <BottomNav />}
         </>
@@ -248,20 +250,38 @@ const App = () => {
         const root = window.document.documentElement;
         if (theme === Theme.DARK) {
             root.classList.add('dark');
-        } else {
+        } else if (theme === Theme.LIGHT) {
             root.classList.remove('dark');
+        } else {
+            // Theme.DEFAULT - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
         }
     }, [theme]);
 
     const setTheme = (newTheme: Theme) => {
-        if (newTheme === Theme.DEFAULT) {
-            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const actualTheme = prefersDark ? Theme.DARK : Theme.LIGHT;
-            setThemeState(actualTheme);
-            localStorage.setItem('theme', Theme.DEFAULT);
+        console.log('Setting theme to:', newTheme);
+        setThemeState(newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Apply theme immediately to DOM
+        const root = window.document.documentElement;
+        if (newTheme === Theme.DARK) {
+            root.classList.add('dark');
+        } else if (newTheme === Theme.LIGHT) {
+            root.classList.remove('dark');
         } else {
-            setThemeState(newTheme);
-            localStorage.setItem('theme', newTheme);
+            // Theme.DEFAULT - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
         }
     };
 

@@ -67,7 +67,7 @@ const NotificationsScreen = () => {
       <AnimatedPage>
         <div className="bg-white min-h-screen">
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+            <button onClick={() => navigate("/home")} className="p-2 -ml-2">
               <img src="/Back.png" alt="Back" className="w-5 h-5" />
             </button>
             <h1 className="text-lg font-semibold text-gray-900">Notifications</h1>
@@ -191,7 +191,7 @@ const NotificationsScreen = () => {
       <AnimatedPage>
         <div className="bg-white min-h-screen">
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+            <button onClick={() => navigate("/home")} className="p-2 -ml-2">
               <img src="/Back.png" alt="Back" className="w-5 h-5" />
             </button>
             <h1 className="text-lg font-semibold text-gray-900">Notifications</h1>
@@ -213,7 +213,7 @@ const NotificationsScreen = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/home")}
             className="p-2 -ml-2"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />

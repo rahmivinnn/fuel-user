@@ -30,20 +30,6 @@ const ThemeScreen = () => {
     const handleThemeSelect = (selectedTheme: Theme) => {
         setTheme(selectedTheme);
         console.log('Theme changed to:', selectedTheme);
-        // Force re-render by updating document class
-        if (selectedTheme === Theme.DARK) {
-            document.documentElement.classList.add('dark');
-        } else if (selectedTheme === Theme.LIGHT) {
-            document.documentElement.classList.remove('dark');
-        } else {
-            // System default
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
     };
 
     return (

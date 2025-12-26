@@ -60,7 +60,7 @@ const FuelFriendDetailsScreen = () => {
         console.error('Failed to fetch fuel friend data:', error);
         if (error.message?.includes('not found')) {
           alert('Fuel friend not found');
-          navigate(-1);
+          navigate("/home");
         } else {
           alert('Failed to load fuel friend details. Please try again.');
         }
@@ -143,7 +143,7 @@ const FuelFriendDetailsScreen = () => {
 
   const handleSelectFuelFriend = () => {
     // Navigate back to station details or checkout with selected fuel friend
-    navigate(-1);
+    navigate("/home");
   };
 
   if (loading) {
@@ -172,7 +172,7 @@ const FuelFriendDetailsScreen = () => {
         {/* Header */}
         <header className="p-4 flex items-center sticky top-0 bg-white z-10 shadow-sm border-b border-gray-100">
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => navigate("/home")} 
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />
