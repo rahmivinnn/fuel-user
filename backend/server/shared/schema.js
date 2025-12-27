@@ -44,6 +44,7 @@ export const fuelStations = pgTable("fuel_stations", {
   totalReviews: integer("total_reviews").default(0),
   averageDeliveryTime: integer("average_delivery_time"),
   isOpen24_7: boolean("is_open_24_7").default(true),
+  image: text("image"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
