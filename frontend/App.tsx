@@ -43,8 +43,9 @@ import { Theme, User } from './types';
 import { apiLogin, apiGetMe } from './services/api';
 
 const apiLogout = () => {
-  // Clear any stored tokens/session data
-  localStorage.removeItem('user');
+  // ✅ Clear token and any stored session data
+  localStorage.removeItem('token');
+  localStorage.removeItem('user'); // Legacy cleanup
 };
 
 const apiLoginWithGoogleCredential = async () => {

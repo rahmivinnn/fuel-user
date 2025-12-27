@@ -34,14 +34,14 @@ const ProfileScreen = () => {
     const [showGenderDropdown, setShowGenderDropdown] = useState(false);
     
     useEffect(() => {
-        // Check if user is logged in
-        const userData = localStorage.getItem('user');
-        if (!userData) {
+        // ✅ User sudah di-load dari App.tsx via /auth/me
+        // Tidak perlu cek localStorage lagi
+        if (user) {
+            setIsLoggedIn(true);
+            setFormData(user);
+        } else {
             setIsLoggedIn(false);
-            return;
         }
-        setIsLoggedIn(true);
-        setFormData(user);
     }, [user]);
 
     // Show login prompt if not logged in
@@ -127,7 +127,7 @@ const ProfileScreen = () => {
             
             const updatedData = await apiUpdateProfile(profileData);
             
-            // Update user in context and localStorage
+            // ✅ Update user in context only (no localStorage)
             const updatedUser = {
                 ...user,
                 ...updatedData.customer,

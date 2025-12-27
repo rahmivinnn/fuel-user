@@ -31,20 +31,9 @@ const StationDetailsScreen = () => {
   const [error, setError] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Mock data for groceries
-  const groceries = [
-    { id: '1', name: 'Snacks', price: 16.19, image: '/image-card-1.png' },
-    { id: '2', name: 'water', price: 16.19, image: '/image-card-1.png' },
-    { id: '3', name: 'Bread', price: 16.19, image: '/image-card-1.png' }
-  ];
-
-  // Mock data for fuel friends
-  const fuelFriends: FuelFriend[] = [
-    { id: '1', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
-    { id: '2', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
-    { id: '3', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' },
-    { id: '4', name: 'Shah Hussain', price: 5.00, location: 'Tennessee', rating: 4.8, reviews: 46, avatar: '/avatar.png' }
-  ];
+  // ✅ Use groceries and fuel friends from API response
+  const groceries = station?.groceries || [];
+  const fuelFriends = station?.fuelFriends || [];
 
   useEffect(() => {
     const fetchStationDetails = async () => {
@@ -178,9 +167,12 @@ const StationDetailsScreen = () => {
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
             <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg">
               <img 
-                src="/brand1.png" 
+                src={station?.image || '/brand1.png'} 
                 alt={station?.name} 
                 className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/brand1.png';
+                }}
               />
             </div>
           </div>
@@ -257,56 +249,65 @@ const StationDetailsScreen = () => {
             <h2 className="text-lg font-semibold text-gray-900">Groceries</h2>
             <button className="text-green-600 text-sm font-medium">See all</button>
           </div>
-          <div className="space-y-3">
-            {groceries.map((item) => {
-              const quantity = getItemQuantity(item.id);
-              return (
-                <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-12 h-12 object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-600">${item.price}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {quantity > 0 ? (
-                      <>
-                        <button
-                          onClick={() => updateCartQuantity(item.id, -1)}
-                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-medium">{quantity}</span>
+          {groceries.length > 0 ? (
+            <div className="space-y-3">
+              {groceries.map((item) => {
+                const quantity = getItemQuantity(item.id);
+                return (
+                  <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <img 
+                      src={item.image || '/image-card-1.png'} 
+                      alt={item.name} 
+                      className="w-12 h-12 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.src = '/image-card-1.png';
+                      }}
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-gray-600">${item.price}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {quantity > 0 ? (
+                        <>
+                          <button
+                            onClick={() => updateCartQuantity(item.id, -1)}
+                            className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">{quantity}</span>
+                          <button
+                            onClick={() => updateCartQuantity(item.id, 1)}
+                            className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center ml-2"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        </>
+                      ) : (
                         <button
                           onClick={() => updateCartQuantity(item.id, 1)}
-                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                          className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium"
                         >
-                          <Plus className="w-4 h-4" />
+                          Add
                         </button>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center ml-2"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => updateCartQuantity(item.id, 1)}
-                        className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium"
-                      >
-                        Add
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No groceries available at this station</p>
+            </div>
+          )}
         </div>
 
         {/* Fuel Friends */}
@@ -316,40 +317,55 @@ const StationDetailsScreen = () => {
             <button className="text-green-600 text-sm font-medium">See all</button>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
-            {fuelFriends.slice(0, 4).map((friend) => (
-              <div key={friend.id} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <img 
-                    src={friend.avatar} 
-                    alt={friend.name} 
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-900 truncate">{friend.name}</h3>
-                    <p className="text-xs text-gray-600">${friend.price.toFixed(2)}</p>
+            {fuelFriends.length > 0 ? (
+              fuelFriends.slice(0, 4).map((friend) => (
+                <div key={friend.id} className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <img 
+                      src={friend.profilePhoto || '/avatar.png'} 
+                      alt={friend.fullName} 
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/avatar.png';
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">{friend.fullName}</h3>
+                      <p className="text-xs text-gray-600">${friend.deliveryFee}</p>
+                    </div>
                   </div>
+                  <div className="flex items-center space-x-1 mb-2">
+                    <MapPin className="w-3 h-3 text-red-500" />
+                    <span className="text-xs text-gray-600">{friend.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 mb-3">
+                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                    <span className="text-xs text-gray-600">{friend.rating || 'N/A'}</span>
+                    <span className="text-xs text-green-600">({friend.totalReviews || 0} reviews)</span>
+                  </div>
+                  <button 
+                    onClick={() => navigate(`/fuel-friend/${friend.id}`)}
+                    className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
+                  >
+                    Select
+                  </button>
                 </div>
-                <div className="flex items-center space-x-1 mb-2">
-                  <MapPin className="w-3 h-3 text-red-500" />
-                  <span className="text-xs text-gray-600">{friend.location}</span>
-                </div>
-                <div className="flex items-center space-x-1 mb-3">
-                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                  <span className="text-xs text-gray-600">{friend.rating}</span>
-                  <span className="text-xs text-green-600">({friend.reviews} reviews)</span>
-                </div>
-                <button 
-                  onClick={() => navigate(`/fuel-friend/${friend.id}`)}
-                  className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
-                >
-                  Select
-                </button>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8 text-gray-500">
+                <p>No fuel friends available at this station</p>
               </div>
-            ))}
+            )}
           </div>
-          <button className="w-full text-green-600 text-sm font-medium py-2">
-            View More
-          </button>
+          {fuelFriends.length > 0 ? (
+            <button className="w-full text-green-600 text-sm font-medium py-2">
+              View More ({fuelFriends.length} total)
+            </button>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              <p>No additional fuel friends available</p>
+            </div>
+          )}
         </div>
 
         {/* Order Now Button */}

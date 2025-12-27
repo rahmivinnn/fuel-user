@@ -317,6 +317,7 @@ export const apiHealthCheck = async () => {
 };
 
 export const apiLogout = () => {
+  // ✅ Clear token and user data from localStorage
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 };

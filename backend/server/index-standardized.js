@@ -656,12 +656,37 @@ app.get('/api/stations/:id', async (req, res) => {
     
     if (station.length > 0) {
       const stationProducts = await db.select().from(products).where(eq(products.stationId, id));
-      const stationFriends = await db.select().from(fuelFriends).limit(3);
+      
+      // ✅ Get fuel friends dynamically assigned to this specific station
+      const stationFuelFriends = await db.select({
+        id: fuelFriends.id,
+        fullName: fuelFriends.fullName,
+        phoneNumber: fuelFriends.phoneNumber,
+        email: fuelFriends.email,
+        location: fuelFriends.location,
+        deliveryFee: fuelFriends.deliveryFee,
+        rating: fuelFriends.rating,
+        totalReviews: fuelFriends.totalReviews,
+        latitude: fuelFriends.latitude,
+        longitude: fuelFriends.longitude,
+        profilePhoto: fuelFriends.profilePhoto,
+        about: fuelFriends.about,
+        isAvailable: fuelFriends.isAvailable
+      })
+      .from(fuelFriends)
+      .innerJoin(
+        sql`station_fuel_friends`,
+        sql`station_fuel_friends.fuel_friend_id = ${fuelFriends.id}`
+      )
+      .where(
+        sql`station_fuel_friends.station_id = ${id} AND station_fuel_friends.is_active = true AND ${fuelFriends.isAvailable} = true`
+      )
+      .limit(6);
       
       return res.success(RESPONSE_CODES.SUCCESS, {
         ...station[0],
         groceries: stationProducts,
-        fuelFriends: stationFriends
+        fuelFriends: stationFuelFriends
       });
     }
     
