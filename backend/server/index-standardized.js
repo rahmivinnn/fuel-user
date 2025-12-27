@@ -216,6 +216,46 @@ app.post('/api/auth/google', validateRequest(googleAuthSchema), async (req, res)
 });
 
 // ==========================================
+// AUTH ME ENDPOINT
+// ==========================================
+
+app.get('/api/auth/me', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId; // From JWT token
+    
+    // Get user data from database
+    const user = await db.select().from(customers)
+      .where(eq(customers.id, userId))
+      .limit(1);
+    
+    if (!user.length) {
+      return res.error(RESPONSE_CODES.USER_NOT_FOUND);
+    }
+    
+    // Get user vehicles
+    const userVehicles = await db.select().from(vehicles)
+      .where(eq(vehicles.customerId, userId));
+    
+    return res.success(RESPONSE_CODES.SUCCESS, {
+      customer: {
+        id: user[0].id,
+        fullName: user[0].fullName,
+        email: user[0].email,
+        phoneNumber: user[0].phoneNumber,
+        city: user[0].city,
+        gender: user[0].gender,
+        isEmailVerified: user[0].isEmailVerified,
+        avatarUrl: user[0].profilePhoto
+      },
+      vehicles: userVehicles
+    });
+  } catch (error) {
+    console.error('Auth me error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+// ==========================================
 // OTP ROUTES
 // ==========================================
 
@@ -279,6 +319,16 @@ app.post('/api/auth/otp/email/verify', validateRequest(emailOTPVerifySchema), as
       return res.error(RESPONSE_CODES.INVALID_OTP);
     }
     
+    // ✅ Update email verification status in database
+    try {
+      await db.update(customers)
+        .set({ isEmailVerified: true })
+        .where(eq(customers.email, email));
+      console.log(`✅ Email verified for: ${email}`);
+    } catch (dbError) {
+      console.log('⚠️ Could not update email verification status:', dbError.message);
+    }
+    
     otpStore.delete(email);
     return res.success(RESPONSE_CODES.SUCCESS, null, 'OTP verified successfully');
   } catch (error) {
@@ -332,6 +382,23 @@ app.post('/api/auth/otp/whatsapp/verify', validateRequest(whatsappOTPVerifySchem
     
     if (storedData.otp !== otp) {
       return res.error(RESPONSE_CODES.INVALID_OTP);
+    }
+    
+    // ✅ Update phone verification status in database (if user exists)
+    try {
+      const result = await db.update(customers)
+        .set({ 
+          phoneNumber: phoneNumber,
+          // Could add isPhoneVerified field if needed
+        })
+        .where(eq(customers.phoneNumber, phoneNumber))
+        .returning();
+      
+      if (result.length > 0) {
+        console.log(`✅ Phone verified for: ${phoneNumber}`);
+      }
+    } catch (dbError) {
+      console.log('⚠️ Could not update phone verification status:', dbError.message);
     }
     
     otpStore.delete(phoneNumber);

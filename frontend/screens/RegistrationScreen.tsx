@@ -89,8 +89,14 @@ const RegistrationScreen = () => {
                 }
             };
             
-            await apiRegisterComplete(registrationData);
-            setStep(4);
+            const userData = await apiRegisterComplete(registrationData);
+            
+            // ✅ Only save token, not user data
+            localStorage.setItem('token', userData.token);
+            
+            // Set user in context for current session
+            updateUser(userData.customer);
+            setStep(7); // Go to success screen
         } catch (error) {
             console.error("Registration failed:", error);
             
@@ -119,36 +125,32 @@ const RegistrationScreen = () => {
             case 2:
                 return <Step2 next={handleNext} back={handleBack} formData={formData} handleChange={handleChange} />;
             case 3:
-                return <Step3 createAccount={createAccount} editDetails={() => setStep(1)} formData={formData} loading={loading} error={error} />;
-            case 4:
                 return <EmailVerificationStep 
                     formData={formData} 
                     onBack={handleBack}
-                    onNext={() => setStep(5)}
-                    onTryAnotherWay={() => setStep(6)}
+                    onNext={() => setStep(4)}
+                    onTryAnotherWay={() => setStep(5)}
                 />;
-            case 5:
+            case 4:
                 return <EmailOTPVerification 
                     formData={formData} 
-                    onBack={() => setStep(4)}
-                    onComplete={() => setStep(8)}
+                    onBack={() => setStep(3)}
+                    onComplete={createAccount}
                 />;
-            case 6:
+            case 5:
                 return <WhatsAppVerificationStep 
                     formData={formData} 
-                    onBack={() => setStep(4)}
-                    onNext={() => setStep(7)}
+                    onBack={() => setStep(3)}
+                    onNext={() => setStep(6)}
                 />;
-            case 7:
+            case 6:
                 return <WhatsAppOTPVerification 
                     formData={formData} 
-                    onBack={() => setStep(6)}
-                    onComplete={() => setStep(9)}
+                    onBack={() => setStep(5)}
+                    onComplete={createAccount}
                 />;
-            case 8:
-                return <VerificationSuccess type="email" formData={formData} />;
-            case 9:
-                return <VerificationSuccess type="whatsapp" formData={formData} />;
+            case 7:
+                return <VerificationSuccess type="success" formData={formData} />;
             default:
                 return <Step1 next={handleNext} formData={formData} handleChange={handleChange} />;
         }
@@ -166,7 +168,7 @@ const RegistrationScreen = () => {
                     </button>
                 </header>
                 
-                {step < 4 && (
+                {step < 3 && (
                     <>
                         <div className="flex flex-col items-center mb-2">
                             <div className="mobile-logo-size mb-2">
@@ -179,42 +181,16 @@ const RegistrationScreen = () => {
                         </div>
 
                         <Stepper currentStep={step} />
-                        {step === 1 && (
-                            <div className="flex justify-center mb-6">
-                                <img 
-                                    src="/car.png" 
-                                    alt="Car icon" 
-                                    className="w-8 h-4"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-                        )}
-                        {step === 2 && (
-                            <div className="flex justify-center mb-6">
-                                <img 
-                                    src="/car.png" 
-                                    alt="Car icon" 
-                                    className="w-8 h-4"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-                        )}
-                        {step === 3 && (
-                            <div className="flex justify-center mb-6">
-                                <img 
-                                    src="/car.png" 
-                                    alt="Car icon" 
-                                    className="w-8 h-4"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-                        )}
+                        <div className="flex justify-center mb-6">
+                            <img 
+                                src="/car.png" 
+                                alt="Car icon" 
+                                className="w-8 h-4"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
                     </>
                 )}
 
@@ -591,7 +567,6 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
     onBack: () => void;
     onComplete: () => void;
 }) => {
-    const { updateUser } = useAppContext();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -649,22 +624,7 @@ const EmailOTPVerification = ({ formData, onBack, onComplete }: {
             const data = await response.json();
             
             if (data.success) {
-                // Save user data to localStorage after successful verification
-                const userData = {
-                    id: `user-${Date.now()}`,
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    city: '',
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
-                    vehicles: [{
-                        brand: formData.vehicleBrand,
-                        color: formData.vehicleColor,
-                        licenseNumber: formData.licenseNumber,
-                        fuelType: formData.fuelType
-                    }]
-                };
-                updateUser(userData);
+                // ✅ OTP verified, now create account
                 onComplete();
             } else {
                 setError(data.error || 'Invalid verification code');
@@ -918,22 +878,7 @@ const WhatsAppOTPVerification = ({ formData, onBack, onComplete }: {
             const data = await response.json();
             
             if (data.success) {
-                // Save user data to localStorage after successful verification
-                const userData = {
-                    id: `user-${Date.now()}`,
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    city: '',
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
-                    vehicles: [{
-                        brand: formData.vehicleBrand,
-                        color: formData.vehicleColor,
-                        licenseNumber: formData.licenseNumber,
-                        fuelType: formData.fuelType
-                    }]
-                };
-                updateUser(userData);
+                // ✅ OTP verified, now create account
                 onComplete();
             } else {
                 setError(data.error || 'Invalid verification code');

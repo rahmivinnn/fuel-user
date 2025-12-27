@@ -40,7 +40,7 @@ import PasswordResetSuccess from './components/PasswordResetSuccess';
 import BottomNav from './components/BottomNav';
 import { Theme, User } from './types';
 
-import { apiLogin } from './services/api';
+import { apiLogin, apiGetMe } from './services/api';
 
 const apiLogout = () => {
   // Clear any stored tokens/session data
@@ -206,17 +206,21 @@ const App = () => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        // Check for existing user session on app start
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            try {
-                const userData = JSON.parse(savedUser);
-                setUser(userData);
-                setIsAuthenticated(true);
-            } catch (error) {
-                console.error('Error parsing saved user data:', error);
-                localStorage.removeItem('user');
-            }
+        // Check for existing token and restore session
+        const token = localStorage.getItem('token');
+        if (token) {
+            // Verify token and get user data from server
+            apiGetMe()
+                .then((userData) => {
+                    setUser(userData.customer);
+                    setIsAuthenticated(true);
+                })
+                .catch((error) => {
+                    console.error('Token verification failed:', error);
+                    // Token invalid/expired, clear storage
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                });
         }
         
         // Load saved theme or detect system preference
@@ -290,8 +294,7 @@ const App = () => {
             const userData = await apiLogin(email, pass);
             setUser(userData.customer);
             setIsAuthenticated(true);
-            // Save user and token to localStorage
-            localStorage.setItem('user', JSON.stringify(userData.customer));
+            // Only save token, not user data
             localStorage.setItem('token', userData.token);
         } catch (error) {
             console.error('Login error:', error);
@@ -322,11 +325,8 @@ const App = () => {
             const userData = await apiLoginWithGoogleCredential();
             setUser(userData);
             setIsAuthenticated(true);
-            // Save user and token to localStorage
-            localStorage.setItem('user', JSON.stringify(userData));
-            if (userData.token) {
-                localStorage.setItem('token', userData.token);
-            }
+            // Only save token
+            localStorage.setItem('token', userData.token || `mock_token_${Date.now()}`);
         } catch (error) {
             console.error('Google login error:', error);
             // Fallback to mock data on error
@@ -341,7 +341,7 @@ const App = () => {
             };
             setUser(userData);
             setIsAuthenticated(true);
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('token', `mock_token_${Date.now()}`);
         }
     };
 
@@ -359,7 +359,8 @@ const App = () => {
         setUser(updatedUser);
         if (updatedUser) {
             setIsAuthenticated(true);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            // Don't save user data to localStorage anymore
+            // User data will be fetched from /auth/me on app restart
         }
     }
 

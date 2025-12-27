@@ -60,6 +60,12 @@ export const apiGoogleAuth = async (googleData: {
   return data.data;
 };
 
+export const apiGetMe = async () => {
+  const { data } = await api.get('/api/auth/me');
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
 export const apiForgotPassword = async (emailOrPhone: string) => {
   const { data } = await api.post('/api/auth/forgot-password', { emailOrPhone });
   if (!data.success) throw new Error(data.message || data.error);
