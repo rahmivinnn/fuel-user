@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { apiGetOrders } from '../services/api';
+import { useAppContext } from '../App';
 import LottieAnimation from '../components/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
 import AnimatedPage from '../components/AnimatedPage';
@@ -69,21 +70,17 @@ const OrderCard = ({ order, type }: OrderCardProps) => {
 
 const MyOrdersScreen = () => {
     const navigate = useNavigate();
+    const { user, token } = useAppContext();
     const [activeTab, setActiveTab] = useState<Tab>('ongoing');
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        // Check if user is logged in
-        const user = localStorage.getItem('user');
-        if (!user) {
-            setIsLoggedIn(false);
+        // Check if user is logged in via token
+        if (!token || !user) {
             setIsLoading(false);
             return;
         }
-        
-        setIsLoggedIn(true);
         
         const fetchOrders = async () => {
             try {
@@ -97,10 +94,10 @@ const MyOrdersScreen = () => {
             }
         };
         fetchOrders();
-    }, []);
+    }, [token, user]);
 
     // Show login prompt if not logged in
-    if (!isLoggedIn) {
+    if (!token || !user) {
         return (
             <AnimatedPage>
                 <div className="min-h-screen flex flex-col bg-white">

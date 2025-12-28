@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { db } from './db.js';
-import { customers, vehicles, orders, fuelStations, products, fuelFriends, fcmTokens, notifications, reviews } from './shared/schema.js';
+import { customers, vehicles, orders, orderItems, fuelStations, products, fuelFriends, fcmTokens, notifications, reviews } from './shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import axios from 'axios';
 import Stripe from 'stripe';
@@ -242,6 +242,7 @@ app.get('/api/auth/me', verifyToken, async (req, res) => {
         fullName: user[0].fullName,
         email: user[0].email,
         phoneNumber: user[0].phoneNumber,
+        address: user[0].address,
         city: user[0].city,
         gender: user[0].gender,
         isEmailVerified: user[0].isEmailVerified,
@@ -820,6 +821,7 @@ app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => 
     
     const trackingNumber = `TRK-${Date.now()}`;
     
+    // Create order
     const [newOrder] = await db.insert(orders).values({
       trackingNumber,
       customerId: orderData.customerId,
@@ -843,6 +845,24 @@ app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => 
       paymentMethod: orderData.paymentMethod || 'credit_card'
     }).returning();
     
+    // Insert order items if cartItems provided
+    if (orderData.cartItems && orderData.cartItems.length > 0) {
+      try {
+        const orderItemsData = orderData.cartItems.map(item => ({
+          orderId: newOrder.id,
+          productId: item.id,
+          quantity: item.quantity,
+          price: item.price.toString()
+        }));
+        
+        await db.insert(orderItems).values(orderItemsData);
+        console.log(`✅ Created ${orderItemsData.length} order items for order ${newOrder.id}`);
+      } catch (itemsError) {
+        console.error('Error creating order items:', itemsError);
+        // Continue without failing the order creation
+      }
+    }
+    
     return res.success(RESPONSE_CODES.ORDER_CREATED, {
       orderId: newOrder.id,
       trackingNumber: newOrder.trackingNumber,
@@ -854,17 +874,15 @@ app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => 
   }
 });
 
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', verifyToken, async (req, res) => {
   try {
-    const { customerId, status } = req.query;
+    const userId = req.user.userId; // From JWT token
+    const { status } = req.query;
     
-    let query = db.select().from(orders);
-    if (customerId) {
-      query = query.where(eq(orders.customerId, customerId));
-    }
+    let query = db.select().from(orders).where(eq(orders.customerId, userId));
     
-    const allOrders = await query.orderBy(sql`${orders.createdAt} DESC`);
-    return res.success(RESPONSE_CODES.SUCCESS, allOrders);
+    const userOrders = await query.orderBy(sql`${orders.createdAt} DESC`);
+    return res.success(RESPONSE_CODES.SUCCESS, userOrders);
   } catch (error) {
     console.error('Orders fetch error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);

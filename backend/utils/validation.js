@@ -67,15 +67,22 @@ export const createOrderSchema = z.object({
   fuelQuantity: z.string().min(1, 'Fuel quantity is required'),
   totalAmount: z.string().min(1, 'Total amount is required'),
   deliveryFee: z.string().min(1, 'Delivery fee is required'),
-  stationId: z.string().optional(),
-  fuelFriendId: z.string().optional(),
-  vehicleId: z.string().optional(),
+  stationId: z.string().nullable().optional(),
+  fuelFriendId: z.string().nullable().optional(),
+  vehicleId: z.string().nullable().optional(),
   groceriesCost: z.string().optional(),
   orderType: z.string().optional(),
-  scheduledDate: z.string().optional(),
-  scheduledTime: z.string().optional(),
-  estimatedDeliveryTime: z.string().optional(),
-  paymentMethod: z.string().optional()
+  scheduledDate: z.string().nullable().optional(),
+  scheduledTime: z.string().nullable().optional(),
+  estimatedDeliveryTime: z.string().nullable().optional(),
+  paymentMethod: z.string().optional(),
+  fuelCost: z.string().optional(),
+  cartItems: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    quantity: z.number()
+  })).optional()
 });
 
 // Payment Schemas

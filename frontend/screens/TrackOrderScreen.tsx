@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Phone, User, Truck, CheckCircle } from 'lucide-react';
+import { useAppContext } from '../App';
+import { apiGetOrders } from '../services/api';
 import AnimatedPage from '../components/AnimatedPage';
 import MapboxMap from '../components/MapboxMap';
 import CallModal from '../components/CallModal';
 
 const TrackOrderScreen = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, token } = useAppContext();
   const [showCallModal, setShowCallModal] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    setIsLoggedIn(!!user);
-  }, []);
+    if (!token || !user) {
+      setIsLoading(false);
+      return;
+    }
 
-  if (!isLoggedIn) {
+    const fetchOrders = async () => {
+      try {
+        const data = await apiGetOrders();
+        setOrders(data);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [token, user]);
+
+  if (!token || !user) {
     return (
       <AnimatedPage>
         <div className="min-h-screen flex flex-col bg-white">
@@ -41,18 +59,54 @@ const TrackOrderScreen = () => {
     );
   }
 
+  // Get the most recent ongoing order
+  const ongoingOrder = orders.find(order => order.status === 'confirmed' || order.status === 'ongoing') || orders[0];
+  
+  if (!ongoingOrder) {
+    return (
+      <AnimatedPage>
+        <div className="min-h-screen flex flex-col bg-white">
+          <div className="flex items-center px-4 py-4 bg-white">
+            <button onClick={() => navigate("/home")} className="p-2 -ml-2">
+              <img src="/Back.png" alt="Back" className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 flex-1 text-center -ml-10">Track Your Order</h1>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Active Orders</h3>
+              <p className="text-gray-600 mb-8 max-w-sm">
+                You don't have any active orders to track at the moment.
+              </p>
+              <button 
+                onClick={() => navigate('/home')}
+                className="bg-[#3AC36C] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#2ea85a] transition-colors"
+              >
+                Browse Stations
+              </button>
+            </div>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
   const orderData = {
     driver: {
-      name: 'Cristopert Dastin',
-      location: 'Tennessee',
+      name: 'Fuel Friend Driver',
+      location: ongoingOrder.deliveryAddress || 'Location',
       avatar: '/avatar.png'
     },
     deliveryTime: '8:30 - 9:15 PM',
     items: [
-      { name: '2 Liters Fuel', price: 283 },
-      { name: '2x Chocolate cookies', price: 20 }
+      { name: `${ongoingOrder.fuelQuantity} Liters ${ongoingOrder.fuelType}`, price: parseFloat(ongoingOrder.fuelCost || '0') },
+      ...(parseFloat(ongoingOrder.groceriesCost || '0') > 0 ? [{ name: 'Groceries', price: parseFloat(ongoingOrder.groceriesCost) }] : [])
     ],
-    userLocation: { lat: 35.1495, lon: -90.0490 }
+    userLocation: { lat: 35.1495, lon: -90.0490 },
+    trackingNumber: ongoingOrder.trackingNumber
   };
 
   return (

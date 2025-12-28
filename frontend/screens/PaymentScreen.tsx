@@ -51,19 +51,28 @@ const PaymentScreen = () => {
     try {
       const orderData = {
         customerId: user.id.toString(),
-        stationId: station?.id || 'station-1',
-        fuelFriendId: selectedFuelFriend?.id || null,
+        stationId: station.id.toString(), // Required field
         deliveryAddress: formData?.address || user.address || 'Sample Address',
         deliveryPhone: formData?.phoneNumber || user.phoneNumber || '1234567890',
         fuelType: formData?.fuelType || 'Premium',
-        fuelQuantity: formData?.quantity?.replace(' liters', '') || '10',
+        fuelQuantity: (formData?.quantity?.replace(' liters', '') || '10').toString(),
         fuelCost: fuelCost.toFixed(2),
         deliveryFee: deliveryFee.toFixed(2),
         groceriesCost: groceriesCost.toFixed(2),
         totalAmount: totalAmount.toFixed(2),
         orderType: formData?.orderType || 'instant',
-        paymentMethod: selectedPayment === 'card' ? 'credit_card' : selectedPayment
+        paymentMethod: selectedPayment === 'card' ? 'credit_card' : selectedPayment,
+        cartItems: cartItems // Add cart items for order_items table
       };
+
+      // Add optional fields only if they have values
+      if (selectedFuelFriend?.id) {
+        orderData.fuelFriendId = selectedFuelFriend.id.toString();
+      }
+      if (user?.vehicles && user.vehicles.length > 0) {
+        const primaryVehicle = user.vehicles.find(v => v.isPrimary) || user.vehicles[0];
+        orderData.vehicleId = primaryVehicle.id.toString();
+      }
 
       const result = await apiCreateOrder(orderData);
       

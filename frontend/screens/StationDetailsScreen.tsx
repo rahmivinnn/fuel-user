@@ -473,9 +473,17 @@ const StationDetailsScreen = () => {
                 totalItems: cart.length + (selectedFuelFriend ? 1 : 0)
               } 
             })}
-            className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold"
+            disabled={cart.length === 0 && !selectedFuelFriend}
+            className={`w-full py-4 rounded-full text-lg font-semibold transition-colors ${
+              cart.length > 0 || selectedFuelFriend 
+                ? 'bg-green-500 text-white hover:bg-green-600' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
-            Order Now {cart.length > 0 || selectedFuelFriend ? `(${cart.length + (selectedFuelFriend ? 1 : 0)} items)` : ''}
+            {cart.length > 0 || selectedFuelFriend 
+              ? `Order Now (${cart.length + (selectedFuelFriend ? 1 : 0)} items)` 
+              : 'Select items or fuel friend to order'
+            }
           </button>
         </div>
       </div>

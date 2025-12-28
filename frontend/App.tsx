@@ -125,6 +125,7 @@ interface AppContextType {
     setTheme: (theme: Theme) => void;
     isAuthenticated: boolean;
     user: User | null;
+    token: string | null;
     login: (email: string, pass: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
@@ -205,11 +206,13 @@ const App = () => {
     const [theme, setThemeState] = useState<Theme>(Theme.LIGHT);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
 
     useEffect(() => {
         // Check for existing token and restore session
-        const token = localStorage.getItem('token');
-        if (token) {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            setToken(storedToken);
             // Verify token and get user data from server
             apiGetMe()
                 .then((userData) => {
@@ -221,6 +224,7 @@ const App = () => {
                     // Token invalid/expired, clear storage
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
+                    setToken(null);
                 });
         }
         
@@ -295,6 +299,7 @@ const App = () => {
             const userData = await apiLogin(email, pass);
             setUser(userData.customer);
             setIsAuthenticated(true);
+            setToken(userData.token);
             // Only save token, not user data
             localStorage.setItem('token', userData.token);
         } catch (error) {
@@ -351,6 +356,7 @@ const App = () => {
             apiLogout();
             setUser(null);
             setIsAuthenticated(false);
+            setToken(null);
         } catch (error) {
             console.error('Error signing out:', error);
         }
@@ -367,7 +373,7 @@ const App = () => {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, login, loginWithGoogle, logout, updateUser }}>
+            <AppContext.Provider value={{ theme, setTheme, isAuthenticated, user, token, login, loginWithGoogle, logout, updateUser }}>
                 <div className="w-full h-full font-sans bg-white text-gray-900" style={{ height: '100dvh', maxHeight: '100dvh', maxWidth: '100vw', fontFamily: 'Poppins, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', backgroundColor: 'white' }}>
                     <Toaster
                         position="top-center"
