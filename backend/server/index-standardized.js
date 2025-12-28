@@ -840,8 +840,8 @@ app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => 
       scheduledDate: orderData.scheduledDate,
       scheduledTime: orderData.scheduledTime,
       estimatedDeliveryTime: orderData.estimatedDeliveryTime,
-      status: 'confirmed',
-      paymentStatus: 'completed',
+      status: 'pending',
+      paymentStatus: 'pending',
       paymentMethod: orderData.paymentMethod || 'credit_card'
     }).returning();
     

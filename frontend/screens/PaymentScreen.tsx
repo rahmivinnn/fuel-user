@@ -76,15 +76,32 @@ const PaymentScreen = () => {
         }))
       };
 
+      console.log('🔍 Order data being sent:', {
+        customerId: orderData.customerId,
+        stationId: orderData.stationId,
+        vehicleId: orderData.vehicleId,
+        fuelFriendId: orderData.fuelFriendId,
+        user: user,
+        userVehicles: user?.vehicles
+      });
+
       // Add optional fields only if they have values
       if (selectedFuelFriend?.id) {
         orderData.fuelFriendId = selectedFuelFriend.id.toString();
       }
+      
+      // Get vehicle ID from user data or fetch from API
+      let vehicleId = null;
       if (user?.vehicles && user.vehicles.length > 0) {
         const primaryVehicle = user.vehicles.find(v => v.isPrimary) || user.vehicles[0];
-        if (primaryVehicle?.id) {
-          orderData.vehicleId = primaryVehicle.id.toString();
-        }
+        vehicleId = primaryVehicle?.id;
+      }
+      
+      if (vehicleId) {
+        orderData.vehicleId = vehicleId.toString();
+        console.log('✅ Vehicle ID added to order:', vehicleId);
+      } else {
+        console.log('⚠️ No vehicle found for user');
       }
 
       const result = await apiCreateOrder(orderData);
