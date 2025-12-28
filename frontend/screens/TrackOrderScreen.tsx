@@ -23,12 +23,12 @@ const TrackOrderScreen = () => {
 
     const fetchOrderData = async () => {
       try {
+        console.log('Fetching order data for ID:', orderId);
         if (orderId) {
-          // Fetch specific order by ID
           const orderData = await apiGetOrderDetail(orderId);
+          console.log('Order data received:', orderData);
           setOrder(orderData);
         } else {
-          // Fallback: get first ongoing order
           const orders = await apiGetOrders();
           const ongoingOrder = orders.find(o => o.status === 'confirmed' || o.status === 'ongoing') || orders[0];
           setOrder(ongoingOrder);
@@ -104,7 +104,7 @@ const TrackOrderScreen = () => {
 
   const orderData = {
     driver: {
-      name: order.fuelFriendName || 'Driver',
+      name: order.fuelFriendName || 'Fuel Friend',
       location: order.fuelFriendLocation || order.deliveryAddress || 'Location',
       avatar: order.fuelFriendPhoto || '/avatar.png'
     },
@@ -123,7 +123,7 @@ const TrackOrderScreen = () => {
       <div className="bg-white min-h-screen">
         {/* Header */}
         <div className="flex items-center px-4 py-4 bg-white">
-          <button onClick={() => navigate("/home")} className="p-2 -ml-2">
+          <button onClick={() => navigate("/orders")} className="p-2 -ml-2">
             <img src="/Back.png" alt="Back" className="w-5 h-5" />
           </button>
           <h1 className="text-lg font-bold text-gray-900 flex-1 text-center -ml-10">Track Your Order</h1>

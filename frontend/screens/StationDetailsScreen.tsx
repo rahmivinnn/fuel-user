@@ -33,6 +33,40 @@ const StationDetailsScreen = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedFuelFriend, setSelectedFuelFriend] = useState<FuelFriend | null>(null);
 
+  // Generate real station logo based on station name
+  const getStationLogo = (stationName) => {
+    const name = stationName?.toLowerCase() || '';
+    console.log('Station name for logo:', name); // Debug
+    
+    if (name.includes('shell') || name.includes('turbofuel')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/Shell-Logo.png';
+    }
+    if (name.includes('bp') || name.includes('british petroleum')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/BP-Logo.png';
+    }
+    if (name.includes('exxon') || name.includes('mobil')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/ExxonMobil-Logo.png';
+    }
+    if (name.includes('chevron')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/Chevron-Logo.png';
+    }
+    if (name.includes('total')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/Total-Logo.png';
+    }
+    if (name.includes('ecofuel') || name.includes('eco')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/BP-Logo.png';
+    }
+    if (name.includes('quickstop') || name.includes('quick')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/Chevron-Logo.png';
+    }
+    if (name.includes('premium') || name.includes('fuel hub')) {
+      return 'https://logos-world.net/wp-content/uploads/2020/04/ExxonMobil-Logo.png';
+    }
+    
+    // Default to Shell
+    return 'https://logos-world.net/wp-content/uploads/2020/04/Shell-Logo.png';
+  };
+
   // Check if fuel friend was selected from FuelFriendDetailsScreen
   useEffect(() => {
     if (location.state?.selectedFuelFriend) {
@@ -180,11 +214,11 @@ const StationDetailsScreen = () => {
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
             <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg">
               <img 
-                src={station?.image || '/brand1.png'} 
+                src={getStationLogo(station?.name)} 
                 alt={station?.name} 
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  e.currentTarget.src = '/brand1.png';
+                  e.currentTarget.src = 'https://logos-world.net/wp-content/uploads/2020/04/Shell-Logo.png';
                 }}
               />
             </div>

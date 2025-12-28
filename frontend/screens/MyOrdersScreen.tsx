@@ -17,11 +17,12 @@ interface OrderCardProps {
 }
 
 const OrderCard = ({ order, type }: OrderCardProps) => {
+    const navigate = useNavigate();
     return (
         <div className="bg-white p-5 rounded-2xl mb-4 shadow-lg border border-gray-100">
             <div className="flex items-center">
                 <img 
-                    src={order.fuelFriend?.avatarUrl || '/avatar.png'} 
+                    src={order.fuelFriendPhoto || order.fuelFriend?.avatarUrl || '/avatar.png'} 
                     alt={order.fuelFriend?.name || 'Fuel Friend'} 
                     className="w-16 h-16 rounded-full border-2 border-gray-200 shadow-sm"
                     onError={(e) => {
@@ -31,10 +32,10 @@ const OrderCard = ({ order, type }: OrderCardProps) => {
                 <div className="ml-4 flex-grow">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="font-bold text-[#3F4249] text-base">{order.fuelFriend?.name || 'Fuel Friend'}</p>
+                            <p className="font-bold text-[#3F4249] text-base">{order.fuelFriendName || order.fuelFriend?.name || 'Fuel Friend'}</p>
                             <p className="text-sm text-gray-600 flex items-center mt-1">
                                 <MapPin size={14} className="mr-1 text-[#FF5630]" />
-                                {order.fuelFriend?.location || order.deliveryAddress || 'Location'}
+                                {order.fuelFriendLocation || order.fuelFriend?.location || order.deliveryAddress || 'Location'}
                             </p>
                         </div>
                         <div className="text-right">
@@ -50,12 +51,7 @@ const OrderCard = ({ order, type }: OrderCardProps) => {
                         <button className="flex-1 bg-[#3AC36C] text-white py-3 rounded-full text-sm font-bold hover:bg-[#2ea85a] transition-all duration-200 active:scale-95 shadow-md"
                             onClick={() => navigate(`/track/${order.id}`)}
                         >
-                            {order.status === 'pending' ? 'Pending' : 
-                             order.status === 'confirmed' ? 'Confirmed' : 
-                             order.status === 'in_progress' ? 'In Progress' : order.status}
-                        </button>
-                        <button className="flex-1 border-2 border-[#3AC36C] text-[#3AC36C] py-3 rounded-full text-sm font-bold hover:bg-[#3AC36C] hover:text-white transition-all duration-200 active:scale-95">
-                            Dispute
+                            View
                         </button>
                     </>
                 ) : (
