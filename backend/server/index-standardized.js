@@ -811,6 +811,13 @@ app.post('/api/reviews', async (req, res) => {
 app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => {
   try {
     const orderData = req.validatedData;
+    
+    // Validate customer exists
+    const customer = await db.select().from(customers).where(eq(customers.id, orderData.customerId)).limit(1);
+    if (!customer.length) {
+      return res.error(RESPONSE_CODES.USER_NOT_FOUND, 'Customer not found');
+    }
+    
     const trackingNumber = `TRK-${Date.now()}`;
     
     const [newOrder] = await db.insert(orders).values({

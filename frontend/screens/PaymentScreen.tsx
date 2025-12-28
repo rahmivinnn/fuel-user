@@ -3,14 +3,29 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Check, Plus, X } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import { apiCreateOrder, apiHealthCheck } from '../services/api';
+import { useAppContext } from '../App';
 
 const PaymentScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAppContext();
   const [selectedPayment, setSelectedPayment] = useState('card');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [trackingId, setTrackingId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const { 
+    formData, 
+    station, 
+    cartItems = [], 
+    selectedFuelFriend 
+  } = location.state || {};
+
+  // Calculate totals from real data
+  const fuelCost = station ? parseFloat(station.regularPrice) * parseFloat(formData?.quantity?.replace(' liters', '') || '10') : 0;
+  const groceriesCost = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const deliveryFee = selectedFuelFriend ? parseFloat(selectedFuelFriend.deliveryFee) : 10;
+  const totalAmount = fuelCost + groceriesCost + deliveryFee;
 
   // Check API health on component mount
   useEffect(() => {
@@ -26,20 +41,27 @@ const PaymentScreen = () => {
   }, []);
 
   const handlePlaceOrder = async () => {
+    if (!user) {
+      alert('Please login to place order');
+      navigate('/login');
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const orderData = {
-        customerId: 'customer-1',
-        stationId: 'station-1',
-        deliveryAddress: 'Sample Address',
-        deliveryPhone: '1234567890',
-        fuelType: 'Premium',
-        fuelQuantity: '10',
-        fuelCost: '90.00',
-        deliveryFee: '10.00',
-        groceriesCost: '20.00',
-        totalAmount: '120.00',
-        orderType: 'instant',
+        customerId: user.id.toString(),
+        stationId: station?.id || 'station-1',
+        fuelFriendId: selectedFuelFriend?.id || null,
+        deliveryAddress: formData?.address || user.address || 'Sample Address',
+        deliveryPhone: formData?.phoneNumber || user.phoneNumber || '1234567890',
+        fuelType: formData?.fuelType || 'Premium',
+        fuelQuantity: formData?.quantity?.replace(' liters', '') || '10',
+        fuelCost: fuelCost.toFixed(2),
+        deliveryFee: deliveryFee.toFixed(2),
+        groceriesCost: groceriesCost.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        orderType: formData?.orderType || 'instant',
         paymentMethod: selectedPayment === 'card' ? 'credit_card' : selectedPayment
       };
 
@@ -217,20 +239,22 @@ const PaymentScreen = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Fuel Cost</span>
-                <span className="text-gray-900">$90.00</span>
+                <span className="text-gray-900">${fuelCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Groceries</span>
-                <span className="text-gray-900">$20.00</span>
-              </div>
+              {groceriesCost > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Groceries</span>
+                  <span className="text-gray-900">${groceriesCost.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Fee</span>
-                <span className="text-gray-900">$10.00</span>
+                <span className="text-gray-900">${deliveryFee.toFixed(2)}</span>
               </div>
               <div className="border-t border-gray-200 pt-2 mt-2">
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-semibold text-gray-900">$120.00</span>
+                  <span className="text-lg font-semibold text-gray-900">${totalAmount.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -244,7 +268,7 @@ const PaymentScreen = () => {
             disabled={isProcessing}
             className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold disabled:opacity-50"
           >
-            {isProcessing ? 'Processing...' : 'Place Order - $120.00'}
+            {isProcessing ? 'Processing...' : `Place Order - $${totalAmount.toFixed(2)}`}
           </button>
         </div>
 

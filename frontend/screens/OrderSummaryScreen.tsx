@@ -6,16 +6,19 @@ import AnimatedPage from '../components/AnimatedPage';
 const OrderSummaryScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const formData = location.state?.formData || {
-    address: 'Loreum ipsum',
-    phoneNumber: '923556688',
-    vehicleColor: 'Red',
-    vehicleBrand: 'Honda',
-    numberPlate: 'CAN-1234',
-    fuelType: 'Premium Gasoline',
-    quantity: '10 liters',
-    deliveryTime: 'Today, 12:30 AM'
-  };
+  const { 
+    formData, 
+    station, 
+    cartItems = [], 
+    selectedFuelFriend, 
+    user 
+  } = location.state || {};
+
+  // Calculate totals
+  const fuelCost = station ? parseFloat(station.regularPrice) * parseFloat(formData?.quantity?.replace(' liters', '') || '10') : 0;
+  const groceriesCost = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const deliveryFee = selectedFuelFriend ? parseFloat(selectedFuelFriend.deliveryFee) : 10;
+  const totalAmount = fuelCost + groceriesCost + deliveryFee;
 
   return (
     <AnimatedPage>
@@ -76,67 +79,76 @@ const OrderSummaryScreen = () => {
               {/* Station Name */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Station Name</span>
-                <span className="text-gray-900 font-medium">TurboFuel Express</span>
+                <span className="text-gray-900 font-medium">{station?.name || 'N/A'}</span>
               </div>
 
               {/* Fuel Type */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Fuel Type</span>
-                <span className="text-gray-900 font-medium">Premium Gasoline</span>
+                <span className="text-gray-900 font-medium">{formData?.fuelType || 'N/A'}</span>
               </div>
 
               {/* Quantity */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Quantity</span>
-                <span className="text-gray-900 font-medium">10 liters</span>
+                <span className="text-gray-900 font-medium">{formData?.quantity || 'N/A'}</span>
               </div>
 
-              {/* Chocolate Cookies */}
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-700">Chocolate Cookies</span>
-                <span className="text-gray-900 font-medium">$20.00</span>
-              </div>
+              {/* Groceries */}
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">{item.name} (x{item.quantity})</span>
+                  <span className="text-gray-900 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+
+              {/* Fuel Friend */}
+              {selectedFuelFriend && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">Fuel Friend</span>
+                  <span className="text-gray-900 font-medium">{selectedFuelFriend.fullName}</span>
+                </div>
+              )}
 
               {/* Delivery Time */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Delivery Time</span>
-                <span className="text-gray-900 font-medium">{formData.deliveryTime}</span>
+                <span className="text-gray-900 font-medium">{formData?.deliveryTime || 'N/A'}</span>
               </div>
 
-              {/* Vehicle Brand */}
+              {/* Vehicle Details */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-700">Vehicle Brand</span>
-                <span className="text-gray-900 font-medium">{formData.vehicleBrand}</span>
+                <span className="text-gray-700">Vehicle</span>
+                <span className="text-gray-900 font-medium">{formData?.vehicleBrand} ({formData?.vehicleColor})</span>
               </div>
 
-              {/* Vehicle Color */}
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-700">Vehicle color</span>
-                <span className="text-gray-900 font-medium">{formData.vehicleColor}</span>
-              </div>
-
-              {/* License Number */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">License Number</span>
-                <span className="text-gray-900 font-medium">{formData.numberPlate}</span>
+                <span className="text-gray-900 font-medium">{formData?.numberPlate || 'N/A'}</span>
               </div>
 
-              {/* Fuel Cost */}
+              {/* Costs */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Fuel Cost</span>
-                <span className="text-gray-900 font-medium">$90.00</span>
+                <span className="text-gray-900 font-medium">${fuelCost.toFixed(2)}</span>
               </div>
 
-              {/* Delivery Fee */}
+              {groceriesCost > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">Groceries Cost</span>
+                  <span className="text-gray-900 font-medium">${groceriesCost.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-700">Delivery Fee</span>
-                <span className="text-gray-900 font-medium">$10.00</span>
+                <span className="text-gray-900 font-medium">${deliveryFee.toFixed(2)}</span>
               </div>
 
               {/* Total Amount */}
               <div className="flex justify-between items-center py-3 pt-4">
                 <span className="text-gray-900 font-semibold text-lg">Total Amount</span>
-                <span className="text-gray-900 font-semibold text-lg">$120.00</span>
+                <span className="text-gray-900 font-semibold text-lg">${totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

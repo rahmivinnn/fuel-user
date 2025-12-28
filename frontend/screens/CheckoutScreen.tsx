@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, X, Zap, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
 
 const CheckoutScreen = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAppContext();
   const [currentStep, setCurrentStep] = useState(1);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -12,16 +15,39 @@ const CheckoutScreen = () => {
   const [selectedTime, setSelectedTime] = useState('12:45 am');
   const [currentMonth, setCurrentMonth] = useState('February');
   const [formData, setFormData] = useState({
-    address: 'Loreum ipsum',
-    phoneNumber: '923556688',
-    vehicleColor: 'Vehicle Color',
-    vehicleBrand: 'Toyota',
-    numberPlate: 'Abc 123',
+    address: '',
+    phoneNumber: '',
+    vehicleColor: '',
+    vehicleBrand: '',
+    numberPlate: '',
     fuelType: 'Petrol',
     quantity: '10 liters',
     deliveryTime: 'Instant',
     orderType: 'instant'
   });
+
+  // Load real user data on component mount
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        address: user.address || '',
+        phoneNumber: user.phoneNumber || ''
+      }));
+    }
+    
+    // Load user's vehicle data if available
+    if (user?.vehicles && user.vehicles.length > 0) {
+      const primaryVehicle = user.vehicles.find(v => v.isPrimary) || user.vehicles[0];
+      setFormData(prev => ({
+        ...prev,
+        vehicleColor: primaryVehicle.color || '',
+        vehicleBrand: primaryVehicle.brand || '',
+        numberPlate: primaryVehicle.licenseNumber || '',
+        fuelType: primaryVehicle.fuelType || 'Petrol'
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -54,8 +80,16 @@ const CheckoutScreen = () => {
   };
 
   const handleSaveAndContinue = () => {
-    // Pass form data to order summary
-    navigate('/order-summary', { state: { formData } });
+    // Pass form data along with station data, cart items, and selected fuel friend to order summary
+    navigate('/order-summary', { 
+      state: { 
+        formData,
+        station: location.state?.station,
+        cartItems: location.state?.cartItems || [],
+        selectedFuelFriend: location.state?.selectedFuelFriend,
+        user: user
+      } 
+    });
   };
 
   return (
@@ -64,7 +98,7 @@ const CheckoutScreen = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <button
-            onClick={() => navigate('/home')}
+            onClick={() => navigate(-1)}
             className="p-2 -ml-2"
           >
             <img src="/Back.png" alt="Back" className="w-5 h-5" />

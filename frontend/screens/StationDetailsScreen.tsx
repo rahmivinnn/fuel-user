@@ -416,7 +416,17 @@ const StationDetailsScreen = () => {
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-gray-900 truncate">{friend.fullName}</h3>
+                        <button
+                        onClick={() => navigate(`/fuel-friend/${friend.id}`, {
+                          state: { 
+                            cartItems: cart,
+                            stationId: id 
+                          }
+                        })}
+                        className="text-sm font-medium text-gray-900 truncate hover:text-green-600 transition-colors text-left"
+                      >
+                        {friend.fullName}
+                      </button>
                         <p className="text-xs text-gray-600">${friend.deliveryFee}</p>
                       </div>
                     </div>
@@ -430,12 +440,7 @@ const StationDetailsScreen = () => {
                       <span className="text-xs text-green-600">({friend.totalReviews || 0} reviews)</span>
                     </div>
                     <button 
-                      onClick={() => navigate(`/fuel-friend/${friend.id}`, {
-                        state: { 
-                          cartItems: cart,
-                          stationId: id 
-                        }
-                      })}
+                      onClick={() => setSelectedFuelFriend(friend)}
                       className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
                     >
                       Select
