@@ -717,10 +717,10 @@ app.get('/api/stations/:id/reviews', async (req, res) => {
       .orderBy(sql`${reviews.createdAt} DESC`)
       .limit(parseInt(limit));
       
-      return res.success(RESPONSE_CODES.SUCCESS, stationReviews);
+      return res.success(RESPONSE_CODES.REVIEWS_FOUND, stationReviews);
     } catch (dbError) {
       console.log('Reviews table not found, returning empty array');
-      return res.success(RESPONSE_CODES.SUCCESS, []);
+      return res.success(RESPONSE_CODES.REVIEWS_FOUND, []);
     }
   } catch (error) {
     console.error('Station reviews error:', error);
@@ -765,7 +765,7 @@ app.get('/api/fuel-friends/:id/reviews', async (req, res) => {
       .orderBy(sql`${reviews.createdAt} DESC`)
       .limit(parseInt(limit));
       
-      return res.success(RESPONSE_CODES.SUCCESS, friendReviews);
+      return res.success(RESPONSE_CODES.REVIEWS_FOUND, friendReviews);
     } catch (dbError) {
       console.log('Reviews table not found, returning empty array');
       return res.success(RESPONSE_CODES.SUCCESS, []);
@@ -793,7 +793,7 @@ app.post('/api/reviews', async (req, res) => {
         comment: comment || null
       }).returning();
       
-      return res.success(RESPONSE_CODES.CREATED, newReview, 'Review added successfully');
+      return res.success(RESPONSE_CODES.REVIEW_CREATED, newReview);
     } catch (dbError) {
       console.log('Reviews table not found, cannot add review');
       return res.error(RESPONSE_CODES.INTERNAL_ERROR, 'Reviews feature not available');

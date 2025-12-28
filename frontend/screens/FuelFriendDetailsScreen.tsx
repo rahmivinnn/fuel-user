@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Star } from 'lucide-react';
-import { apiGetFuelFriendDetails, apiGetFuelFriendReviews } from '../services/api';
+import { apiGetFuelFriendDetails, apiGetFuelFriendReviews, apiAddReview } from '../services/api';
+import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
 
 interface FuelFriend {
@@ -27,10 +28,13 @@ interface Review {
 const FuelFriendDetailsScreen = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAppContext();
   const [fuelFriend, setFuelFriend] = useState<FuelFriend | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchFuelFriendData = async () => {
@@ -67,11 +71,27 @@ const FuelFriendDetailsScreen = () => {
     }));
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMonths = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    return diffInMonths === 0 ? 'This month' : `${diffInMonths} months ago`;
+  const handleSubmitReview = async () => {
+    if (!newReview.rating || !newReview.comment.trim() || !user?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      await apiAddReview({
+        customerId: user.id,
+        fuelFriendId: id!,
+        rating: newReview.rating,
+        comment: newReview.comment
+      });
+      
+      // Refresh reviews
+      const updatedReviews = await apiGetFuelFriendReviews(id!);
+      setReviews(updatedReviews);
+      setNewReview({ rating: 0, comment: '' });
+    } catch (err: any) {
+      console.error('Failed to submit review:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -241,18 +261,30 @@ const FuelFriendDetailsScreen = () => {
               <span className="font-medium">Add review</span>
               <div className="flex space-x-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-5 h-5 text-gray-300 cursor-pointer hover:text-yellow-500" />
+                  <Star 
+                    key={star} 
+                    className={`w-5 h-5 cursor-pointer ${
+                      star <= newReview.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'
+                    }`}
+                    onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                  />
                 ))}
               </div>
             </div>
             <input
               type="text"
               placeholder="Your review here"
+              value={newReview.comment}
+              onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
               className="w-full text-sm text-gray-600 bg-transparent border-none outline-none mb-3"
             />
             <div className="flex justify-end">
-              <button className="bg-green-500 text-white px-6 py-2 rounded-full text-sm font-medium">
-                Add
+              <button 
+                onClick={handleSubmitReview}
+                disabled={!newReview.rating || !newReview.comment.trim() || isSubmitting}
+                className="bg-green-500 text-white px-6 py-2 rounded-full text-sm font-medium disabled:bg-gray-300"
+              >
+                {isSubmitting ? 'Adding...' : 'Add'}
               </button>
             </div>
           </div>
@@ -290,7 +322,12 @@ const FuelFriendDetailsScreen = () => {
         {/* Select Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <button
-            onClick={() => navigate(-1, { state: { selectedFuelFriend: fuelFriend } })}
+            onClick={() => navigate(-1, { 
+              state: { 
+                selectedFuelFriend: fuelFriend,
+                cartItems: location.state?.cartItems || []
+              } 
+            })}
             className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold"
           >
             Select Fuel friend

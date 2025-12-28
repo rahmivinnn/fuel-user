@@ -38,6 +38,10 @@ const StationDetailsScreen = () => {
     if (location.state?.selectedFuelFriend) {
       setSelectedFuelFriend(location.state.selectedFuelFriend);
     }
+    // Restore cart from location state if available
+    if (location.state?.cartItems) {
+      setCart(location.state.cartItems);
+    }
   }, [location.state]);
 
   // ✅ Use groceries and fuel friends from API response
@@ -345,20 +349,28 @@ const StationDetailsScreen = () => {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <img 
-                    src={selectedFuelFriend.profilePhoto || '/avatar.png'} 
-                    alt={selectedFuelFriend.fullName} 
-                    className="w-12 h-12 rounded-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/avatar.png';
-                    }}
-                  />
+                  <div className="relative">
+                    <img 
+                      src={selectedFuelFriend.profilePhoto || '/avatar.png'} 
+                      alt={selectedFuelFriend.fullName} 
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/avatar.png';
+                      }}
+                    />
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{selectedFuelFriend.fullName}</h3>
                     <p className="text-sm text-gray-600">${selectedFuelFriend.deliveryFee}</p>
                     <div className="flex items-center space-x-1">
                       <Star className="w-3 h-3 text-yellow-500 fill-current" />
                       <span className="text-xs text-gray-600">{selectedFuelFriend.rating}</span>
+                      <span className="text-xs text-green-600 font-medium">Selected</span>
                     </div>
                   </div>
                 </div>
@@ -418,7 +430,12 @@ const StationDetailsScreen = () => {
                       <span className="text-xs text-green-600">({friend.totalReviews || 0} reviews)</span>
                     </div>
                     <button 
-                      onClick={() => navigate(`/fuel-friend/${friend.id}`)}
+                      onClick={() => navigate(`/fuel-friend/${friend.id}`, {
+                        state: { 
+                          cartItems: cart,
+                          stationId: id 
+                        }
+                      })}
                       className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
                     >
                       Select
@@ -443,10 +460,17 @@ const StationDetailsScreen = () => {
         {/* Order Now Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <button 
-            onClick={() => navigate('/checkout')}
+            onClick={() => navigate('/checkout', { 
+              state: { 
+                station: station,
+                cartItems: cart,
+                selectedFuelFriend: selectedFuelFriend,
+                totalItems: cart.length + (selectedFuelFriend ? 1 : 0)
+              } 
+            })}
             className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold"
           >
-            Order Now
+            Order Now {cart.length > 0 || selectedFuelFriend ? `(${cart.length + (selectedFuelFriend ? 1 : 0)} items)` : ''}
           </button>
         </div>
       </div>
