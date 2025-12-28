@@ -4,13 +4,26 @@ import { ArrowLeft, Check } from 'lucide-react';
 import AnimatedPage from './AnimatedPage';
 import { useAppContext } from '../App';
 
-const VerificationSuccess = ({ type = 'email', formData }: { type?: 'email' | 'whatsapp'; formData?: any }) => {
+const VerificationSuccess = ({ type = 'email', formData, onCreateAccount }: { type?: 'email' | 'whatsapp' | 'success'; formData?: any; onCreateAccount?: () => Promise<void> }) => {
   const navigate = useNavigate();
   const { login, updateUser } = useAppContext();
+  const [loading, setLoading] = React.useState(false);
 
   const handleGoToHome = async () => {
-    // ✅ User sudah login dari createAccount(), langsung navigate
-    navigate('/home');
+    if (onCreateAccount) {
+      setLoading(true);
+      try {
+        // Create account and save token
+        await onCreateAccount();
+        // Navigate to home after successful account creation
+        navigate('/home');
+      } catch (error) {
+        console.error('Failed to create account:', error);
+        setLoading(false);
+      }
+    } else {
+      navigate('/home');
+    }
   };
 
   return (
@@ -50,9 +63,10 @@ const VerificationSuccess = ({ type = 'email', formData }: { type?: 'email' | 'w
           {/* Go to Home Button */}
           <button
             onClick={handleGoToHome}
-            className="w-full max-w-sm bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl"
+            disabled={loading}
+            className="w-full max-w-sm bg-green-500 text-white py-4 rounded-full text-base font-semibold shadow-lg transition-all active:scale-95 hover:shadow-xl disabled:opacity-70"
           >
-            Go to Home
+            {loading ? 'Creating Account...' : 'Go to Home'}
           </button>
 
           {/* Illustration */}

@@ -80,8 +80,8 @@ export const createOrderSchema = z.object({
   cartItems: z.array(z.object({
     id: z.string(),
     name: z.string(),
-    price: z.number(),
-    quantity: z.number()
+    price: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+    quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val)
   })).optional()
 });
 

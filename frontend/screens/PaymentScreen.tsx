@@ -47,11 +47,17 @@ const PaymentScreen = () => {
       return;
     }
 
+    if (!station?.id) {
+      alert('Station information missing. Please go back and select a station.');
+      navigate('/home');
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const orderData = {
         customerId: user.id.toString(),
-        stationId: station.id.toString(), // Required field
+        stationId: station.id.toString(),
         deliveryAddress: formData?.address || user.address || 'Sample Address',
         deliveryPhone: formData?.phoneNumber || user.phoneNumber || '1234567890',
         fuelType: formData?.fuelType || 'Premium',
@@ -62,7 +68,12 @@ const PaymentScreen = () => {
         totalAmount: totalAmount.toFixed(2),
         orderType: formData?.orderType || 'instant',
         paymentMethod: selectedPayment === 'card' ? 'credit_card' : selectedPayment,
-        cartItems: cartItems // Add cart items for order_items table
+        cartItems: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: parseInt(item.quantity)
+        }))
       };
 
       // Add optional fields only if they have values
@@ -71,7 +82,9 @@ const PaymentScreen = () => {
       }
       if (user?.vehicles && user.vehicles.length > 0) {
         const primaryVehicle = user.vehicles.find(v => v.isPrimary) || user.vehicles[0];
-        orderData.vehicleId = primaryVehicle.id.toString();
+        if (primaryVehicle?.id) {
+          orderData.vehicleId = primaryVehicle.id.toString();
+        }
       }
 
       const result = await apiCreateOrder(orderData);

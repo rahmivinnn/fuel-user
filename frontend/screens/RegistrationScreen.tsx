@@ -70,6 +70,7 @@ const RegistrationScreen = () => {
     };
     
     const createAccount = async () => {
+        console.log('Creating account with data:', formData);
         setLoading(true);
         setError('');
         try {
@@ -89,13 +90,16 @@ const RegistrationScreen = () => {
                 }
             };
             
+            console.log('Sending registration data:', registrationData);
             const userData = await apiRegisterComplete(registrationData);
+            console.log('Registration successful:', userData);
             
             // ✅ Only save token, not user data
             localStorage.setItem('token', userData.token);
             
             // Set user in context for current session
             updateUser(userData.customer);
+            console.log('Moving to success screen (step 7)');
             setStep(7); // Go to success screen
         } catch (error) {
             console.error("Registration failed:", error);
@@ -108,6 +112,7 @@ const RegistrationScreen = () => {
                 errorMessage = error.message;
             }
             
+            console.error('Setting error:', errorMessage);
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -135,7 +140,7 @@ const RegistrationScreen = () => {
                 return <EmailOTPVerification 
                     formData={formData} 
                     onBack={() => setStep(3)}
-                    onComplete={createAccount}
+                    onComplete={() => setStep(7)}
                 />;
             case 5:
                 return <WhatsAppVerificationStep 
@@ -147,10 +152,10 @@ const RegistrationScreen = () => {
                 return <WhatsAppOTPVerification 
                     formData={formData} 
                     onBack={() => setStep(5)}
-                    onComplete={createAccount}
+                    onComplete={() => setStep(7)}
                 />;
             case 7:
-                return <VerificationSuccess type="success" formData={formData} />;
+                return <VerificationSuccess type="success" formData={formData} onCreateAccount={createAccount} />;
             default:
                 return <Step1 next={handleNext} formData={formData} handleChange={handleChange} />;
         }

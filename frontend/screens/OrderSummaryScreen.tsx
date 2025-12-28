@@ -157,7 +157,15 @@ const OrderSummaryScreen = () => {
         {/* Confirm Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <button 
-            onClick={() => navigate('/payment')}
+            onClick={() => navigate('/payment', {
+              state: {
+                formData,
+                station,
+                cartItems,
+                selectedFuelFriend,
+                user
+              }
+            })}
             className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold mb-4"
           >
             Confirm Payment & Address
