@@ -58,7 +58,7 @@ const RegistrationScreen = () => {
         fuelType: 'Petrol',
     });
     const [loading, setLoading] = useState(false);
-    const [verificationMethod, setVerificationMethod] = useState<'sms' | 'email' | null>(null);
+    const [verificationMethod, setVerificationMethod] = useState<'email' | 'whatsapp' | null>(null);
 
     const handleNext = () => setStep(s => s + 1);
     const handleBack = () => {
@@ -140,7 +140,10 @@ const RegistrationScreen = () => {
                 return <EmailOTPVerification 
                     formData={formData} 
                     onBack={() => setStep(3)}
-                    onComplete={() => setStep(7)}
+                    onComplete={() => {
+                        setVerificationMethod('email');
+                        setStep(7);
+                    }}
                 />;
             case 5:
                 return <WhatsAppVerificationStep 
@@ -152,10 +155,17 @@ const RegistrationScreen = () => {
                 return <WhatsAppOTPVerification 
                     formData={formData} 
                     onBack={() => setStep(5)}
-                    onComplete={() => setStep(7)}
+                    onComplete={() => {
+                        setVerificationMethod('whatsapp');
+                        setStep(7);
+                    }}
                 />;
             case 7:
-                return <VerificationSuccess type="success" formData={formData} onCreateAccount={createAccount} />;
+                return <VerificationSuccess 
+                    type={verificationMethod || 'email'} 
+                    formData={formData} 
+                    onCreateAccount={createAccount} 
+                />;
             default:
                 return <Step1 next={handleNext} formData={formData} handleChange={handleChange} />;
         }
