@@ -1,220 +1,195 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Star, MapPin } from 'lucide-react';
-import { apiGetFuelFriendDetails, apiGetFuelFriendReviews, apiAddReview } from '../services/api';
-import { useAppContext } from '../App';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MapPin, Star } from 'lucide-react';
+import { apiGetFuelFriendDetails, apiGetFuelFriendReviews } from '../services/api';
 import AnimatedPage from '../components/AnimatedPage';
-
-interface Review {
-  id: string;
-  userName: string;
-  rating: number;
-  createdAt: string;
-  comment: string;
-  userAvatar: string;
-}
 
 interface FuelFriend {
   id: string;
   fullName: string;
-  deliveryFee: number;
   location: string;
+  deliveryFee: number;
   rating: number;
   totalReviews: number;
   profilePhoto: string;
   about: string;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  userName: string;
+  userAvatar: string;
+}
+
 const FuelFriendDetailsScreen = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAppContext();
+  const navigate = useNavigate();
   const [fuelFriend, setFuelFriend] = useState<FuelFriend | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newReview, setNewReview] = useState('');
-  const [newRating, setNewRating] = useState(0);
-  const [submittingReview, setSubmittingReview] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFuelFriendData = async () => {
       if (!id) return;
       
+      setIsLoading(true);
       try {
-        setLoading(true);
         const [friendData, reviewsData] = await Promise.all([
           apiGetFuelFriendDetails(id),
           apiGetFuelFriendReviews(id)
         ]);
-        
         setFuelFriend(friendData);
-        setReviews(reviewsData.map((review: any) => ({
-          id: review.id,
-          userName: review.userName || 'Anonymous',
-          rating: review.rating,
-          createdAt: formatDate(review.createdAt),
-          comment: review.comment || '',
-          userAvatar: review.userAvatar || '/avatar.png'
-        })));
-      } catch (error: any) {
-        console.error('Failed to fetch fuel friend data:', error);
-        if (error.message?.includes('not found')) {
-          alert('Fuel friend not found');
-          navigate("/home");
-        } else {
-          alert('Failed to load fuel friend details. Please try again.');
-        }
+        setReviews(reviewsData);
+      } catch (err: any) {
+        setError(err.message);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchFuelFriendData();
   }, [id]);
 
-  const formatDate = (dateString: string) => {
+  const getRatingDistribution = () => {
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach(review => {
+      distribution[review.rating as keyof typeof distribution]++;
+    });
+    
+    const total = reviews.length || 1;
+    return Object.entries(distribution).reverse().map(([rating, count]) => ({
+      rating: parseInt(rating),
+      percentage: Math.round((count / total) * 100)
+    }));
+  };
+
+  const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 30) return `${diffDays} days ago`;
-    if (diffDays < 60) return '1 month ago';
-    return `${Math.floor(diffDays / 30)} months ago`;
+    const diffInMonths = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    return diffInMonths === 0 ? 'This month' : `${diffInMonths} months ago`;
   };
 
-  const ratingDistribution = [
-    { stars: 5, percentage: 95 },
-    { stars: 4, percentage: 4 },
-    { stars: 3, percentage: 0 },
-    { stars: 2, percentage: 0 },
-    { stars: 1, percentage: 0 }
-  ];
-
-  const renderStars = (rating: number, interactive = false, onStarClick?: (rating: number) => void) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <Star
-        key={index}
-        className={`w-4 h-4 cursor-pointer ${
-          index < rating ? 'text-yellow-500 fill-current' : 'text-gray-300'
-        }`}
-        onClick={() => interactive && onStarClick && onStarClick(index + 1)}
-      />
-    ));
-  };
-
-  const handleAddReview = async () => {
-    if (!newReview.trim() || newRating === 0 || !user?.id || !id) {
-      alert('Please provide a rating and comment');
-      return;
-    }
-
-    try {
-      setSubmittingReview(true);
-      await apiAddReview({
-        customerId: user.id,
-        fuelFriendId: id,
-        rating: newRating,
-        comment: newReview.trim()
-      });
-      
-      // Refresh reviews
-      const reviewsData = await apiGetFuelFriendReviews(id);
-      setReviews(reviewsData.map((review: any) => ({
-        id: review.id,
-        userName: review.userName || 'Anonymous',
-        rating: review.rating,
-        createdAt: formatDate(review.createdAt),
-        comment: review.comment || '',
-        userAvatar: review.userAvatar || '/avatar.png'
-      })));
-      
-      setNewReview('');
-      setNewRating(0);
-      alert('Review added successfully!');
-    } catch (error: any) {
-      console.error('Failed to add review:', error);
-      alert(error.message || 'Failed to add review');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-
-  const handleSelectFuelFriend = () => {
-    // Navigate back to station details or checkout with selected fuel friend
-    navigate("/home");
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <AnimatedPage>
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="w-8 h-8 border-4 border-[#3AC36C] border-t-transparent rounded-full animate-spin"></div>
+        <div className="bg-white min-h-screen pb-24">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="w-6 h-6 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-24 h-5 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-6"></div>
+          </div>
+
+          {/* Profile Section Skeleton */}
+          <div className="px-4 py-6 text-center">
+            <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4 animate-pulse"></div>
+            <div className="w-32 h-6 bg-gray-300 rounded mx-auto mb-2 animate-pulse"></div>
+            <div className="w-40 h-4 bg-gray-300 rounded mx-auto mb-2 animate-pulse"></div>
+            <div className="w-28 h-4 bg-gray-300 rounded mx-auto animate-pulse"></div>
+          </div>
+
+          {/* About Section Skeleton */}
+          <div className="px-4 mb-6">
+            <div className="w-16 h-5 bg-gray-300 rounded mb-3 animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="w-full h-3 bg-gray-300 rounded animate-pulse"></div>
+              <div className="w-5/6 h-3 bg-gray-300 rounded animate-pulse"></div>
+              <div className="w-4/5 h-3 bg-gray-300 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Rating Section Skeleton */}
+          <div className="px-4 mb-6">
+            <div className="w-40 h-5 bg-gray-300 rounded mb-4 animate-pulse"></div>
+            <div className="flex items-start space-x-6 mb-6">
+              <div className="text-center">
+                <div className="w-12 h-8 bg-gray-300 rounded mb-2 animate-pulse"></div>
+                <div className="w-16 h-3 bg-gray-300 rounded mb-1 animate-pulse"></div>
+                <div className="w-20 h-3 bg-gray-300 rounded animate-pulse"></div>
+              </div>
+              <div className="flex-1 space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-gray-300 rounded animate-pulse"></div>
+                    <div className="w-3 h-3 bg-gray-300 rounded animate-pulse"></div>
+                    <div className="flex-1 h-2 bg-gray-300 rounded animate-pulse"></div>
+                    <div className="w-8 h-3 bg-gray-300 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </AnimatedPage>
     );
   }
 
-  if (!fuelFriend) {
+  if (error || !fuelFriend) {
     return (
       <AnimatedPage>
         <div className="flex justify-center items-center min-h-screen">
-          <p className="text-red-500">Fuel friend not found</p>
+          <p className="text-red-500">{error || 'Fuel friend not found'}</p>
         </div>
       </AnimatedPage>
     );
   }
+
+  const ratingDistribution = getRatingDistribution();
 
   return (
     <AnimatedPage>
-      <div className="min-h-screen bg-white pb-24">
+      <div className="bg-white min-h-screen pb-24">
         {/* Header */}
-        <header className="p-4 flex items-center sticky top-0 bg-white z-10 shadow-sm border-b border-gray-100">
-          <button 
-            onClick={() => navigate("/home")} 
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-full"
           >
-            <img src="/Back.png" alt="Back" className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-bold text-center flex-grow -ml-10 text-[#3F4249]">
-            Fuel friend
-          </h2>
-        </header>
+          <h1 className="text-lg font-semibold">Fuel friend</h1>
+          <div className="w-9"></div>
+        </div>
 
         {/* Profile Section */}
         <div className="px-4 py-6 text-center">
-          <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-orange-400 shadow-lg">
-            <img 
-              src={fuelFriend.profilePhoto || '/avatar.png'} 
+          <div className="relative inline-block mb-4">
+            <img
+              src={fuelFriend.profilePhoto || '/avatar.png'}
               alt={fuelFriend.fullName}
-              className="w-full h-full object-cover"
+              className="w-24 h-24 rounded-full object-cover mx-auto"
               onError={(e) => {
-                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Ccircle cx='48' cy='48' r='48' fill='%23e5e7eb'/%3E%3Cpath d='M48 24a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM24 72a24 24 0 0 1 48 0H24z' fill='%23999'/%3E%3C/svg%3E";
+                e.currentTarget.src = '/avatar.png';
               }}
             />
+            <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
           
-          <h1 className="text-xl font-semibold text-[#3F4249] mb-2">{fuelFriend.fullName}</h1>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{fuelFriend.fullName}</h2>
           
           <div className="flex items-center justify-center space-x-4 mb-2">
-            <span className="text-lg font-bold text-[#3F4249]">${fuelFriend.deliveryFee.toFixed(2)}</span>
+            <span className="text-lg font-semibold">${fuelFriend.deliveryFee}</span>
             <div className="flex items-center">
               <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-              <span className="font-semibold text-[#3F4249]">{fuelFriend.rating}</span>
+              <span className="font-medium">{fuelFriend.rating}</span>
               <span className="text-gray-600 ml-1">({fuelFriend.totalReviews})</span>
             </div>
           </div>
           
           <div className="flex items-center justify-center text-gray-600">
             <MapPin className="w-4 h-4 mr-1 text-red-500" />
-            <span className="text-sm">{fuelFriend.location}</span>
+            <span>{fuelFriend.location}</span>
           </div>
         </div>
 
         {/* About Section */}
         <div className="px-4 mb-6">
-          <h3 className="text-lg font-semibold text-[#3F4249] mb-3">About</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">About</h3>
           <p className="text-gray-700 text-sm leading-relaxed">
             {fuelFriend.about || 'No description available.'}
           </p>
@@ -222,109 +197,101 @@ const FuelFriendDetailsScreen = () => {
 
         {/* Rating and Reviews Section */}
         <div className="px-4 mb-6">
-          <h3 className="text-lg font-semibold text-[#3F4249] mb-4">Rating and Reviews</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating and Reviews</h3>
           
-          {/* Overall Rating */}
+          {/* Rating Overview */}
           <div className="flex items-start space-x-6 mb-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#3F4249] mb-1">{fuelFriend.rating}</div>
-              <div className="flex items-center mb-1">
-                {renderStars(Math.floor(fuelFriend.rating))}
+              <div className="text-3xl font-bold text-gray-900">{fuelFriend.rating}</div>
+              <div className="flex items-center justify-center mb-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${
+                      star <= Math.floor(fuelFriend.rating)
+                        ? 'text-yellow-500 fill-current'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="text-xs text-gray-600">{fuelFriend.totalReviews} All ratings</div>
+              <div className="text-sm text-gray-600">{fuelFriend.totalReviews} All ratings</div>
             </div>
             
-            {/* Rating Distribution */}
             <div className="flex-1">
-              {ratingDistribution.map((item) => (
-                <div key={item.stars} className="flex items-center mb-1">
-                  <span className="text-sm text-gray-600 w-2">{item.stars}</span>
-                  <Star className="w-3 h-3 text-yellow-500 fill-current mx-2" />
-                  <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                    <div 
-                      className="bg-yellow-500 h-2 rounded-full" 
-                      style={{ width: `${item.percentage}%` }}
+              {ratingDistribution.map(({ rating, percentage }) => (
+                <div key={rating} className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm w-2">{rating}</span>
+                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-yellow-500 h-2 rounded-full"
+                      style={{ width: `${percentage}%` }}
                     ></div>
                   </div>
-                  <span className="text-xs text-gray-600 w-8">{item.percentage}%</span>
+                  <span className="text-sm text-gray-600 w-8">{percentage}%</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Add Review Section - Only show if user is logged in */}
-          {user ? (
-            <div className="mb-6">
-              <h4 className="font-semibold text-[#3F4249] mb-3">Add review</h4>
-              <div className="flex items-center mb-3">
-                {renderStars(newRating, true, setNewRating)}
-              </div>
-              <div className="relative">
-                <textarea
-                  value={newReview}
-                  onChange={(e) => setNewReview(e.target.value)}
-                  placeholder="Your review here"
-                  disabled={submittingReview}
-                  className="w-full p-3 border border-gray-300 rounded-lg resize-none h-20 text-sm focus:outline-none focus:border-[#3AC36C] disabled:opacity-50"
-                />
-                <button
-                  onClick={handleAddReview}
-                  disabled={!newReview.trim() || newRating === 0 || submittingReview}
-                  className="absolute bottom-3 right-3 bg-[#3AC36C] text-white px-4 py-1 rounded-full text-sm font-medium hover:bg-[#2ea85a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submittingReview ? 'Adding...' : 'Add'}
-                </button>
+          {/* Add Review */}
+          <div className="border border-gray-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium">Add review</span>
+              <div className="flex space-x-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="w-5 h-5 text-gray-300 cursor-pointer hover:text-yellow-500" />
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-600 mb-3">Please login to add a review</p>
-              <button 
-                onClick={() => navigate('/login')}
-                className="bg-[#3AC36C] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#2ea85a] transition-colors"
-              >
-                Login
+            <input
+              type="text"
+              placeholder="Your review here"
+              className="w-full text-sm text-gray-600 bg-transparent border-none outline-none mb-3"
+            />
+            <div className="flex justify-end">
+              <button className="bg-green-500 text-white px-6 py-2 rounded-full text-sm font-medium">
+                Add
               </button>
             </div>
-          )}
+          </div>
 
           {/* Reviews List */}
           <div className="space-y-4">
-            {reviews.length > 0 ? reviews.map((review) => (
+            {reviews.slice(0, 2).map((review) => (
               <div key={review.id} className="border-b border-gray-100 pb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h5 className="font-semibold text-[#3F4249]">{review.userName}</h5>
-                  <span className="text-xs text-gray-500">{review.createdAt}</span>
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="font-medium">{review.userName}</span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3 h-3 ${
+                          star <= review.rating
+                            ? 'text-yellow-500 fill-current'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-600">{formatTimeAgo(review.createdAt)}</span>
                 </div>
-                <div className="flex items-center mb-2">
-                  {renderStars(review.rating)}
-                </div>
-                {review.comment && (
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    {review.comment}
-                  </p>
-                )}
+                <p className="text-sm text-gray-700">{review.comment}</p>
               </div>
-            )) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No reviews yet. Be the first to review!</p>
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* Read More */}
-          <div className="mt-4 text-center">
-            <button className="text-[#3AC36C] font-medium text-sm hover:underline">
-              Read More
-            </button>
-          </div>
+          {reviews.length > 2 && (
+            <button className="text-gray-600 text-sm mt-4">Read More</button>
+          )}
         </div>
 
         {/* Select Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
-          <button 
-            onClick={handleSelectFuelFriend}
-            className="w-full bg-[#3AC36C] text-white py-4 rounded-full text-lg font-semibold hover:bg-[#2ea85a] transition-colors shadow-lg"
+          <button
+            onClick={() => navigate(-1, { state: { selectedFuelFriend: fuelFriend } })}
+            className="w-full bg-green-500 text-white py-4 rounded-full text-lg font-semibold"
           >
             Select Fuel friend
           </button>

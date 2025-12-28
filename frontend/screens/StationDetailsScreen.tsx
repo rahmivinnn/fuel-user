@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, Star, Plus, Minus, Trash2 } from 'lucide-react';
 import { Station } from '../types';
 import { apiGetStationDetails } from '../services/api';
@@ -26,10 +26,19 @@ interface FuelFriend {
 const StationDetailsScreen = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [station, setStation] = useState<Station | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedFuelFriend, setSelectedFuelFriend] = useState<FuelFriend | null>(null);
+
+  // Check if fuel friend was selected from FuelFriendDetailsScreen
+  useEffect(() => {
+    if (location.state?.selectedFuelFriend) {
+      setSelectedFuelFriend(location.state.selectedFuelFriend);
+    }
+  }, [location.state]);
 
   // ✅ Use groceries and fuel friends from API response
   const groceries = station?.groceries || [];
@@ -249,7 +258,21 @@ const StationDetailsScreen = () => {
             <h2 className="text-lg font-semibold text-gray-900">Groceries</h2>
             <button className="text-green-600 text-sm font-medium">See all</button>
           </div>
-          {groceries.length > 0 ? (
+          {isLoading ? (
+            /* Groceries Skeleton */
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg animate-pulse">
+                  <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                  </div>
+                  <div className="w-16 h-8 bg-gray-300 rounded-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : groceries.length > 0 ? (
             <div className="space-y-3">
               {groceries.map((item) => {
                 const quantity = getItemQuantity(item.id);
@@ -316,56 +339,105 @@ const StationDetailsScreen = () => {
             <h2 className="text-lg font-semibold text-gray-900">Select Fuel friend</h2>
             <button className="text-green-600 text-sm font-medium">See all</button>
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {fuelFriends.length > 0 ? (
-              fuelFriends.slice(0, 4).map((friend) => (
-                <div key={friend.id} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <img 
-                      src={friend.profilePhoto || '/avatar.png'} 
-                      alt={friend.fullName} 
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/avatar.png';
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">{friend.fullName}</h3>
-                      <p className="text-xs text-gray-600">${friend.deliveryFee}</p>
+          
+          {selectedFuelFriend ? (
+            /* Selected Fuel Friend Display */
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={selectedFuelFriend.profilePhoto || '/avatar.png'} 
+                    alt={selectedFuelFriend.fullName} 
+                    className="w-12 h-12 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/avatar.png';
+                    }}
+                  />
+                  <div>
+                    <h3 className="font-medium text-gray-900">{selectedFuelFriend.fullName}</h3>
+                    <p className="text-sm text-gray-600">${selectedFuelFriend.deliveryFee}</p>
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                      <span className="text-xs text-gray-600">{selectedFuelFriend.rating}</span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1 mb-2">
-                    <MapPin className="w-3 h-3 text-red-500" />
-                    <span className="text-xs text-gray-600">{friend.location}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 mb-3">
-                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                    <span className="text-xs text-gray-600">{friend.rating || 'N/A'}</span>
-                    <span className="text-xs text-green-600">({friend.totalReviews || 0} reviews)</span>
-                  </div>
-                  <button 
-                    onClick={() => navigate(`/fuel-friend/${friend.id}`)}
-                    className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
-                  >
-                    Select
-                  </button>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-8 text-gray-500">
-                <p>No fuel friends available at this station</p>
+                <button 
+                  onClick={() => setSelectedFuelFriend(null)}
+                  className="text-red-500 text-sm font-medium"
+                >
+                  Remove
+                </button>
               </div>
-            )}
-          </div>
-          {fuelFriends.length > 0 ? (
+            </div>
+          ) : isLoading ? (
+            /* Fuel Friends Skeleton */
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                    <div className="flex-1">
+                      <div className="h-3 bg-gray-300 rounded w-3/4 mb-1"></div>
+                      <div className="h-2 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-gray-300 rounded w-2/3 mb-2"></div>
+                  <div className="h-2 bg-gray-300 rounded w-1/2 mb-3"></div>
+                  <div className="h-8 bg-gray-300 rounded-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Fuel Friends Grid */
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {fuelFriends.length > 0 ? (
+                fuelFriends.slice(0, 4).map((friend) => (
+                  <div key={friend.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <img 
+                        src={friend.profilePhoto || '/avatar.png'} 
+                        alt={friend.fullName} 
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/avatar.png';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">{friend.fullName}</h3>
+                        <p className="text-xs text-gray-600">${friend.deliveryFee}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1 mb-2">
+                      <MapPin className="w-3 h-3 text-red-500" />
+                      <span className="text-xs text-gray-600">{friend.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 mb-3">
+                      <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                      <span className="text-xs text-gray-600">{friend.rating || 'N/A'}</span>
+                      <span className="text-xs text-green-600">({friend.totalReviews || 0} reviews)</span>
+                    </div>
+                    <button 
+                      onClick={() => navigate(`/fuel-friend/${friend.id}`)}
+                      className="w-full bg-green-500 text-white py-2 rounded-full text-sm font-medium hover:bg-green-600 transition-colors"
+                    >
+                      Select
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-8 text-gray-500">
+                  <p>No fuel friends available at this station</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {!selectedFuelFriend && fuelFriends.length > 0 ? (
             <button className="w-full text-green-600 text-sm font-medium py-2">
               View More ({fuelFriends.length} total)
             </button>
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              <p>No additional fuel friends available</p>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Order Now Button */}
