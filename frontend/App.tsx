@@ -179,6 +179,7 @@ const AppNavigator = () => {
                 <Route path="/order-summary" element={<OrderSummaryScreen />} />
                 <Route path="/payment" element={<PaymentScreen />} />
                 <Route path="/track" element={<TrackOrderScreen />} />
+                <Route path="/track/:orderId" element={<TrackOrderScreen />} />
                 <Route path="/orders" element={<MyOrdersScreen />} />
                 <Route path="/notifications" element={<NotificationsScreen />} />
                 <Route path="/settings" element={<SettingsScreen />} />

@@ -47,8 +47,12 @@ const OrderCard = ({ order, type }: OrderCardProps) => {
             <div className="mt-5 flex space-x-3">
                 {type === 'ongoing' ? (
                     <>
-                        <button className="flex-1 bg-[#3AC36C] text-white py-3 rounded-full text-sm font-bold hover:bg-[#2ea85a] transition-all duration-200 active:scale-95 shadow-md">
-                            Request Completed
+                        <button className="flex-1 bg-[#3AC36C] text-white py-3 rounded-full text-sm font-bold hover:bg-[#2ea85a] transition-all duration-200 active:scale-95 shadow-md"
+                            onClick={() => navigate(`/track/${order.id}`)}
+                        >
+                            {order.status === 'pending' ? 'Pending' : 
+                             order.status === 'confirmed' ? 'Confirmed' : 
+                             order.status === 'in_progress' ? 'In Progress' : order.status}
                         </button>
                         <button className="flex-1 border-2 border-[#3AC36C] text-[#3AC36C] py-3 rounded-full text-sm font-bold hover:bg-[#3AC36C] hover:text-white transition-all duration-200 active:scale-95">
                             Dispute
@@ -86,6 +90,8 @@ const MyOrdersScreen = () => {
             try {
                 setIsLoading(true);
                 const data = await apiGetOrders();
+                console.log('📦 Orders data:', data);
+                console.log('📊 Order statuses:', data.map(o => o.status));
                 setOrders(data);
             } catch (error) {
                 console.error("Failed to fetch orders:", error);
@@ -133,8 +139,16 @@ const MyOrdersScreen = () => {
         );
     }
 
-    const ongoingOrders = orders.filter(o => o.status === 'Ongoing');
-    const historyOrders = orders.filter(o => o.status !== 'Ongoing');
+    const ongoingOrders = orders.filter(o => 
+        o.status === 'pending' || 
+        o.status === 'confirmed' || 
+        o.status === 'in_progress'
+    );
+    const historyOrders = orders.filter(o => 
+        o.status === 'completed' || 
+        o.status === 'cancelled' || 
+        o.status === 'delivered'
+    );
 
     return (
         <AnimatedPage>

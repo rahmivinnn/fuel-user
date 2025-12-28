@@ -200,6 +200,12 @@ export const apiGetOrders = async (customerId?: string, status?: string) => {
   return data.data;
 };
 
+export const apiGetOrderDetail = async (orderId: string) => {
+  const { data } = await api.get(`/api/orders/${orderId}`);
+  if (!data.success) throw new Error(data.message || data.error);
+  return data.data;
+};
+
 // ==========================================
 // PAYMENTS
 // ==========================================

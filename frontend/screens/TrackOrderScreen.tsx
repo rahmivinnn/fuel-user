@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MessageCircle, Phone, User, Truck, CheckCircle } from 'lucide-react';
 import { useAppContext } from '../App';
-import { apiGetOrders } from '../services/api';
+import { apiGetOrders, apiGetOrderDetail } from '../services/api';
 import AnimatedPage from '../components/AnimatedPage';
 import MapboxMap from '../components/MapboxMap';
 import CallModal from '../components/CallModal';
 
 const TrackOrderScreen = () => {
   const navigate = useNavigate();
+  const { orderId } = useParams();
   const { user, token } = useAppContext();
   const [showCallModal, setShowCallModal] = useState(false);
-  const [orders, setOrders] = useState([]);
+  const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,18 +21,27 @@ const TrackOrderScreen = () => {
       return;
     }
 
-    const fetchOrders = async () => {
+    const fetchOrderData = async () => {
       try {
-        const data = await apiGetOrders();
-        setOrders(data);
+        if (orderId) {
+          // Fetch specific order by ID
+          const orderData = await apiGetOrderDetail(orderId);
+          setOrder(orderData);
+        } else {
+          // Fallback: get first ongoing order
+          const orders = await apiGetOrders();
+          const ongoingOrder = orders.find(o => o.status === 'confirmed' || o.status === 'ongoing') || orders[0];
+          setOrder(ongoingOrder);
+        }
       } catch (error) {
-        console.error('Failed to fetch orders:', error);
+        console.error('Failed to fetch order data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchOrders();
-  }, [token, user]);
+    
+    fetchOrderData();
+  }, [orderId, token, user]);
 
   if (!token || !user) {
     return (
@@ -59,15 +69,13 @@ const TrackOrderScreen = () => {
     );
   }
 
-  // Get the most recent ongoing order
-  const ongoingOrder = orders.find(order => order.status === 'confirmed' || order.status === 'ongoing') || orders[0];
-  
-  if (!ongoingOrder) {
+  // Get the order data
+  if (!order) {
     return (
       <AnimatedPage>
         <div className="min-h-screen flex flex-col bg-white">
           <div className="flex items-center px-4 py-4 bg-white">
-            <button onClick={() => navigate("/home")} className="p-2 -ml-2">
+            <button onClick={() => navigate("/orders")} className="p-2 -ml-2">
               <img src="/Back.png" alt="Back" className="w-5 h-5" />
             </button>
             <h1 className="text-lg font-bold text-gray-900 flex-1 text-center -ml-10">Track Your Order</h1>
@@ -77,9 +85,9 @@ const TrackOrderScreen = () => {
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Active Orders</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Order Found</h3>
               <p className="text-gray-600 mb-8 max-w-sm">
-                You don't have any active orders to track at the moment.
+                {orderId ? 'Order not found or you don\'t have access to it.' : 'You don\'t have any active orders to track at the moment.'}
               </p>
               <button 
                 onClick={() => navigate('/home')}
@@ -96,17 +104,18 @@ const TrackOrderScreen = () => {
 
   const orderData = {
     driver: {
-      name: 'Fuel Friend Driver',
-      location: ongoingOrder.deliveryAddress || 'Location',
-      avatar: '/avatar.png'
+      name: order.fuelFriendName || 'Driver',
+      location: order.fuelFriendLocation || order.deliveryAddress || 'Location',
+      avatar: order.fuelFriendPhoto || '/avatar.png'
     },
-    deliveryTime: '8:30 - 9:15 PM',
+    deliveryTime: order.estimatedDeliveryTime || '8:30 - 9:15 PM',
     items: [
-      { name: `${ongoingOrder.fuelQuantity} Liters ${ongoingOrder.fuelType}`, price: parseFloat(ongoingOrder.fuelCost || '0') },
-      ...(parseFloat(ongoingOrder.groceriesCost || '0') > 0 ? [{ name: 'Groceries', price: parseFloat(ongoingOrder.groceriesCost) }] : [])
+      { name: `${order.fuelQuantity} Liters ${order.fuelType}`, price: parseFloat(order.fuelCost || '0') },
+      ...(parseFloat(order.groceriesCost || '0') > 0 ? [{ name: 'Groceries', price: parseFloat(order.groceriesCost) }] : []),
+      ...(order.items || []).map(item => ({ name: item.productName, price: parseFloat(item.price) }))
     ],
     userLocation: { lat: 35.1495, lon: -90.0490 },
-    trackingNumber: ongoingOrder.trackingNumber
+    trackingNumber: order.trackingNumber
   };
 
   return (

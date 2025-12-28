@@ -90,18 +90,24 @@ const PaymentScreen = () => {
         orderData.fuelFriendId = selectedFuelFriend.id.toString();
       }
       
-      // Get vehicle ID from user data or fetch from API
+      // Get vehicle ID from user data or create default vehicle
       let vehicleId = null;
       if (user?.vehicles && user.vehicles.length > 0) {
         const primaryVehicle = user.vehicles.find(v => v.isPrimary) || user.vehicles[0];
         vehicleId = primaryVehicle?.id;
       }
       
+      // If no vehicle found, try to get from API or use a default
+      if (!vehicleId && user?.id) {
+        console.log('⚠️ No vehicle in user context, will create order without vehicleId');
+        // Backend will handle null vehicleId
+      }
+      
       if (vehicleId) {
         orderData.vehicleId = vehicleId.toString();
         console.log('✅ Vehicle ID added to order:', vehicleId);
       } else {
-        console.log('⚠️ No vehicle found for user');
+        console.log('⚠️ No vehicle found for user, order will be created without vehicleId');
       }
 
       const result = await apiCreateOrder(orderData);
