@@ -49,7 +49,7 @@ const OrderCard = ({ order, type }: OrderCardProps) => {
                 {type === 'ongoing' ? (
                     <>
                         <button className="flex-1 bg-[#3AC36C] text-white py-3 rounded-full text-sm font-bold hover:bg-[#2ea85a] transition-all duration-200 active:scale-95 shadow-md"
-                            onClick={() => navigate(`/track/${order.id}`)}
+                            onClick={() => navigate('/track', { state: { selectedOrder: order } })}
                         >
                             View
                         </button>

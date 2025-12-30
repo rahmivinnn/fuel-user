@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { MessageCircle, Phone, User, Truck, CheckCircle } from 'lucide-react';
 import { useAppContext } from '../App';
 import { apiGetOrders, apiGetOrderDetail } from '../services/api';
@@ -10,10 +10,51 @@ import CallModal from '../components/CallModal';
 const TrackOrderScreen = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
+  const location = useLocation();
   const { user, token } = useAppContext();
   const [showCallModal, setShowCallModal] = useState(false);
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sheetHeight, setSheetHeight] = useState(60);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startHeight, setStartHeight] = useState(60);
+  const sheetRef = useRef(null);
+
+  // Get selected order from navigation state
+  const selectedOrder = location.state?.selectedOrder;
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartY(e.touches[0].clientY);
+    setStartHeight(sheetHeight);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    
+    const currentY = e.touches[0].clientY;
+    const deltaY = startY - currentY;
+    const screenHeight = window.innerHeight;
+    const deltaPercent = (deltaY / screenHeight) * 100;
+    
+    let newHeight = startHeight + deltaPercent;
+    newHeight = Math.max(20, Math.min(85, newHeight));
+    
+    setSheetHeight(newHeight);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    
+    if (sheetHeight < 35) {
+      setSheetHeight(20);
+    } else if (sheetHeight > 70) {
+      setSheetHeight(85);
+    } else {
+      setSheetHeight(60);
+    }
+  };
 
   useEffect(() => {
     if (!token || !user) {
@@ -23,10 +64,15 @@ const TrackOrderScreen = () => {
 
     const fetchOrderData = async () => {
       try {
-        console.log('Fetching order data for ID:', orderId);
+        // If order is passed from MyOrdersScreen, use it directly
+        if (selectedOrder) {
+          setOrder(selectedOrder);
+          setIsLoading(false);
+          return;
+        }
+        
         if (orderId) {
           const orderData = await apiGetOrderDetail(orderId);
-          console.log('Order data received:', orderData);
           setOrder(orderData);
         } else {
           const orders = await apiGetOrders();
@@ -41,7 +87,7 @@ const TrackOrderScreen = () => {
     };
     
     fetchOrderData();
-  }, [orderId, token, user]);
+  }, [orderId, token, user, selectedOrder]);
 
   if (!token || !user) {
     return (
@@ -104,18 +150,18 @@ const TrackOrderScreen = () => {
 
   const orderData = {
     driver: {
-      name: order.fuelFriendName || 'Fuel Friend',
-      location: order.fuelFriendLocation || order.deliveryAddress || 'Location',
-      avatar: order.fuelFriendPhoto || '/avatar.png'
+      name: order?.fuelFriendName || order?.fuelFriend?.name || 'Fuel Friend',
+      location: order?.fuelFriendLocation || order?.fuelFriend?.location || order?.deliveryAddress || 'Location',
+      avatar: order?.fuelFriendPhoto || order?.fuelFriend?.avatarUrl || '/avatar.png'
     },
-    deliveryTime: order.estimatedDeliveryTime || '8:30 - 9:15 PM',
+    deliveryTime: order?.estimatedDeliveryTime || '8:30 - 9:15 PM',
     items: [
-      { name: `${order.fuelQuantity} Liters ${order.fuelType}`, price: parseFloat(order.fuelCost || '0') },
-      ...(parseFloat(order.groceriesCost || '0') > 0 ? [{ name: 'Groceries', price: parseFloat(order.groceriesCost) }] : []),
-      ...(order.items || []).map(item => ({ name: item.productName, price: parseFloat(item.price) }))
+      { name: `${order?.fuelQuantity || '0'} Liters ${order?.fuelType || 'Fuel'}`, price: parseFloat(order?.fuelCost || '0') },
+      ...(parseFloat(order?.groceriesCost || '0') > 0 ? [{ name: 'Groceries', price: parseFloat(order?.groceriesCost || '0') }] : []),
+      ...(order?.items || []).map(item => ({ name: item?.productName || item?.name, price: parseFloat(item?.price || '0') }))
     ],
     userLocation: { lat: 35.1495, lon: -90.0490 },
-    trackingNumber: order.trackingNumber
+    trackingNumber: order?.trackingNumber || order?.trackingNo || 'N/A'
   };
 
   return (
@@ -129,8 +175,11 @@ const TrackOrderScreen = () => {
           <h1 className="text-lg font-bold text-gray-900 flex-1 text-center -ml-10">Track Your Order</h1>
         </div>
 
-        {/* Map */}
-        <div className="h-80 mx-4 rounded-2xl overflow-hidden mb-4">
+        {/* Map - Dynamic height */}
+        <div 
+          className="mx-4 rounded-2xl overflow-hidden mb-4 transition-all duration-300"
+          style={{ height: `${100 - sheetHeight - 15}vh` }}
+        >
           <MapboxMap
             stations={[]}
             userLocation={orderData.userLocation}
@@ -138,14 +187,23 @@ const TrackOrderScreen = () => {
           />
         </div>
 
-        {/* Bottom Card */}
-        <div className="mx-4 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Handle */}
-          <div className="flex justify-center py-3">
+        {/* Draggable Bottom Sheet */}
+        <div 
+          ref={sheetRef}
+          className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg border border-gray-100 transition-all duration-300"
+          style={{ height: `${sheetHeight}vh` }}
+        >
+          {/* Drag Handle */}
+          <div 
+            className="flex justify-center py-3 cursor-grab active:cursor-grabbing"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 overflow-y-auto" style={{ height: 'calc(100% - 60px)' }}>
             {/* Driver Info */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
@@ -224,8 +282,6 @@ const TrackOrderScreen = () => {
             </div>
           </div>
         </div>
-
-        <div className="h-24"></div>
 
         {/* Call Modal */}
         <CallModal

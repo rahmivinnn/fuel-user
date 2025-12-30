@@ -160,7 +160,10 @@ const AppNavigator = () => {
         }
     }, [isAuthenticated, navigate]);
 
-    const showBottomNav = isAuthenticated && ['/home', '/orders', '/track', '/settings'].includes(location.pathname);
+    const showBottomNav = isAuthenticated && (
+        ['/home', '/orders', '/track', '/settings'].includes(location.pathname) ||
+        location.pathname.startsWith('/track/')
+    );
 
     return (
         <>

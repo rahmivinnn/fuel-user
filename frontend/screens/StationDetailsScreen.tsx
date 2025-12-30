@@ -200,7 +200,7 @@ const StationDetailsScreen = () => {
               className="w-full h-full object-cover"
             />
             <button
-              onClick={() => navigate('/home')}
+              onClick={() => navigate(-1)}
               className="absolute top-4 left-4 p-2 bg-white/80 rounded-full"
             >
               <img src="/Back.png" alt="Back" className="w-5 h-5" />

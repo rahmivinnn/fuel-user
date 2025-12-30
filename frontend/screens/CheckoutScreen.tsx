@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, X, Zap, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../App';
 import AnimatedPage from '../components/AnimatedPage';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const CheckoutScreen = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const CheckoutScreen = () => {
     vehicleBrand: '',
     numberPlate: '',
     fuelType: 'Petrol',
-    quantity: '10 liters',
+    quantity: '10',
     deliveryTime: 'Instant',
     orderType: 'instant'
   });
@@ -165,11 +166,9 @@ const CheckoutScreen = () => {
           {/* Address */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">Address</label>
-            <input
-              type="text"
+            <AddressAutocomplete
               value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              onChange={(value) => handleInputChange('address', value)}
               placeholder="Enter your address"
             />
           </div>
@@ -228,7 +227,7 @@ const CheckoutScreen = () => {
                 <select
                   value={formData.fuelType}
                   onChange={(e) => handleInputChange('fuelType', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white pr-12"
                 >
                   <option value="Petrol">Petrol</option>
                   <option value="Diesel">Diesel</option>
@@ -243,13 +242,19 @@ const CheckoutScreen = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-gray-700 font-medium mb-2">Quantity</label>
-              <input
-                type="text"
-                value={formData.quantity}
-                onChange={(e) => handleInputChange('quantity', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Quantity"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleInputChange('quantity', e.target.value)}
+                  className="w-full px-4 py-3 pr-16 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="10"
+                  min="1"
+                />
+                <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                  liters
+                </span>
+              </div>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Delivery Time</label>
