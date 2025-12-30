@@ -24,12 +24,7 @@ const NotificationsScreen = () => {
 
   const loadNotifications = async () => {
     try {
-      if (!user?.id) {
-        console.log('No user ID found, cannot load notifications');
-        return;
-      }
-      
-      const data = await apiGetNotifications(user.id);
+      const data = await apiGetNotifications();
       setNotifications(data);
       console.log('Notifications loaded:', data.length);
     } catch (error) {
@@ -96,9 +91,7 @@ const NotificationsScreen = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      if (!user?.id) return;
-      
-      await apiMarkNotificationAsRead(notificationId, user.id);
+      await apiMarkNotificationAsRead(notificationId);
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );

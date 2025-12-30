@@ -1067,44 +1067,61 @@ app.post('/api/notifications/send', async (req, res) => {
   }
 });
 
-app.get('/api/notifications/customer/:customerId', async (req, res) => {
+app.get('/api/notifications', verifyToken, async (req, res) => {
   try {
-    const { customerId } = req.params;
+    const userId = req.user.userId; // From JWT token
     const { limit = 20 } = req.query;
     
-    const notifications = await notificationService.getCustomerNotifications(customerId, parseInt(limit));
-    return res.success(RESPONSE_CODES.SUCCESS, notifications);
+    const notifications = await notificationService.getCustomerNotifications(userId, parseInt(limit));
+    return res.success(RESPONSE_CODES.NOTIFICATIONS_FOUND, notifications);
   } catch (error) {
     console.error('Get notifications error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });
 
-app.patch('/api/notifications/:id/read', async (req, res) => {
+app.patch('/api/notifications/:id/read', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { customerId } = req.body;
+    const userId = req.user.userId; // From JWT token
     
-    if (!customerId) {
-      return res.error(RESPONSE_CODES.BAD_REQUEST, 'Customer ID required');
-    }
-    
-    const result = await notificationService.markAsRead(id, customerId);
-    return res.success(RESPONSE_CODES.SUCCESS, result);
+    const result = await notificationService.markAsRead(id, userId);
+    return res.success(RESPONSE_CODES.NOTIFICATION_MARKED_READ, result);
   } catch (error) {
     console.error('Mark as read error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });
 
-app.post('/api/notifications/test/:customerId', async (req, res) => {
+app.post('/api/notifications/test', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId; // From JWT token
+    
+    const result = await notificationService.sendTestNotification(userId);
+    return res.success(RESPONSE_CODES.NOTIFICATION_SENT, result);
+  } catch (error) {
+    console.error('Test notification error:', error);
+    return res.error(RESPONSE_CODES.INTERNAL_ERROR);
+  }
+});
+
+// Add sample notification for testing
+app.post('/api/notifications/sample/:customerId', async (req, res) => {
   try {
     const { customerId } = req.params;
     
-    const result = await notificationService.sendTestNotification(customerId);
-    return res.success(RESPONSE_CODES.SUCCESS, result);
+    // Create a sample notification directly in database
+    await db.insert(notifications).values({
+      customerId,
+      title: 'Welcome to FuelFriendly! 🎉',
+      body: 'Your account has been set up successfully. Start ordering fuel now!',
+      data: JSON.stringify({ type: 'welcome' }),
+      isRead: false
+    });
+    
+    return res.success(RESPONSE_CODES.SUCCESS, { message: 'Sample notification created' });
   } catch (error) {
-    console.error('Test notification error:', error);
+    console.error('Sample notification error:', error);
     return res.error(RESPONSE_CODES.INTERNAL_ERROR);
   }
 });

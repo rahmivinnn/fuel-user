@@ -234,20 +234,20 @@ export const apiRegisterFCMToken = async (customerId: string, token: string, dev
   return data;
 };
 
-export const apiGetNotifications = async (customerId: string) => {
-  const { data } = await api.get(`/api/notifications/customer/${customerId}`);
+export const apiGetNotifications = async () => {
+  const { data } = await api.get('/api/notifications');
   if (!data.success) throw new Error(data.message || data.error);
   return data.data;
 };
 
-export const apiMarkNotificationAsRead = async (notificationId: string, customerId: string) => {
-  const { data } = await api.patch(`/api/notifications/${notificationId}/read`, { customerId });
+export const apiMarkNotificationAsRead = async (notificationId: string) => {
+  const { data } = await api.patch(`/api/notifications/${notificationId}/read`);
   if (!data.success) throw new Error(data.message || data.error);
   return data;
 };
 
-export const apiSendTestNotification = async (customerId: string) => {
-  const { data } = await api.post(`/api/notifications/test/${customerId}`);
+export const apiSendTestNotification = async () => {
+  const { data } = await api.post('/api/notifications/test');
   if (!data.success) throw new Error(data.message || data.error);
   return data;
 };

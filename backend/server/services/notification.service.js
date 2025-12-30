@@ -1,6 +1,6 @@
 import { db } from '../db.js';
 import { fcmTokens, notifications, customers } from '../shared/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import firebaseService from './firebase.service.js';
 
 class NotificationService {
@@ -128,7 +128,7 @@ class NotificationService {
       const customerNotifications = await db.select()
         .from(notifications)
         .where(eq(notifications.customerId, customerId))
-        .orderBy(notifications.createdAt)
+        .orderBy(sql`${notifications.createdAt} DESC`)
         .limit(limit);
 
       return customerNotifications;
