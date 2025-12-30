@@ -14,14 +14,29 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
         <div className="flex items-center justify-center w-full my-2">
             {steps.map((step, index) => (
                 <React.Fragment key={index}>
-                    <div className={`mobile-stepper-circle rounded-full border-2 flex items-center justify-center font-semibold ${
-                        index + 1 === currentStep 
-                            ? 'bg-green-500 border-green-500 text-white' 
-                            : index + 1 < currentStep
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'bg-white border-gray-300 text-gray-400'
-                    }`}>
-                        {index + 1 < currentStep ? <Check size={20} /> : step}
+                    <div className="flex flex-col items-center">
+                        <div className={`mobile-stepper-circle rounded-full border-2 flex items-center justify-center font-semibold ${
+                            index + 1 === currentStep 
+                                ? 'bg-green-500 border-green-500 text-white' 
+                                : index + 1 < currentStep
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : 'bg-white border-gray-300 text-gray-400'
+                        }`}>
+                            {index + 1 < currentStep ? <Check size={20} /> : step}
+                        </div>
+                        {/* Car icon positioned below current step */}
+                        {index + 1 === currentStep && (
+                            <div className="mt-2">
+                                <img 
+                                    src="/car.png" 
+                                    alt="Car icon" 
+                                    className="w-8 h-4"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
                     {index < steps.length - 1 && (
                         <div className="flex items-center mx-4" style={{ minWidth: '40px', maxWidth: '80px' }}>
@@ -196,16 +211,6 @@ const RegistrationScreen = () => {
                         </div>
 
                         <Stepper currentStep={step} />
-                        <div className="flex justify-center mb-6">
-                            <img 
-                                src="/car.png" 
-                                alt="Car icon" 
-                                className="w-8 h-4"
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                        </div>
                     </>
                 )}
 
@@ -342,76 +347,133 @@ const Step1 = ({ next, formData, handleChange }: StepProps) => {
     );
 };
 
-const Step2 = ({ next, back, formData, handleChange }: StepProps) => (
-    <div className="space-y-4">
-        <form onSubmit={(e) => { e.preventDefault(); next(); }} className="space-y-4">
-            <input 
-                name="vehicleBrand" 
-                type="text" 
-                placeholder="Vehicle Brand"
-                value={formData.vehicleBrand} 
-                onChange={handleChange} 
-                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
-                required 
-            />
-            
-            <input 
-                name="vehicleColor" 
-                type="text" 
-                placeholder="Vehicle Color"
-                value={formData.vehicleColor} 
-                onChange={handleChange} 
-                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
-                required 
-            />
-            
-            <input 
-                name="licenseNumber" 
-                type="text" 
-                placeholder="License Number"
-                value={formData.licenseNumber} 
-                onChange={handleChange} 
-                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
-                required 
-            />
-            
-            <div className="relative">
-                <select 
-                    name="fuelType" 
-                    value={formData.fuelType} 
-                    onChange={handleChange} 
-                    className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none"
+const Step2 = ({ next, back, formData, handleChange }: StepProps) => {
+    const [vehicles, setVehicles] = useState([{
+        brand: formData.vehicleBrand || '',
+        color: formData.vehicleColor || '',
+        licenseNumber: formData.licenseNumber || '',
+        fuelType: formData.fuelType || 'Petrol'
+    }]);
+
+    const addVehicle = () => {
+        setVehicles([...vehicles, {
+            brand: '',
+            color: '',
+            licenseNumber: '',
+            fuelType: 'Petrol'
+        }]);
+    };
+
+    const updateVehicle = (index: number, field: string, value: string) => {
+        const updatedVehicles = [...vehicles];
+        updatedVehicles[index] = { ...updatedVehicles[index], [field]: value };
+        setVehicles(updatedVehicles);
+        
+        // Update main form data for first vehicle
+        if (index === 0) {
+            const event = {
+                target: {
+                    name: field === 'brand' ? 'vehicleBrand' : 
+                          field === 'color' ? 'vehicleColor' : 
+                          field === 'licenseNumber' ? 'licenseNumber' : 'fuelType',
+                    value
+                }
+            } as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
+            handleChange(event);
+        }
+    };
+
+    const removeVehicle = (index: number) => {
+        if (vehicles.length > 1) {
+            setVehicles(vehicles.filter((_, i) => i !== index));
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); next(); }} className="space-y-4">
+                {vehicles.map((vehicle, index) => (
+                    <div key={index} className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                        {index > 0 && (
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-medium text-gray-700">Vehicle {index + 1}</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => removeVehicle(index)}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        )}
+                        
+                        <input 
+                            type="text" 
+                            placeholder="Vehicle Brand"
+                            value={vehicle.brand}
+                            onChange={(e) => updateVehicle(index, 'brand', e.target.value)}
+                            className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
+                            required 
+                        />
+                        
+                        <input 
+                            type="text" 
+                            placeholder="Vehicle Color"
+                            value={vehicle.color}
+                            onChange={(e) => updateVehicle(index, 'color', e.target.value)}
+                            className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
+                            required 
+                        />
+                        
+                        <input 
+                            type="text" 
+                            placeholder="License Number"
+                            value={vehicle.licenseNumber}
+                            onChange={(e) => updateVehicle(index, 'licenseNumber', e.target.value)}
+                            className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400" 
+                            required 
+                        />
+                        
+                        <div className="relative">
+                            <select 
+                                value={vehicle.fuelType}
+                                onChange={(e) => updateVehicle(index, 'fuelType', e.target.value)}
+                                className="w-full mobile-form-input rounded-full border border-black/50 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none"
+                            >
+                                <option value="" disabled>Fuel type</option>
+                                <option value="Petrol">Petrol</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Electric">Electric</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                
+                <button 
+                    type="button"
+                    onClick={addVehicle}
+                    className="w-full mobile-form-button rounded-full border border-green-500 bg-white hover:bg-green-50 text-green-500 font-medium flex items-center justify-center gap-2 transition-colors"
                 >
-                    <option value="" disabled>Fuel type</option>
-                    <option value="Petrol">Petrol</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="Electric">Electric</option>
-                    <option value="Hybrid">Hybrid</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
-            </div>
-            
-            <button 
-                type="button"
-                className="w-full mobile-form-button rounded-full border border-green-500 bg-white hover:bg-white text-green-500 font-medium flex items-center justify-center gap-2 transition-colors"
-            >
-                <span className="text-lg">+</span>
-                Add Vehicle
-            </button>
-            
-            <button 
-                type="submit" 
-                className="w-full py-4 bg-[#3AC36C] hover:bg-[#2ea85a] text-white rounded-full font-semibold text-base shadow-lg transition-all duration-300 active:scale-95 mt-6"
-            >
-                Next
-            </button>
-        </form>
-    </div>
-);
+                    <span className="text-lg">+</span>
+                    Add Vehicle
+                </button>
+                
+                <button 
+                    type="submit" 
+                    className="w-full py-4 bg-[#3AC36C] hover:bg-[#2ea85a] text-white rounded-full font-semibold text-base shadow-lg transition-all duration-300 active:scale-95 mt-6"
+                >
+                    Next
+                </button>
+            </form>
+        </div>
+    );
+};
 
 const Step3 = ({ createAccount, editDetails, formData, loading, error }: { createAccount: () => void; editDetails: () => void; formData: any; loading: boolean; error?: string }) => (
     <div className="space-y-6">
