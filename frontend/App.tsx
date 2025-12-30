@@ -303,6 +303,14 @@ const App = () => {
             setToken(userData.token);
             // Only save token, not user data
             localStorage.setItem('token', userData.token);
+            
+            // Register FCM token for push notifications
+            try {
+                const { pushNotificationService } = await import('./services/pushNotification');
+                await pushNotificationService.initializePushNotifications(userData.customer.id);
+            } catch (notifError) {
+                console.log('Push notification setup failed:', notifError);
+            }
         } catch (error) {
             console.error('Login error:', error);
             throw error;

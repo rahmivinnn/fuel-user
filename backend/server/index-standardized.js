@@ -863,6 +863,15 @@ app.post('/api/orders', validateRequest(createOrderSchema), async (req, res) => 
       }
     }
     
+    // 🔔 Send order confirmation notification
+    try {
+      await notificationService.sendOrderNotification(orderData.customerId, newOrder.id, 'confirmed');
+      console.log(`✅ Order confirmation notification sent to customer ${orderData.customerId}`);
+    } catch (notificationError) {
+      console.error('❌ Failed to send order notification:', notificationError);
+      // Don't fail order creation if notification fails
+    }
+    
     return res.success(RESPONSE_CODES.ORDER_CREATED, {
       orderId: newOrder.id,
       trackingNumber: newOrder.trackingNumber,
@@ -879,9 +888,45 @@ app.get('/api/orders', verifyToken, async (req, res) => {
     const userId = req.user.userId; // From JWT token
     const { status } = req.query;
     
-    let query = db.select().from(orders).where(eq(orders.customerId, userId));
+    const userOrders = await db.select({
+      id: orders.id,
+      trackingNumber: orders.trackingNumber,
+      customerId: orders.customerId,
+      stationId: orders.stationId,
+      fuelFriendId: orders.fuelFriendId,
+      vehicleId: orders.vehicleId,
+      deliveryAddress: orders.deliveryAddress,
+      deliveryPhone: orders.deliveryPhone,
+      fuelType: orders.fuelType,
+      fuelQuantity: orders.fuelQuantity,
+      fuelCost: orders.fuelCost,
+      deliveryFee: orders.deliveryFee,
+      groceriesCost: orders.groceriesCost,
+      totalAmount: orders.totalAmount,
+      orderType: orders.orderType,
+      scheduledDate: orders.scheduledDate,
+      scheduledTime: orders.scheduledTime,
+      estimatedDeliveryTime: orders.estimatedDeliveryTime,
+      status: orders.status,
+      paymentStatus: orders.paymentStatus,
+      paymentMethod: orders.paymentMethod,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      // Fuel Friend data
+      fuelFriendName: fuelFriends.fullName,
+      fuelFriendPhone: fuelFriends.phoneNumber,
+      fuelFriendLocation: fuelFriends.location,
+      fuelFriendPhoto: fuelFriends.profilePhoto,
+      // Station data
+      stationName: fuelStations.name,
+      stationAddress: fuelStations.address
+    })
+    .from(orders)
+    .leftJoin(fuelFriends, eq(orders.fuelFriendId, fuelFriends.id))
+    .leftJoin(fuelStations, eq(orders.stationId, fuelStations.id))
+    .where(eq(orders.customerId, userId))
+    .orderBy(sql`${orders.createdAt} DESC`);
     
-    const userOrders = await query.orderBy(sql`${orders.createdAt} DESC`);
     return res.success(RESPONSE_CODES.SUCCESS, userOrders);
   } catch (error) {
     console.error('Orders fetch error:', error);

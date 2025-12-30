@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreVertical, Trash2, CheckCircle, XCircle, Mail, User, CreditCard } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import { apiGetNotifications, apiMarkNotificationAsRead } from '../services/api';
+import { useAppContext } from '../App';
 
 interface Notification {
   id: string;
@@ -16,19 +17,21 @@ interface Notification {
 
 const NotificationsScreen = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, isAuthenticated } = useAppContext();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
 
   const loadNotifications = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      if (user.id) {
-        const data = await apiGetNotifications(user.id);
-        setNotifications(data);
+      if (!user?.id) {
+        console.log('No user ID found, cannot load notifications');
+        return;
       }
+      
+      const data = await apiGetNotifications(user.id);
+      setNotifications(data);
+      console.log('Notifications loaded:', data.length);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -37,16 +40,12 @@ const NotificationsScreen = () => {
   };
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      setIsLoggedIn(false);
+    if (!isAuthenticated || !user) {
       setLoading(false);
       return;
     }
-    setIsLoggedIn(true);
     loadNotifications();
-  }, []);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -62,7 +61,7 @@ const NotificationsScreen = () => {
     };
   }, [showDeleteMenu]);
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated || !user) {
     return (
       <AnimatedPage>
         <div className="bg-white min-h-screen">
@@ -97,8 +96,7 @@ const NotificationsScreen = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user.id) return;
+      if (!user?.id) return;
       
       await apiMarkNotificationAsRead(notificationId, user.id);
       setNotifications(prev => 
