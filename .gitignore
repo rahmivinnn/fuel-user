@@ -61,3 +61,6 @@ backend/create-*.sql
 # WhatsApp session
 backend/server/wa-session/
 
+# Kubernetes deployment files
+k8s-deploy.yaml
+create-secret.sh
