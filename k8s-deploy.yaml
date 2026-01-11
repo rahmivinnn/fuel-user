@@ -32,32 +32,32 @@ spec:
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: database-url
+              key: database_url
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: jwt-secret
+              key: jwt_secret
         - name: EMAILJS_PUBLIC_KEY
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: emailjs-public-key
+              key: emailjs_public_key
         - name: EMAILJS_SERVICE_ID
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: emailjs-service-id
+              key: emailjs_service_id
         - name: EMAILJS_TEMPLATE_ID
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: emailjs-template-id
+              key: emailjs_template_id
         - name: STRIPE_SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: stripe-secret-key
+              key: stripe_secret_key
         resources:
           requests:
             memory: "256Mi"
