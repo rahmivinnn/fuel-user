@@ -3,9 +3,9 @@
 # FuelFriendly Auto Deploy Script
 set -e
 
-PROJECT_DIR="/var/www/fuel-user"
-BACKUP_DIR="/var/backups/fuel-user"
-LOG_FILE="/var/log/fuel-deploy.log"
+PROJECT_DIR="$(pwd)"
+BACKUP_DIR="$PROJECT_DIR/backups"
+LOG_FILE="$PROJECT_DIR/deploy.log"
 
 # Colors for output
 RED='\033[0;31m'
@@ -51,25 +51,7 @@ update_code() {
     log "Code updated successfully"
 }
 
-# Build frontend
-build_frontend() {
-    log "Building frontend..."
-    cd $PROJECT_DIR/frontend
-    
-    # Install dependencies if package.json changed
-    if [ package.json -nt node_modules/.package-lock.json ] 2>/dev/null; then
-        log "Installing frontend dependencies..."
-        npm ci --production=false
-    fi
-    
-    # Build for production
-    npm run build || {
-        error "Frontend build failed"
-        exit 1
-    }
-    
-    log "Frontend built successfully"
-}
+
 
 # Install backend dependencies
 install_backend_deps() {
@@ -81,43 +63,33 @@ install_backend_deps() {
     fi
 }
 
-# Deploy with Docker Compose
-deploy_services() {
-    log "Deploying services with Docker Compose..."
-    cd $PROJECT_DIR
+# Deploy backend
+deploy_backend() {
+    log "Deploying backend..."
+    cd $PROJECT_DIR/backend
     
-    # Pull latest images
-    docker-compose pull 2>/dev/null || true
+    # Kill existing process
+    pkill -f "node.*index-standardized.js" || true
+    sleep 2
     
-    # Build and start services
-    docker-compose up -d --build || {
-        error "Docker deployment failed"
-        exit 1
-    }
+    # Start backend
+    nohup node server/index-standardized.js > ../backend.log 2>&1 &
     
-    log "Services deployed successfully"
+    log "Backend deployed successfully"
 }
 
 # Health check
 health_check() {
     log "Performing health check..."
     
-    # Wait for services to start
-    sleep 10
+    # Wait for backend to start
+    sleep 5
     
     # Check backend
     if curl -f -s http://localhost:4000/api/health > /dev/null; then
         log "✅ Backend is healthy"
     else
         error "❌ Backend health check failed"
-        return 1
-    fi
-    
-    # Check frontend
-    if curl -f -s http://localhost/health > /dev/null; then
-        log "✅ Frontend is healthy"
-    else
-        error "❌ Frontend health check failed"
         return 1
     fi
     
@@ -136,9 +108,8 @@ main() {
     
     create_backup
     update_code
-    build_frontend
     install_backend_deps
-    deploy_services
+    deploy_backend
     
     if health_check; then
         cleanup_backups
