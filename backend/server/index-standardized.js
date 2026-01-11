@@ -72,16 +72,37 @@ app.use(responseMiddleware);
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
-// Email service setup
-let emailService = null;
-if (process.env.SENDGRID_API_KEY) {
-  const sgMail = await import('@sendgrid/mail');
-  sgMail.default.setApiKey(process.env.SENDGRID_API_KEY);
-  emailService = sgMail.default;
-  console.log('✅ SendGrid email service initialized');
-} else {
-  console.log('⚠️ No email service configured');
-}
+// EmailJS service setup
+const sendEmailOTP = async (email, otp) => {
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        service_id: process.env.EMAILJS_SERVICE_ID || 'service_8y8reng',
+        template_id: process.env.EMAILJS_TEMPLATE_ID || 'template_k4j9jvk',
+        user_id: process.env.EMAILJS_PUBLIC_KEY || 'XRetTnpI57yZxgu9g',
+        template_params: {
+          to_email: email,
+          otp_code: otp,
+          user_name: email.split('@')[0]
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`EmailJS error: ${response.status}`);
+    }
+    
+    console.log('✅ Email sent via EmailJS');
+    return true;
+  } catch (error) {
+    console.error('EmailJS send error:', error);
+    throw error;
+  }
+};
 
 // In-memory OTP store
 const otpStore = new Map();
@@ -271,28 +292,12 @@ app.post('/api/auth/otp/email/send', validateRequest(emailOTPSendSchema), async 
       type: 'email'
     });
     
-    if (emailService) {
-      try {
-        const msg = {
-          to: email,
-          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@fuelfriendly.com',
-          subject: 'FuelFriendly Verification Code',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #3AC36C;">FuelFriendly Verification</h2>
-              <p>Your verification code is:</p>
-              <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                ${otp}
-              </div>
-              <p>This code will expire in 5 minutes.</p>
-            </div>
-          `
-        };
-        await emailService.send(msg);
-      } catch (emailError) {
-        console.error('Email send error:', emailError);
-        return res.error(RESPONSE_CODES.EMAIL_SEND_FAILED);
-      }
+    // Send OTP via EmailJS
+    try {
+      await sendEmailOTP(email, otp);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+      return res.error(RESPONSE_CODES.EMAIL_SEND_FAILED);
     }
     
     return res.success(RESPONSE_CODES.OTP_SENT);

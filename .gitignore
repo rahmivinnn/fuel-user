@@ -60,3 +60,4 @@ backend/create-*.sql
 
 # WhatsApp session
 backend/server/wa-session/
+

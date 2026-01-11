@@ -38,11 +38,21 @@ spec:
             secretKeyRef:
               name: fuel-user-secrets
               key: jwt-secret
-        - name: SENDGRID_API_KEY
+        - name: EMAILJS_PUBLIC_KEY
           valueFrom:
             secretKeyRef:
               name: fuel-user-secrets
-              key: sendgrid-api-key
+              key: emailjs-public-key
+        - name: EMAILJS_SERVICE_ID
+          valueFrom:
+            secretKeyRef:
+              name: fuel-user-secrets
+              key: emailjs-service-id
+        - name: EMAILJS_TEMPLATE_ID
+          valueFrom:
+            secretKeyRef:
+              name: fuel-user-secrets
+              key: emailjs-template-id
         - name: STRIPE_SECRET_KEY
           valueFrom:
             secretKeyRef:

@@ -10,7 +10,9 @@ kubectl delete secret fuel-user-secrets -n fuel-friendly --ignore-not-found=true
 kubectl create secret generic fuel-user-secrets -n fuel-friendly \
   --from-literal=database-url="$DATABASE_URL" \
   --from-literal=jwt-secret="$JWT_SECRET" \
-  --from-literal=sendgrid-api-key="$SENDGRID_API_KEY" \
+  --from-literal=emailjs-public-key="$EMAILJS_PUBLIC_KEY" \
+  --from-literal=emailjs-service-id="$EMAILJS_SERVICE_ID" \
+  --from-literal=emailjs-template-id="$EMAILJS_TEMPLATE_ID" \
   --from-literal=stripe-secret-key="$STRIPE_SECRET_KEY"
 
 echo "✅ Secret created for fuel-user"
