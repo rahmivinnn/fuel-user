@@ -66,3 +66,13 @@ k8s-deploy.yaml
 create-secret.sh
 fuel-user-secret.yaml
 *-secret.yaml
+
+# Deployment scripts with sensitive info
+deploy-remote.sh
+webhook-server.sh
+build-push.sh
+*-deploy.sh
+setup-kubeconfig.sh
+
+# Docker credentials
+.docker/
