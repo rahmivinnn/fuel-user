@@ -72,36 +72,36 @@ app.use(responseMiddleware);
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
-// EmailJS service setup
+// SendGrid service setup
+import sgMail from '@sendgrid/mail';
+
 const sendEmailOTP = async (email, otp) => {
   try {
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        service_id: process.env.EMAILJS_SERVICE_ID || 'service_8y8reng',
-        template_id: process.env.EMAILJS_TEMPLATE_ID || 'template_k4j9jvk',
-        user_id: process.env.EMAILJS_PUBLIC_KEY || 'XRetTnpI57yZxgu9g',
-        template_params: {
-          to_name: email.split('@')[0],
-          to_email: email,
-          message: `Your FuelFriendly verification code is: ${otp}`,
-          otp: otp
-        }
-      })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`EmailJS error: ${response.status} - ${errorText}`);
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error('SENDGRID_API_KEY not configured');
     }
     
-    console.log('✅ Email sent via EmailJS');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@fuelfriendly.com',
+      subject: 'FuelFriendly Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #4CAF50;">FuelFriendly</h2>
+          <p>Your verification code is:</p>
+          <div style="font-size: 24px; font-weight: bold; color: #333; margin: 20px 0;">${otp}</div>
+          <p style="color: #666;">This code expires in 5 minutes.</p>
+        </div>
+      `
+    };
+    
+    await sgMail.send(msg);
+    console.log('✅ Email sent via SendGrid');
     return true;
   } catch (error) {
-    console.error('EmailJS send error:', error);
+    console.error('SendGrid send error:', error);
     throw error;
   }
 };
